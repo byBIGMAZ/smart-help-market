@@ -1,0 +1,391 @@
+
+/*
+ * SMART HELP MARKET BY BIGMAZ
+ * Admin appearance follows the browser/device system preference.
+ * Dark mode retains the existing BIGMAZ green identity.
+ */
+
+.admin-shell {
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  color-scheme: dark;
+}
+
+/* Allow the admin console to use the available browser width.
+   This only applies when the admin app is mounted. */
+#root:has(.admin-shell) {
+  width: 100%;
+  max-width: none;
+  min-height: 100vh;
+  margin: 0;
+  border: 0;
+  text-align: left;
+}
+
+/* Browser or device is using Light mode */
+@media (prefers-color-scheme: light) {
+  .admin-shell {
+    color-scheme: light;
+    background: #f5f7f5 !important;
+    color: #17231b !important;
+  }
+
+  .admin-shell h1,
+  .admin-shell h2,
+  .admin-shell h3,
+  .admin-shell h4,
+  .admin-shell strong {
+    color: #17231b;
+  }
+
+  .admin-shell p,
+  .admin-shell small,
+  .admin-shell .admin-muted {
+    color: #647267;
+  }
+
+  .admin-shell .admin-kicker,
+  .admin-shell .admin-panel-label {
+    color: #397b2b;
+  }
+
+  .admin-shell .admin-loading p {
+    color: #647267;
+  }
+
+  .admin-shell .admin-brand-mark {
+    background: #397b2b;
+    color: #ffffff;
+  }
+
+  .admin-shell .admin-login-brand h1 {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-security-note {
+    color: #526157;
+  }
+
+  .admin-shell .admin-security-note span {
+    color: #397b2b;
+  }
+
+  .admin-shell .admin-login-card,
+  .admin-shell .admin-stat-card,
+  .admin-shell .admin-empty-panel,
+  .admin-shell .admin-next-panel,
+  .admin-shell .admin-user-filters,
+  .admin-shell .admin-role-card,
+  .admin-shell .admin-permission-editor,
+  .admin-shell .admin-permission-group,
+  .admin-shell .admin-audit-filters,
+  .admin-shell .admin-audit-table-wrap {
+    background: #ffffff;
+    border-color: #dce5dc;
+    color: #17231b;
+    box-shadow: 0 8px 24px rgba(28, 54, 32, 0.045);
+  }
+
+  .admin-shell .admin-login-card h2,
+  .admin-shell .admin-section-heading h2,
+  .admin-shell .admin-welcome-panel h2,
+  .admin-shell .admin-next-panel h2,
+  .admin-shell .admin-empty-panel h3 {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-field,
+  .admin-shell .admin-user-search,
+  .admin-shell .admin-user-status-filter,
+  .admin-shell .admin-audit-field {
+    color: #344438;
+  }
+
+  .admin-shell input,
+  .admin-shell select,
+  .admin-shell textarea {
+    background: #ffffff;
+    border-color: #cbd8cc;
+    color: #17231b;
+    color-scheme: light;
+  }
+
+  .admin-shell input::placeholder {
+    color: #89958b;
+  }
+
+  .admin-shell input:focus,
+  .admin-shell select:focus,
+  .admin-shell textarea:focus {
+    border-color: #4b9639;
+    box-shadow: 0 0 0 3px rgba(75, 150, 57, 0.13);
+  }
+
+  .admin-shell .admin-primary-button {
+    background: #397b2b;
+    color: #ffffff;
+  }
+
+  .admin-shell .admin-primary-button:hover {
+    background: #2e6822;
+  }
+
+  .admin-shell .admin-secondary-button {
+    background: #ffffff;
+    border-color: #cbd8cc;
+    color: #26372a;
+  }
+
+  .admin-shell .admin-secondary-button:hover {
+    border-color: #397b2b;
+    color: #285d20;
+  }
+
+  .admin-shell .admin-back-link {
+    color: #526b55;
+  }
+
+  .admin-shell .admin-back-link:hover {
+    color: #285d20;
+  }
+
+  .admin-shell .admin-message {
+    background: #edf5eb;
+    border-color: #c9dfc5;
+    color: #285d20;
+  }
+
+  .admin-shell .admin-error {
+    background: #fff0ee;
+    border-color: #edc5bf;
+    color: #9b3027;
+  }
+
+  .admin-shell .admin-topbar {
+    background: #ffffff;
+    border-color: #dce5dc;
+    box-shadow: 0 2px 12px rgba(28, 54, 32, 0.04);
+  }
+
+  .admin-shell .admin-brand strong {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-brand small {
+    color: #397b2b;
+  }
+
+  .admin-shell .admin-status,
+  .admin-shell .admin-live-label {
+    color: #526157;
+  }
+
+  .admin-shell .admin-status > span,
+  .admin-shell .admin-live-label > span {
+    background: #4b9639;
+  }
+
+  .admin-shell .admin-welcome-panel {
+    background:
+      radial-gradient(ellipse at 90% 10%, rgba(83, 153, 65, 0.12), transparent 48%),
+      linear-gradient(120deg, #edf5e9, #ffffff);
+    border-color: #d4e3d0;
+  }
+
+  .admin-shell .admin-welcome-panel p,
+  .admin-shell .admin-page-heading p,
+  .admin-shell .admin-next-panel > p {
+    color: #596a5d;
+  }
+
+  .admin-shell .admin-welcome-symbol {
+    background: rgba(57, 123, 43, 0.08);
+    border-color: rgba(57, 123, 43, 0.28);
+    color: #397b2b;
+  }
+
+  .admin-shell .admin-stat-icon {
+    background: #edf5eb;
+    color: #397b2b;
+  }
+
+  .admin-shell .admin-stat-label,
+  .admin-shell .admin-stat-card > small {
+    color: #68776b;
+  }
+
+  .admin-shell .admin-stat-card > strong {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-roadmap-list {
+    color: #344438;
+  }
+
+  .admin-shell .admin-roadmap-list span:nth-child(-n + 3) {
+    color: #397b2b;
+  }
+
+  .admin-shell .admin-section-nav {
+    border-color: #dce5dc;
+  }
+
+  .admin-shell .admin-nav-button {
+    color: #596a5d;
+  }
+
+  .admin-shell .admin-nav-button:hover {
+    background: #edf5eb;
+    border-color: #d4e3d0;
+    color: #285d20;
+  }
+
+  .admin-shell .admin-nav-button.is-active {
+    background: #eaf4e6;
+    border-color: #b9d4b2;
+    color: #285d20;
+  }
+
+  .admin-shell .admin-users-description {
+    color: #647267;
+  }
+
+  .admin-shell .admin-users-summary,
+  .admin-shell .admin-user-pagination,
+  .admin-shell .admin-audit-summary,
+  .admin-shell .admin-audit-pagination {
+    color: #526157;
+  }
+
+  .admin-shell .admin-user-table,
+  .admin-shell .admin-audit-table {
+    background: #ffffff;
+    color: #26372a;
+  }
+
+  .admin-shell .admin-user-table th,
+  .admin-shell .admin-audit-table th {
+    background: #edf3ed;
+    color: #344438;
+    border-color: #dce5dc;
+  }
+
+  .admin-shell .admin-user-table td,
+  .admin-shell .admin-audit-table td {
+    border-color: #e5ece5;
+    color: #344438;
+  }
+
+  .admin-shell .admin-user-table tr:hover,
+  .admin-shell .admin-audit-table tbody tr:hover {
+    background: #f7faf6;
+  }
+
+  .admin-shell .admin-audit-actor strong,
+  .admin-shell .admin-audit-target strong {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-audit-actor span,
+  .admin-shell .admin-audit-actor small,
+  .admin-shell .admin-audit-target span,
+  .admin-shell .admin-audit-date {
+    color: #647267;
+  }
+
+  .admin-shell .admin-audit-action {
+    background: #edf5eb;
+    color: #285d20;
+    border-color: #d4e3d0;
+  }
+
+  .admin-shell .admin-audit-details {
+    background: #f4f7f3;
+    border-color: #dce5dc;
+  }
+
+  .admin-shell .admin-audit-details pre {
+    color: #344438;
+  }
+
+  .admin-shell .admin-role-key,
+  .admin-shell .admin-role-permissions code,
+  .admin-shell code {
+    background: #edf3ed;
+    color: #285d20;
+  }
+
+  .admin-shell .admin-role-description,
+  .admin-shell .admin-role-permissions p {
+    color: #647267;
+  }
+
+  .admin-shell .admin-role-permissions li {
+    border-color: #e5ece5;
+  }
+
+  .admin-shell .admin-protected-role {
+    color: #8a641d;
+  }
+
+  .admin-shell .admin-role-user-count {
+    color: #647267;
+  }
+
+  .admin-shell .admin-permission-option {
+    color: #344438;
+  }
+
+  .admin-shell .admin-permission-option small {
+    color: #647267;
+  }
+
+  .admin-shell .admin-permission-toolbar {
+    color: #526157;
+  }
+
+  .admin-shell .admin-footer {
+    border-color: #dce5dc;
+    color: #718075;
+  }
+
+  .admin-shell .admin-audit-generated {
+    color: #718075;
+  }
+}
+
+/* Keep native form controls aligned with the active system appearance. */
+.admin-shell input,
+.admin-shell select,
+.admin-shell textarea {
+  font: inherit;
+}
+
+.admin-shell button:focus-visible,
+.admin-shell a:focus-visible,
+.admin-shell input:focus-visible,
+.admin-shell select:focus-visible {
+  outline: 3px solid rgba(166, 237, 105, 0.55);
+  outline-offset: 2px;
+}
+
+@media (prefers-color-scheme: light) {
+  .admin-shell button:focus-visible,
+  .admin-shell a:focus-visible,
+  .admin-shell input:focus-visible,
+  .admin-shell select:focus-visible {
+    outline-color: rgba(57, 123, 43, 0.45);
+  }
+}
+
+@media (max-width: 700px) {
+  #root:has(.admin-shell) {
+    width: 100%;
+  }
+
+  .admin-shell .admin-content {
+    width: 100%;
+    box-sizing: border-box;
+  }
+}

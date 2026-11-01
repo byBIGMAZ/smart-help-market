@@ -1,0 +1,581 @@
+
+/* =========================================================
+   SMART HELP MARKET BY BIGMAZ
+   AUTOMATION CONTROL
+   Matches the main admin dark/light theme.
+   ========================================================= */
+
+.admin-shell .admin-automation {
+  width: 100%;
+  min-width: 0;
+  color: #f3f5f4;
+  text-align: left;
+  font-family: inherit;
+}
+
+.admin-shell .admin-automation *,
+.admin-shell .admin-automation *::before,
+.admin-shell .admin-automation *::after {
+  box-sizing: border-box;
+}
+
+/* PAGE HEADER */
+
+.admin-automation-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.admin-automation-header h2 {
+  margin: 0 0 9px;
+  color: #f3f5f4;
+  font-size: 23px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.admin-automation-header p {
+  margin: 0;
+  color: #a4b1a9;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* BUTTONS */
+
+.admin-shell .automation-refresh-button,
+.admin-shell .automation-button {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 16px;
+  border: 1px solid #34443a;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.admin-shell .automation-refresh-button {
+  background: #111815;
+  color: #f3f5f4;
+}
+
+.admin-shell .automation-refresh-button:hover:not(:disabled) {
+  border-color: #a6ed69;
+  color: #a6ed69;
+}
+
+.admin-shell .automation-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.admin-shell .automation-button:disabled,
+.admin-shell .automation-refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-shell .automation-button:focus-visible,
+.admin-shell .automation-refresh-button:focus-visible {
+  outline: 3px solid rgba(166, 237, 105, 0.55);
+  outline-offset: 2px;
+}
+
+/* STATUS CARDS */
+
+.automation-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.admin-shell .automation-status-card,
+.admin-shell .automation-control-panel,
+.admin-shell .automation-information {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid #28362e;
+  border-radius: 13px;
+  background: #111815;
+}
+
+.automation-card-label {
+  display: block;
+  margin-bottom: 14px;
+  color: #a4b1a9;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.automation-status-value {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 22px;
+  font-weight: 850;
+  letter-spacing: -0.035em;
+  overflow-wrap: anywhere;
+}
+
+.status-running {
+  color: #a6ed69;
+}
+
+.status-stopped {
+  color: #a4b1a9;
+}
+
+.status-warning {
+  color: #e8c58b;
+}
+
+.automation-status-card p {
+  margin: 0;
+  color: #a4b1a9;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+/* ALERTS */
+
+.admin-shell .automation-alert {
+  padding: 15px 17px;
+  margin-bottom: 18px;
+  border: 1px solid #34443a;
+  border-radius: 9px;
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+
+.automation-alert p {
+  margin: 6px 0 0;
+}
+
+.admin-shell .automation-alert-error {
+  color: #ffc5bf;
+  background: #321c1b;
+  border-color: #75413e;
+}
+
+.admin-shell .automation-alert-warning {
+  color: #e8c58b;
+  background: #282219;
+  border-color: #6c5940;
+}
+
+.automation-alert strong {
+  font-weight: 850;
+}
+
+/* ENGINE CONTROL PANEL */
+
+.automation-control-panel {
+  margin-bottom: 20px;
+}
+
+.automation-control-panel h3,
+.automation-information h3 {
+  margin: 0 0 9px;
+  color: #f3f5f4;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.automation-control-panel > p {
+  margin: 0;
+  color: #a4b1a9;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* REASON FIELD */
+
+.automation-reason-field {
+  margin-top: 24px;
+}
+
+.automation-reason-field label {
+  display: block;
+  margin-bottom: 9px;
+  color: #dce5de;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.admin-shell .automation-reason-field textarea {
+  display: block;
+  width: 100%;
+  min-height: 90px;
+  padding: 13px;
+  border: 1px solid #34443a;
+  border-radius: 8px;
+  outline: none;
+  background: #0b100e;
+  color: #f3f5f4;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+.admin-shell .automation-reason-field textarea::placeholder {
+  color: #78867c;
+}
+
+.admin-shell .automation-reason-field textarea:focus {
+  border-color: #a6ed69;
+  box-shadow: 0 0 0 3px #a6ed691c;
+}
+
+.automation-reason-field small {
+  display: block;
+  margin-top: 7px;
+  color: #839188;
+  font-size: 10px;
+  text-align: right;
+}
+
+/* CONTROL ACTIONS */
+
+.automation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 19px;
+}
+
+.admin-shell .automation-button.button-enable,
+.admin-shell .automation-button.button-resume {
+  border-color: #526e43;
+  background: #a6ed69;
+  color: #101a0b;
+}
+
+.admin-shell .automation-button.button-enable:hover:not(:disabled),
+.admin-shell .automation-button.button-resume:hover:not(:disabled) {
+  background: #bcf78e;
+}
+
+.admin-shell .automation-button.button-pause {
+  border-color: #6c5940;
+  background: #3a2e1e;
+  color: #e8c58b;
+}
+
+.admin-shell .automation-button.button-pause:hover:not(:disabled) {
+  border-color: #b58a48;
+  background: #493820;
+}
+
+.admin-shell .automation-button.button-emergency {
+  border-color: #75413e;
+  background: #321c1b;
+  color: #ffc5bf;
+}
+
+.admin-shell .automation-button.button-emergency:hover:not(:disabled) {
+  border-color: #c66b63;
+  background: #472321;
+}
+
+.automation-processing {
+  margin: 15px 0 0;
+  color: #a6ed69;
+  font-size: 12px;
+}
+
+/* CONTROL INFORMATION */
+
+.automation-information {
+  display: grid;
+  gap: 0;
+}
+
+.automation-information h3 {
+  margin-bottom: 15px;
+}
+
+.automation-information > div {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 13px 0;
+  border-top: 1px solid #28362e;
+}
+
+.automation-information span {
+  color: #a4b1a9;
+  font-size: 12px;
+}
+
+.automation-information strong {
+  max-width: 65%;
+  color: #dce5de;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* LOADING */
+
+.automation-loading {
+  padding: 35px 20px;
+  border: 1px solid #28362e;
+  border-radius: 12px;
+  background: #111815;
+  color: #a4b1a9;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* =========================================================
+   LIGHT THEME
+   Uses the existing BIGMAZ green identity.
+   ========================================================= */
+
+@media (prefers-color-scheme: light) {
+  .admin-shell .admin-automation {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-automation-header h2 {
+    color: #17231b;
+  }
+
+  .admin-shell .admin-automation-header p {
+    color: #647267;
+  }
+
+  .admin-shell .automation-refresh-button {
+    border-color: #cbd8cc;
+    background: #ffffff;
+    color: #26372a;
+  }
+
+  .admin-shell .automation-refresh-button:hover:not(:disabled) {
+    border-color: #397b2b;
+    color: #285d20;
+  }
+
+  .admin-shell .automation-status-card,
+  .admin-shell .automation-control-panel,
+  .admin-shell .automation-information,
+  .admin-shell .automation-loading {
+    border-color: #dce5dc;
+    background: #ffffff;
+    color: #17231b;
+    box-shadow: 0 8px 24px rgba(28, 54, 32, 0.045);
+  }
+
+  .admin-shell .automation-card-label {
+    color: #647267;
+  }
+
+  .admin-shell .status-running {
+    color: #397b2b;
+  }
+
+  .admin-shell .status-stopped {
+    color: #647267;
+  }
+
+  .admin-shell .status-warning {
+    color: #946414;
+  }
+
+  .admin-shell .automation-status-card p {
+    color: #647267;
+  }
+
+  .admin-shell .automation-alert-error {
+    border-color: #edc5bf;
+    background: #fff0ee;
+    color: #9b3027;
+  }
+
+  .admin-shell .automation-alert-warning {
+    border-color: #ead9ac;
+    background: #fff8e8;
+    color: #805d19;
+  }
+
+  .admin-shell .automation-control-panel h3,
+  .admin-shell .automation-information h3 {
+    color: #17231b;
+  }
+
+  .admin-shell .automation-control-panel > p {
+    color: #647267;
+  }
+
+  .admin-shell .automation-reason-field label {
+    color: #344438;
+  }
+
+  .admin-shell .automation-reason-field textarea {
+    border-color: #cbd8cc;
+    background: #ffffff;
+    color: #17231b;
+    color-scheme: light;
+  }
+
+  .admin-shell .automation-reason-field textarea::placeholder {
+    color: #89958b;
+  }
+
+  .admin-shell .automation-reason-field textarea:focus {
+    border-color: #4b9639;
+    box-shadow: 0 0 0 3px rgba(75, 150, 57, 0.13);
+  }
+
+  .admin-shell .automation-reason-field small {
+    color: #718075;
+  }
+
+  .admin-shell .automation-button.button-enable,
+  .admin-shell .automation-button.button-resume {
+    border-color: #397b2b;
+    background: #397b2b;
+    color: #ffffff;
+  }
+
+  .admin-shell .automation-button.button-enable:hover:not(:disabled),
+  .admin-shell .automation-button.button-resume:hover:not(:disabled) {
+    background: #2e6822;
+  }
+
+  .admin-shell .automation-button.button-pause {
+    border-color: #d9c18c;
+    background: #fff5df;
+    color: #805d19;
+  }
+
+  .admin-shell .automation-button.button-pause:hover:not(:disabled) {
+    border-color: #b58a48;
+    background: #f9edcf;
+  }
+
+  .admin-shell .automation-button.button-emergency {
+    border-color: #edc5bf;
+    background: #fff0ee;
+    color: #9b3027;
+  }
+
+  .admin-shell .automation-button.button-emergency:hover:not(:disabled) {
+    border-color: #cf8179;
+    background: #ffe3df;
+  }
+
+  .admin-shell .automation-processing {
+    color: #397b2b;
+  }
+
+  .admin-shell .automation-information > div {
+    border-color: #e5ece5;
+  }
+
+  .admin-shell .automation-information span {
+    color: #647267;
+  }
+
+  .admin-shell .automation-information strong {
+    color: #26372a;
+  }
+
+  .admin-shell .automation-loading {
+    color: #647267;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE LAYOUT
+   ========================================================= */
+
+@media (max-width: 900px) {
+  .automation-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-automation-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .admin-shell .automation-refresh-button {
+    width: 100%;
+  }
+
+  .automation-status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+  }
+
+  .admin-shell .automation-status-card,
+  .admin-shell .automation-control-panel,
+  .admin-shell .automation-information {
+    padding: 17px;
+  }
+
+  .automation-status-value {
+    font-size: 19px;
+  }
+
+  .automation-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .admin-shell .automation-button {
+    width: 100%;
+    min-width: 0;
+    padding: 10px;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .automation-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-information > div {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .automation-information strong {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  .admin-shell .automation-status-card,
+  .admin-shell .automation-control-panel,
+  .admin-shell .automation-information {
+    padding: 16px;
+  }
+}

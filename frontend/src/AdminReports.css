@@ -1,0 +1,565 @@
+
+/* ==================================================
+   SMART HELP MARKET
+   REPORTS & OPERATIONAL ANALYTICS
+================================================== */
+
+.admin-reports-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+  color: #e8e8e8;
+}
+
+.admin-reports-section,
+.admin-reports-section * {
+  box-sizing: border-box;
+}
+
+.admin-report-filter-panel {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid #303638;
+  border-radius: 13px;
+  background: #171c1d;
+}
+
+.admin-report-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 150px;
+  flex: 1;
+}
+
+.admin-report-filter-field label {
+  color: #aeb8b4;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-report-filter-field input,
+.admin-report-filter-field select {
+  width: 100%;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid #394342;
+  border-radius: 7px;
+  outline: none;
+  background: #202727;
+  color: #f0f3f1;
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-report-filter-field input:focus,
+.admin-report-filter-field select:focus {
+  border-color: #a6ed69;
+  box-shadow: 0 0 0 2px rgba(166, 237, 105, 0.12);
+}
+
+.admin-report-filter-panel button {
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.admin-report-period-note {
+  padding: 12px 15px;
+  border-left: 3px solid #a6ed69;
+  border-radius: 5px;
+  background: #1c2420;
+  color: #b9c5bf;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.admin-report-period-note strong {
+  color: #f0f5f1;
+  font-weight: 600;
+}
+
+.admin-report-section-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.admin-report-section-heading h3 {
+  margin: 0;
+  color: #f0f3f1;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-report-section-heading p {
+  margin: 0;
+  color: #9ca8a2;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ==================================================
+   PERIOD COMPARISON
+================================================== */
+
+.admin-report-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.admin-report-comparison-card {
+  min-width: 0;
+  padding: 19px;
+  border: 1px solid #303839;
+  border-radius: 12px;
+  background: #171d1e;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.admin-report-comparison-card:hover {
+  border-color: #56644e;
+  transform: translateY(-2px);
+}
+
+.admin-report-card-title {
+  color: #aeb8b4;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.admin-report-current-value {
+  margin-top: 15px;
+  color: #f3f6f3;
+  font-size: 29px;
+  font-weight: 750;
+  letter-spacing: -1px;
+  overflow-wrap: anywhere;
+}
+
+.admin-report-card-previous {
+  margin-top: 9px;
+  color: #89968f;
+  font-size: 11px;
+}
+
+.admin-report-change {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 13px;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.admin-report-change.positive {
+  background: rgba(85, 190, 113, 0.12);
+  color: #8ce5a1;
+}
+
+.admin-report-change.negative {
+  background: rgba(230, 91, 91, 0.12);
+  color: #ff9999;
+}
+
+.admin-report-change.neutral {
+  background: rgba(160, 170, 165, 0.1);
+  color: #aeb8b4;
+}
+
+/* ==================================================
+   REPORT PANELS
+================================================== */
+
+.admin-report-panel {
+  min-width: 0;
+  padding: 21px;
+  border: 1px solid #303839;
+  border-radius: 13px;
+  background: #171d1e;
+}
+
+.admin-report-panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.admin-report-panel-heading h3 {
+  margin: 0;
+  color: #f0f3f1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-report-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 13px;
+}
+
+.admin-report-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #aeb8b4;
+  font-size: 10px;
+}
+
+.admin-report-legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex: 0 0 9px;
+  border-radius: 2px;
+}
+
+.admin-report-legend-users,
+.admin-report-bar-users {
+  fill: #a6ed69;
+  background: #a6ed69;
+}
+
+.admin-report-legend-listings,
+.admin-report-bar-listings {
+  fill: #53b6d5;
+  background: #53b6d5;
+}
+
+.admin-report-legend-approved,
+.admin-report-bar-approved {
+  fill: #a6ed69;
+  background: #a6ed69;
+}
+
+.admin-report-legend-rejected,
+.admin-report-bar-rejected {
+  fill: #ed7777;
+  background: #ed7777;
+}
+
+.admin-report-legend-published,
+.admin-report-bar-published {
+  fill: #53b6d5;
+  background: #53b6d5;
+}
+
+.admin-report-legend-unpublished,
+.admin-report-bar-unpublished {
+  fill: #d5a65c;
+  background: #d5a65c;
+}
+
+.admin-report-legend-suspended,
+.admin-report-bar-suspended {
+  fill: #b58be5;
+  background: #b58be5;
+}
+
+.admin-report-legend-restored,
+.admin-report-bar-restored {
+  fill: #68c6a1;
+  background: #68c6a1;
+}
+
+.admin-report-legend-wrap {
+  gap: 10px 13px;
+}
+
+/* ==================================================
+   SVG CHARTS
+================================================== */
+
+.admin-report-chart-scroll {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+}
+
+.admin-report-chart {
+  display: block;
+  width: 100%;
+  min-width: 520px;
+  height: auto;
+  overflow: visible;
+}
+
+.admin-report-grid-line {
+  stroke: #343d3d;
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.admin-report-axis-label {
+  fill: #91a099;
+  font-size: 10px;
+}
+
+/* ==================================================
+   CATEGORY PERFORMANCE
+================================================== */
+
+.admin-report-category-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 21px;
+}
+
+.admin-report-category-row {
+  display: grid;
+  grid-template-columns: minmax(100px, 150px) minmax(100px, 1fr) 75px;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-report-category-name {
+  color: #dfe6e1;
+  font-size: 12px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.admin-report-category-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-report-category-track {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #2a3332;
+}
+
+.admin-report-category-created,
+.admin-report-category-published {
+  height: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  transition: width 0.3s ease;
+}
+
+.admin-report-category-created {
+  background: #a6ed69;
+}
+
+.admin-report-category-published {
+  background: #53b6d5;
+}
+
+.admin-report-category-values {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  color: #b9c5bf;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==================================================
+   EMPTY, LOADING AND FOOTER STATES
+================================================== */
+
+.admin-report-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 145px;
+  padding: 20px;
+  color: #98a49e;
+  font-size: 13px;
+  text-align: center;
+}
+
+.admin-report-footer-note {
+  margin: 0;
+  padding: 12px 0;
+  color: #89968f;
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* ==================================================
+   LIGHT THEME
+================================================== */
+
+@media (prefers-color-scheme: light) {
+  .admin-reports-section {
+    color: #26332d;
+  }
+
+  .admin-report-filter-panel,
+  .admin-report-comparison-card,
+  .admin-report-panel {
+    border-color: #dfe6e1;
+    background: #ffffff;
+  }
+
+  .admin-report-filter-field label {
+    color: #526159;
+  }
+
+  .admin-report-filter-field input,
+  .admin-report-filter-field select {
+    border-color: #d5dfd8;
+    background: #f8faf8;
+    color: #26332d;
+  }
+
+  .admin-report-filter-field input:focus,
+  .admin-report-filter-field select:focus {
+    border-color: #75ad42;
+    box-shadow: 0 0 0 2px rgba(117, 173, 66, 0.12);
+  }
+
+  .admin-report-period-note {
+    background: #f0f7ec;
+    color: #526159;
+  }
+
+  .admin-report-period-note strong,
+  .admin-report-section-heading h3,
+  .admin-report-panel-heading h3,
+  .admin-report-current-value {
+    color: #26332d;
+  }
+
+  .admin-report-section-heading p,
+  .admin-report-card-title,
+  .admin-report-card-previous {
+    color: #65736a;
+  }
+
+  .admin-report-change.positive {
+    background: #eaf7ec;
+    color: #23783b;
+  }
+
+  .admin-report-change.negative {
+    background: #fff0f0;
+    color: #b33e3e;
+  }
+
+  .admin-report-change.neutral {
+    background: #f0f2f0;
+    color: #65736a;
+  }
+
+  .admin-report-legend span,
+  .admin-report-category-values {
+    color: #58675e;
+  }
+
+  .admin-report-grid-line {
+    stroke: #e4eae5;
+  }
+
+  .admin-report-axis-label {
+    fill: #738078;
+  }
+
+  .admin-report-category-name {
+    color: #35443a;
+  }
+
+  .admin-report-category-track {
+    background: #edf1ed;
+  }
+
+  .admin-report-empty {
+    color: #68766d;
+  }
+
+  .admin-report-footer-note {
+    color: #738078;
+  }
+}
+
+/* ==================================================
+   RESPONSIVE LAYOUT
+================================================== */
+
+@media (max-width: 1050px) {
+  .admin-report-comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .admin-reports-section {
+    gap: 18px;
+  }
+
+  .admin-report-filter-panel {
+    align-items: stretch;
+    padding: 15px;
+  }
+
+  .admin-report-filter-field {
+    min-width: calc(50% - 8px);
+  }
+
+  .admin-report-filter-panel button {
+    flex: 1 1 100%;
+  }
+
+  .admin-report-comparison-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .admin-report-comparison-card {
+    padding: 14px;
+  }
+
+  .admin-report-current-value {
+    font-size: 24px;
+  }
+
+  .admin-report-panel {
+    padding: 15px;
+  }
+
+  .admin-report-panel-heading {
+    flex-direction: column;
+  }
+
+  .admin-report-category-row {
+    grid-template-columns: 90px minmax(70px, 1fr) 60px;
+    gap: 9px;
+  }
+
+  .admin-report-category-name {
+    font-size: 11px;
+  }
+
+  .admin-report-category-values {
+    gap: 7px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .admin-report-comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-report-filter-field {
+    min-width: 100%;
+  }
+}

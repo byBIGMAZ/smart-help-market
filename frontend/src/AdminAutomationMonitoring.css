@@ -1,0 +1,416 @@
+
+.automation-monitor {
+  width: 100%;
+  color: var(--admin-text, inherit);
+}
+
+.automation-monitor-header,
+.automation-monitor-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.automation-monitor-header {
+  margin-bottom: 22px;
+}
+
+.automation-monitor-header h2,
+.automation-monitor-history-heading h3 {
+  margin: 0 0 7px;
+}
+
+.automation-monitor-header p,
+.automation-monitor-history-heading p {
+  margin: 0;
+  color: var(--admin-muted, #888);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.automation-monitor-refresh,
+.automation-monitor-pagination button,
+.automation-monitor-detail-button {
+  border: 1px solid var(--admin-border, #ccc);
+  border-radius: 8px;
+  padding: 9px 14px;
+  background: var(--admin-card, transparent);
+  color: var(--admin-text, inherit);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.automation-monitor button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.automation-monitor-error {
+  margin: 15px 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(220, 70, 70, 0.4);
+  border-radius: 9px;
+  background: rgba(220, 70, 70, 0.09);
+  color: #e16b6b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.automation-monitor-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.automation-monitor-stat {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 12px;
+  background: var(--admin-card, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automation-monitor-stat > span {
+  color: var(--admin-muted, #888);
+  font-size: 12px;
+}
+
+.automation-monitor-stat > strong {
+  font-size: 27px;
+  line-height: 1.2;
+}
+
+.automation-monitor-stat > small {
+  color: var(--admin-muted, #888);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.automation-monitor-secondary-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.automation-monitor-secondary-stats > div {
+  padding: 15px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 10px;
+  background: var(--admin-card, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.automation-monitor-secondary-stats span {
+  color: var(--admin-muted, #888);
+  font-size: 11px;
+}
+
+.automation-monitor-secondary-stats strong {
+  font-size: 20px;
+}
+
+.automation-monitor-history {
+  padding: 20px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 13px;
+  background: var(--admin-card, #fff);
+}
+
+.automation-monitor-history-heading {
+  margin-bottom: 20px;
+}
+
+.automation-monitor-history-heading h3 {
+  font-size: 16px;
+}
+
+.automation-monitor-history-heading > span {
+  color: var(--admin-muted, #888);
+  font-size: 12px;
+}
+
+.automation-monitor-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 13px;
+  margin-bottom: 20px;
+}
+
+.automation-monitor-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--admin-text, inherit);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.automation-monitor-filters input,
+.automation-monitor-filters select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 10px 11px;
+  border: 1px solid var(--admin-border, #ccc);
+  border-radius: 8px;
+  background: var(--admin-input, transparent);
+  color: var(--admin-text, inherit);
+  font: inherit;
+  font-size: 12px;
+  outline: none;
+}
+
+.automation-monitor-filters input:focus,
+.automation-monitor-filters select:focus {
+  border-color: var(--admin-accent, #2563eb);
+}
+
+.automation-monitor-empty {
+  padding: 35px 20px;
+  border: 1px dashed var(--admin-border, #ccc);
+  border-radius: 10px;
+  text-align: center;
+  color: var(--admin-muted, #888);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.automation-monitor-empty strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--admin-text, inherit);
+}
+
+.automation-monitor-empty p {
+  margin: 0;
+}
+
+.automation-monitor-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.automation-monitor-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.automation-monitor-table th {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--admin-border, #ddd);
+  color: var(--admin-muted, #888);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.automation-monitor-table td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--admin-border, #ddd);
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.automation-monitor-table td strong {
+  display: block;
+  font-size: 12px;
+}
+
+.automation-monitor-table td small {
+  display: block;
+  margin-top: 5px;
+  color: var(--admin-muted, #888);
+  font-size: 10px;
+}
+
+.automation-monitor-status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.automation-monitor-status.succeeded {
+  color: #249b69;
+  background: rgba(36, 155, 105, 0.12);
+}
+
+.automation-monitor-status.failed {
+  color: #dc5555;
+  background: rgba(220, 85, 85, 0.12);
+}
+
+.automation-monitor-status.running {
+  color: #c28a29;
+  background: rgba(194, 138, 41, 0.13);
+}
+
+.automation-monitor-status.skipped {
+  color: var(--admin-muted, #888);
+  background: rgba(130, 130, 130, 0.12);
+}
+
+.automation-monitor-details {
+  padding: 18px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 10px;
+  background: var(--admin-input, transparent);
+}
+
+.automation-monitor-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 15px;
+}
+
+.automation-monitor-detail-grid > div,
+.automation-monitor-detail-times > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.automation-monitor-details span {
+  color: var(--admin-muted, #888);
+  font-size: 10px;
+}
+
+.automation-monitor-details strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.automation-monitor-detail-times {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 20px;
+  padding-top: 17px;
+  border-top: 1px solid var(--admin-border, #ddd);
+}
+
+.automation-monitor-error-detail,
+.automation-monitor-output {
+  margin-top: 18px;
+}
+
+.automation-monitor-error-detail > strong,
+.automation-monitor-output > strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+.automation-monitor-error-detail pre,
+.automation-monitor-output pre {
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 13px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 8px;
+  background: var(--admin-card, #fff);
+  color: var(--admin-text, inherit);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  overflow-x: auto;
+}
+
+.automation-monitor-error-detail pre {
+  color: #dc5555;
+}
+
+.automation-monitor-pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--admin-border, #ddd);
+  color: var(--admin-muted, #888);
+  font-size: 12px;
+}
+
+.automation-monitor-pagination > div {
+  display: flex;
+  gap: 8px;
+}
+
+.automation-monitor-generated {
+  margin: 15px 0 0;
+  color: var(--admin-muted, #888);
+  font-size: 10px;
+  text-align: right;
+}
+
+@media (max-width: 850px) {
+  .automation-monitor-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .automation-monitor-secondary-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .automation-monitor-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .automation-monitor-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .automation-monitor-stats,
+  .automation-monitor-secondary-stats,
+  .automation-monitor-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-monitor-history {
+    padding: 14px;
+  }
+
+  .automation-monitor-history-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .automation-monitor-detail-times {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-monitor-pagination {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .automation-monitor-pagination > div {
+    width: 100%;
+  }
+
+  .automation-monitor-pagination button {
+    flex: 1;
+  }
+}

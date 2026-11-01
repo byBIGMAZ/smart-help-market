@@ -1,0 +1,397 @@
+
+.automation-rules {
+  width: 100%;
+  color: var(--admin-text, inherit);
+}
+
+.automation-rules-header,
+.automation-rule-form-heading,
+.automation-rules-list-heading,
+.automation-rule-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.automation-rules-header {
+  margin-bottom: 22px;
+}
+
+.automation-rules-header h2,
+.automation-rule-form h3,
+.automation-rules-list-heading h3 {
+  margin: 0 0 7px;
+}
+
+.automation-rules-header p,
+.automation-rule-form-heading p {
+  margin: 0;
+  color: var(--admin-muted, #888);
+  line-height: 1.6;
+}
+
+.automation-rules-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.automation-rule-stat {
+  padding: 18px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 12px;
+  background: var(--admin-card, #fff);
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.automation-rule-stat span {
+  color: var(--admin-muted, #888);
+  font-size: 13px;
+}
+
+.automation-rule-stat strong {
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.automation-rules-primary,
+.automation-rules-secondary,
+.automation-rules-danger,
+.automation-rules-refresh {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.automation-rules-primary {
+  color: #fff;
+  background: var(--admin-accent, #2563eb);
+}
+
+.automation-rules-secondary,
+.automation-rules-refresh {
+  color: var(--admin-text, inherit);
+  background: var(--admin-card, transparent);
+  border-color: var(--admin-border, #ccc);
+}
+
+.automation-rules-danger {
+  color: #dc5555;
+  background: transparent;
+  border-color: rgba(220, 85, 85, 0.4);
+}
+
+.automation-rules-primary:hover,
+.automation-rules-secondary:hover,
+.automation-rules-danger:hover,
+.automation-rules-refresh:hover {
+  opacity: 0.8;
+}
+
+.automation-rules button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.automation-rules-error {
+  margin: 16px 0;
+  padding: 13px 15px;
+  border: 1px solid rgba(220, 70, 70, 0.4);
+  border-radius: 9px;
+  background: rgba(220, 70, 70, 0.09);
+  color: #e16b6b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.automation-rule-form {
+  margin: 22px 0 30px;
+  padding: 22px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 13px;
+  background: var(--admin-card, #fff);
+}
+
+.automation-rule-form-heading {
+  margin-bottom: 22px;
+}
+
+.automation-rule-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+}
+
+.automation-rule-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--admin-text, inherit);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.automation-rule-form input:not([type="checkbox"]),
+.automation-rule-form textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 12px;
+  border: 1px solid var(--admin-border, #ccc);
+  border-radius: 8px;
+  background: var(--admin-input, transparent);
+  color: var(--admin-text, inherit);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.automation-rule-form input:focus,
+.automation-rule-form textarea:focus {
+  border-color: var(--admin-accent, #2563eb);
+}
+
+.automation-rule-form input::placeholder,
+.automation-rule-form textarea::placeholder {
+  color: var(--admin-muted, #888);
+  opacity: 0.8;
+}
+
+.automation-rule-description {
+  grid-column: 1 / -1;
+}
+
+.automation-rule-form textarea {
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.automation-rule-editor {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 25px;
+}
+
+.automation-rule-editor > div {
+  min-width: 0;
+}
+
+.automation-rule-editor h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.automation-rule-editor p {
+  min-height: 55px;
+  margin: 0 0 12px;
+  color: var(--admin-muted, #888);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.automation-rule-form .automation-rule-json {
+  min-height: 180px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.automation-rule-editor small {
+  display: block;
+  margin-top: 9px;
+  color: var(--admin-muted, #888);
+  font-size: 11px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.automation-rule-active-option {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 10px !important;
+  margin-top: 22px;
+  font-weight: 500 !important;
+}
+
+.automation-rule-active-option input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--admin-accent, #2563eb);
+}
+
+.automation-rule-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid var(--admin-border, #ddd);
+}
+
+.automation-rules-list-heading {
+  margin: 26px 0 15px;
+}
+
+.automation-rules-list-heading h3 {
+  font-size: 16px;
+}
+
+.automation-rules-empty {
+  padding: 35px 20px;
+  border: 1px dashed var(--admin-border, #ccc);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--admin-muted, #888);
+  line-height: 1.6;
+}
+
+.automation-rules-empty strong {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--admin-text, inherit);
+}
+
+.automation-rules-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.automation-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.automation-rule-card {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--admin-border, #ddd);
+  border-radius: 12px;
+  background: var(--admin-card, #fff);
+}
+
+.automation-rule-card-top {
+  align-items: flex-start;
+}
+
+.automation-rule-card-top h4 {
+  margin: 0 0 7px;
+  font-size: 15px;
+}
+
+.automation-rule-card-top code {
+  color: var(--admin-muted, #888);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+
+.automation-rule-status {
+  flex-shrink: 0;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.automation-rule-status.active {
+  color: #249b69;
+  background: rgba(36, 155, 105, 0.12);
+}
+
+.automation-rule-status.inactive {
+  color: var(--admin-muted, #888);
+  background: rgba(130, 130, 130, 0.12);
+}
+
+.automation-rule-card-description {
+  margin: 14px 0;
+  color: var(--admin-muted, #888);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.automation-rule-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin-top: 15px;
+  padding-top: 13px;
+  border-top: 1px solid var(--admin-border, #ddd);
+}
+
+.automation-rule-metadata span {
+  color: var(--admin-muted, #888);
+  font-size: 12px;
+}
+
+.automation-rule-metadata strong {
+  color: var(--admin-text, inherit);
+}
+
+.automation-rule-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 17px;
+}
+
+@media (max-width: 760px) {
+  .automation-rule-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-rule-editor p {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .automation-rules-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .automation-rules-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-rule-form {
+    padding: 15px;
+  }
+
+  .automation-rule-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .automation-rule-description {
+    grid-column: auto;
+  }
+
+  .automation-rule-card-top {
+    gap: 10px;
+  }
+
+  .automation-rule-card-actions button {
+    flex: 1;
+  }
+
+  .automation-rule-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .automation-rule-form-actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,351 @@
+
+/*
+ * SMART HELP MARKET BY BIGMAZ
+ * Public marketplace automatic system theme.
+ * Existing dark design remains the default.
+ */
+
+@media (prefers-color-scheme: light) {
+  .marketplace {
+    color-scheme: light;
+
+    --page: #f5f7f3;
+    --surface: #ffffff;
+    --surface-raised: #edf2e9;
+    --border: #dce5d8;
+    --text: #202a22;
+    --muted: #657267;
+    --green: #568d32;
+    --green-dark: #3e7123;
+    --green-ink: #ffffff;
+
+    color: var(--text);
+    background:
+      radial-gradient(ellipse at 85% 6%, #e3eedc 0, transparent 32rem),
+      var(--page);
+  }
+
+  .site-header {
+    border-bottom-color: #dce5d8;
+    background: rgb(255 255 255 / 94%);
+  }
+
+  .main-nav a {
+    color: #536154;
+  }
+
+  .main-nav a:hover {
+    color: var(--green);
+  }
+
+  .brand-copy small {
+    color: var(--green-dark);
+  }
+
+  .button-primary {
+    background: #79b94c;
+    color: #14210f;
+  }
+
+  .button-primary:hover {
+    background: #8bca5e;
+  }
+
+  .button-quiet {
+    border-color: #d2dfce;
+    color: #263328;
+  }
+
+  .button-quiet:hover {
+    border-color: var(--green);
+  }
+
+  .hero-content > p {
+    color: #657267;
+  }
+
+  .hero-stats span {
+    color: #718071;
+  }
+
+  .eyebrow {
+    border-color: #d4e4cc;
+    background: #edf5e8;
+  }
+
+  .hero-art::before {
+    border-color: #c7d9bd;
+    background: radial-gradient(
+      circle,
+      #e0efd8 0,
+      #f0f6ec 56%,
+      transparent 70%
+    );
+    box-shadow: 0 0 100px #78bd4320;
+  }
+
+  .art-orbit {
+    border-color: #9dbb8d70;
+  }
+
+  .orbit-two {
+    border-color: #9dbb8d70;
+  }
+
+  .art-card {
+    border-color: #d0dfca;
+    background: linear-gradient(145deg, #ffffff, #edf4e9);
+    box-shadow: 0 25px 70px #344d271c;
+  }
+
+  .art-card-float {
+    border-color: #a9c58e;
+    background: linear-gradient(145deg, #eaf5df, #f8fbf5);
+  }
+
+  .art-icon {
+    color: #17240f;
+  }
+
+  .spark-two {
+    color: #76a64f;
+  }
+
+  .search-section {
+    border-color: #d5e1d0;
+    background: linear-gradient(135deg, #ffffff, #f0f5ed 70%);
+    box-shadow: 0 22px 75px #344d2710;
+  }
+
+  .search-field,
+  .location-field {
+    border-color: #d6e0d2;
+    background: #ffffff;
+    color: var(--green-dark);
+  }
+
+  .search-field input,
+  .location-field input {
+    color: #263328;
+  }
+
+  .search-field input::placeholder,
+  .location-field input::placeholder {
+    color: #8a968a;
+  }
+
+  .popular-searches > span {
+    color: #738073;
+  }
+
+  .popular-searches button {
+    border-color: #d9e3d5;
+    background: #f0f5ed;
+    color: #536153;
+  }
+
+  .popular-searches button:hover {
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+
+  .category-card {
+    border-color: #dce5d8;
+    background: #ffffff;
+  }
+
+  .category-card:hover,
+  .category-selected {
+    border-color: #83ad68;
+    background: #f0f7eb;
+  }
+
+  .category-icon {
+    background: #e8f2e1;
+    color: #568d32;
+  }
+
+  .category-products .category-icon {
+    background: #eaf1eb;
+  }
+
+  .category-services .category-icon {
+    background: #f0f2e5;
+  }
+
+  .category-card-copy small {
+    color: #718071;
+  }
+
+  .category-arrow {
+    color: #729461;
+  }
+
+  .results-count {
+    color: #667663;
+  }
+
+  .filter-tabs button {
+    border-color: #d9e3d5;
+    background: #ffffff;
+    color: #59685a;
+  }
+
+  .filter-tabs button:hover,
+  .filter-tabs button.filter-active {
+    border-color: #79b94c;
+    background: #79b94c;
+    color: #17240f;
+  }
+
+  .listing-card {
+    border-color: #dce5d8;
+    background: #ffffff;
+  }
+
+  .listing-card:hover {
+    border-color: #9dbb8d;
+  }
+
+  .listing-image {
+    background:
+      radial-gradient(circle at 45% 42%, #b4d0a2 0, transparent 28%),
+      linear-gradient(145deg, #e4efdf, #f4f7f1);
+  }
+
+  .listing-image-2,
+  .listing-image-5 {
+    background:
+      radial-gradient(circle at 45% 45%, #c9d2a7 0, transparent 30%),
+      linear-gradient(145deg, #eef0e3, #f8f8f2);
+  }
+
+  .listing-image-3,
+  .listing-image-6 {
+    background:
+      radial-gradient(circle at 45% 45%, #b9d0c2 0, transparent 30%),
+      linear-gradient(145deg, #e7f0eb, #f5f8f5);
+  }
+
+  .listing-tag {
+    background: #e2f2d5;
+    color: #29421c;
+  }
+
+  .save-button {
+    border-color: #ffffff;
+    background: #344331c9;
+    color: #ffffff;
+  }
+
+  .sample-label {
+    background: #ffffffdc;
+    color: #52634f;
+  }
+
+  .listing-category {
+    color: #568d32;
+  }
+
+  .listing-content > p {
+    color: #68766b;
+  }
+
+  .listing-location {
+    color: #667568;
+  }
+
+  .listing-footer {
+    border-top-color: #e2e9de;
+  }
+
+  .listing-footer > div > span {
+    color: #758276;
+  }
+
+  .details-button {
+    color: #568d32;
+  }
+
+  .details-button:hover {
+    color: #376c20;
+  }
+
+  .empty-state {
+    border-color: #cbd9c5;
+    background: #ffffff;
+  }
+
+  .demo-disclaimer {
+    color: #778477;
+  }
+
+  .how-section {
+    border-top-color: #dce5d8;
+    background: linear-gradient(180deg, #edf3e9, #f5f7f3);
+  }
+
+  .step-card {
+    border-color: #dce5d8;
+    background: #ffffff;
+  }
+
+  .step-number {
+    color: #82927d;
+  }
+
+  .step-icon {
+    background: #e8f2e1;
+    color: #568d32;
+  }
+
+  .step-card p {
+    color: #68766b;
+  }
+
+  .cta-section {
+    border-color: #b7cda9;
+    background:
+      radial-gradient(ellipse at 90% 10%, #cce4b765, transparent 45%),
+      linear-gradient(110deg, #e7f1df, #f5f8f1);
+  }
+
+  .cta-section p {
+    color: #657463;
+  }
+
+  .button-light {
+    background: #263b20;
+    color: #ffffff;
+  }
+
+  .button-light:hover {
+    background: #38552d;
+  }
+
+  .site-footer {
+    border-top-color: #dce5d8;
+  }
+
+  .site-footer > p,
+  .site-footer > span {
+    color: #718071;
+  }
+
+  .notice {
+    border-color: #a9c994;
+    background: #edf6e7;
+    color: #263b20;
+    box-shadow: 0 12px 50px #344d2720;
+  }
+
+  .notice-close {
+    color: #526d43;
+  }
+
+  .marketplace button:focus-visible,
+  .marketplace a:focus-visible,
+  .marketplace input:focus-visible {
+    outline-color: #568d32;
+  }
+}
