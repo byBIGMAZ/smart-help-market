@@ -206,3 +206,33 @@
 /* Vehicle branding is derived from the public platform name setting. */
 .shm-vehicle-brand{position:absolute;z-index:5;top:38%;left:50%;display:block;max-width:80%;overflow:hidden;color:#fff;font-size:7px;font-weight:1000;letter-spacing:.08em;line-height:1;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 2px #000,0 0 3px #000;transform:translateX(-50%);pointer-events:none}
 .shm-road-bus:after{content:attr(data-brand)!important;display:grid;place-items:center;color:#fff!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.08em;text-shadow:0 1px 2px #000}
+
+
+/* Night driving: visible forward-facing headlight beams on cars, vans and bus. */
+.shm-ambient-night .shm-road-vehicle em{
+  background:#fff6c8;
+  box-shadow:0 0 8px 3px #fff4b8,14px 0 24px 10px #fff2a844,34px 0 42px 17px #fff2a822;
+}
+.shm-road-bus .shm-bus-headlight{
+  position:absolute;
+  z-index:4;
+  top:23px;
+  right:3px;
+  width:5px;
+  height:7px;
+  border-radius:50%;
+  background:#fff2b8;
+  opacity:.75;
+}
+.shm-ambient-night .shm-road-bus .shm-bus-headlight{
+  opacity:1;
+  box-shadow:0 0 8px 3px #fff4b8,16px 0 25px 10px #fff2a844,38px 0 44px 18px #fff2a822;
+}
+.shm-ambient-night .shm-ambient-road{opacity:.72}
+.shm-ambient-night .shm-ambient-road:before{
+  background:linear-gradient(90deg,transparent,#6b7890,transparent);
+  opacity:.62;
+}
+@media(prefers-reduced-motion:reduce){
+  .shm-ambient-night .shm-road-vehicle em,.shm-ambient-night .shm-road-bus .shm-bus-headlight{box-shadow:none}
+}
