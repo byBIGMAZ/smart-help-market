@@ -1,0 +1,31 @@
+.admin-help-centre{display:grid;gap:16px}
+.admin-help-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.admin-help-heading h2{margin:6px 0;font-size:23px}
+.admin-help-heading p{margin:0;color:var(--admin-text-muted,var(--text-secondary));font-size:12px;line-height:1.6}
+.admin-help-layout{display:grid;grid-template-columns:minmax(230px,310px) minmax(0,1fr);min-height:620px;border:1px solid var(--admin-border,var(--border));border-radius:16px;overflow:hidden;background:var(--admin-surface,var(--surface))}
+.admin-help-case-list{display:flex;flex-direction:column;gap:7px;padding:13px;border-right:1px solid var(--admin-border,var(--border));background:var(--admin-surface-secondary,var(--surface-secondary));overflow:auto}
+.admin-help-list-title{display:flex;justify-content:space-between;align-items:center;padding:4px 3px 9px;font-size:12px}
+.admin-help-list-title span{font-size:10px;color:var(--admin-text-muted,var(--text-muted))}
+.admin-help-case-list>button{display:grid;gap:5px;width:100%;padding:11px;border:1px solid transparent;border-radius:11px;background:transparent;color:var(--admin-text,var(--text-primary));text-align:left;cursor:pointer}
+.admin-help-case-list>button:hover,.admin-help-case-list>button.is-active{border-color:var(--admin-border,var(--border));background:var(--admin-surface,var(--surface))}
+.admin-help-case-list>button strong{font-size:11px}
+.admin-help-case-list>button small{font-size:9px;color:var(--admin-text-muted,var(--text-muted))}
+.admin-help-status{justify-self:start;padding:3px 7px;border-radius:20px;background:var(--admin-surface-secondary,var(--surface-secondary));font-size:8px;font-weight:850;text-transform:uppercase}
+.admin-help-status.status-open{color:#b7791f}.admin-help-status.status-assigned{color:#2563eb}.admin-help-status.status-resolved{color:#16804b}
+.admin-help-thread{display:flex;flex-direction:column;min-width:0;padding:15px}
+.admin-help-thread-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--admin-border,var(--border))}
+.admin-help-thread-header h3{margin:5px 0;font-size:17px}.admin-help-thread-header small{color:var(--admin-text-muted,var(--text-muted));font-size:10px}
+.admin-help-thread-header select{min-height:35px;padding:0 9px;border:1px solid var(--admin-border,var(--border));border-radius:8px;background:var(--admin-surface,var(--surface));color:var(--admin-text,var(--text-primary))}
+.admin-help-case-details{margin:12px 0;padding:11px;border:1px solid var(--admin-border,var(--border));border-radius:10px;background:var(--admin-surface-secondary,var(--surface-secondary))}
+.admin-help-case-details strong{font-size:10px}.admin-help-case-details p{margin:5px 0 0;font-size:11px;line-height:1.6}
+.admin-help-messages{display:flex;flex:1;flex-direction:column;gap:9px;min-height:180px;max-height:400px;overflow:auto;padding:6px 2px}
+.admin-help-message{max-width:88%;padding:10px 12px;border:1px solid var(--admin-border,var(--border));border-radius:11px;background:var(--admin-surface-secondary,var(--surface-secondary))}
+.admin-help-message.message-admin{align-self:flex-end;background:var(--admin-brand-soft,var(--brand-primary-soft))}
+.admin-help-message small{font-size:8px;font-weight:850;letter-spacing:.08em;color:var(--admin-text-muted,var(--text-muted))}
+.admin-help-message p{margin:5px 0;font-size:11px;line-height:1.6;white-space:pre-wrap}
+.admin-help-message time{font-size:8px;color:var(--admin-text-muted,var(--text-muted))}
+.admin-help-reply{display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--admin-border,var(--border))}
+.admin-help-reply textarea{width:100%;padding:10px;border:1px solid var(--admin-border,var(--border));border-radius:10px;background:var(--admin-surface,var(--surface));color:var(--admin-text,var(--text-primary));font:inherit;font-size:11px}
+.admin-help-reply button{justify-self:end}
+.admin-help-empty{margin:auto;padding:20px;color:var(--admin-text-muted,var(--text-muted));font-size:11px;text-align:center;line-height:1.6}
+@media(max-width:800px){.admin-help-layout{grid-template-columns:1fr}.admin-help-case-list{max-height:260px;border-right:0;border-bottom:1px solid var(--admin-border,var(--border))}.admin-help-thread{min-height:420px}.admin-help-heading{align-items:flex-start;flex-direction:column}}
