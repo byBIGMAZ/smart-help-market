@@ -12,7 +12,7 @@ import MobileBottomNav from '../components/navigation/MobileBottomNav'
 import AmbientExperience from '../components/experience/AmbientExperience'
 import QuickNavigationOrb from '../components/navigation/QuickNavigationOrb'
 import WorkspaceFloatingSidebar from '../components/navigation/WorkspaceFloatingSidebar'
-import { workspaces, type Role } from '../pages/workspaces/RoleWorkspacePage'
+import { workspaces, type Role } from '../pages/workspaces/workspaceNavigation'
 
 import { getPublicPlatformSettings } from '../services/platformSettings'
 
@@ -35,7 +35,7 @@ export default function MarketplaceLayout({
   const isWorkspaceRoute = ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(routeRole || '')
   const workspaceRole = (isWorkspaceRoute ? routeRole : isOwnerWorkspaceRoute ? 'landlord' : null) as Role | null
   const workspaceLinks = workspaceRole
-    ? [...workspaces[workspaceRole].links, ...(isOwnerWorkspaceRoute ? [{ label: 'My Listings', path: '/owner/listings' }] : [])]
+    ? [...workspaces[workspaceRole].links, ...(workspaceRole === 'landlord' ? [{ label: 'My Listings', path: '/owner/listings' }] : [])]
     : []
   const isWorkspaceOverview = workspaceRole ? pathname === `/${workspaceRole}/dashboard` || pathname === `/${workspaceRole}` : false
   const [platformName, setPlatformName] = useState(
