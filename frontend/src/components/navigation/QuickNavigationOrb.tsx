@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import './QuickNavigationOrb.css'
 
@@ -45,7 +45,7 @@ function readPosition(): OrbPosition | null {
 export default function QuickNavigationOrb() {
   const location = useLocation()
   const orbRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef<{ pointerId: number; offsetX: number; offsetY: number; moved: boolean } | null>(null)
+  const dragRef = useRef<{ pointerId: number; pointerX: number; pointerY: number; startX: number; startY: number; moved: boolean } | null>(null)
   const [open, setOpen] = useState(false)
   const [customising, setCustomising] = useState(false)
   const [selected, setSelected] = useState<string[]>(() => readStoredLinks())
@@ -85,7 +85,7 @@ export default function QuickNavigationOrb() {
   const radius = viewport.width <= 720 ? 91 : 116
   const arc = links.length > 1 ? links.map((_, index) => -Math.PI / 2 + (Math.PI * index) / (links.length - 1)) : [0]
 
-  function startDrag(event: React.PointerEvent<HTMLButtonElement>) {
+  function startDrag(event: PointerEvent<HTMLButtonElement>) {
     const rect = orbRef.current?.getBoundingClientRect()
     if (!rect) return
     dragRef.current = {
@@ -97,7 +97,7 @@ export default function QuickNavigationOrb() {
     event.currentTarget.setPointerCapture(event.pointerId)
   }
 
-  function moveDrag(event: React.PointerEvent<HTMLButtonElement>) {
+  function moveDrag(event: PointerEvent<HTMLButtonElement>) {
     const drag = dragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
     const dx = event.clientX - (center.x + drag.offsetX)
@@ -111,7 +111,7 @@ export default function QuickNavigationOrb() {
     })
   }
 
-  function endDrag(event: React.PointerEvent<HTMLButtonElement>) {
+  function endDrag(event: PointerEvent<HTMLButtonElement>) {
     if (dragRef.current?.pointerId === event.pointerId) {
       const moved = dragRef.current.moved
       dragRef.current = null
@@ -146,7 +146,7 @@ export default function QuickNavigationOrb() {
                 key={item.id}
                 to={item.to}
                 className={`shm-quick-orb-link ${active ? 'is-active' : ''}`}
-                style={{ '--orb-x': `${x}px`, '--orb-y': `${y}px`, '--orb-delay': `${index * 35}ms` } as React.CSSProperties}
+                style={{ '--orb-x': `${x}px`, '--orb-y': `${y}px`, '--orb-delay': `${index * 35}ms` } as CSSProperties}
                 aria-label={item.label}
                 title={item.label}
                 onClick={() => setOpen(false)}
