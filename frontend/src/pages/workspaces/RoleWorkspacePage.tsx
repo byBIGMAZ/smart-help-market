@@ -909,6 +909,7 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
 
   useEffect(() => {
     setQuery('')
+    setSelectedRecord(null)
     setNewTitle('')
     setNewDetail('')
     setNewAmount('')
@@ -1373,9 +1374,9 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
 
   useEffect(() => {
     const email = user?.email.trim().toLowerCase()
-    if (!email) return
+    if (role !== 'buyer' || !email) return
     const directory = readTenantSubmissions()
-    if (role === 'buyer' && shareTenantProfile) {
+    if (shareTenantProfile) {
       directory[email] = {
         email,
         fullName: saved.profile.fullName || saved.profile.displayName || user?.displayName || '',
@@ -1796,6 +1797,7 @@ export default function RoleWorkspacePage() {
 
   useEffect(() => {
     setWorkspaceMenuOpen(false)
+    setSelectedWorkspaceRecord(null)
   }, [pathname])
 
   useEffect(() => {
