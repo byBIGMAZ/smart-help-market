@@ -1,0 +1,1003 @@
+.communication-page {
+  display: grid;
+  gap: 20px;
+  animation: shm-page-enter .3s ease both;
+}
+
+.communication-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.communication-heading h1 {
+  margin: 7px 0;
+  font-size: clamp(29px, 4vw, 40px);
+}
+
+.communication-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.communication-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.communication-tabs a {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 15px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-weight: 700;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.communication-tabs a.active,
+.communication-tabs a:hover {
+  color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+}
+
+.communication-tabs a > span {
+  font-size: 17px;
+}
+
+.communication-tabs a small {
+  display: grid;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 10px;
+}
+
+.communication-content {
+  min-width: 0;
+}
+
+.communication-messages {
+  display: grid;
+  grid-template-columns: minmax(270px, .85fr) minmax(0, 1.6fr);
+  min-height: 600px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.communication-inbox {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+}
+
+.communication-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 20px;
+}
+
+.communication-panel-heading h2 {
+  margin: 0;
+  font-size: 19px;
+}
+
+.communication-panel-heading p {
+  margin: 3px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.communication-panel-heading > span {
+  color: var(--brand-primary);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.communication-search {
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.communication-search:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-primary-soft);
+}
+
+.communication-inbox > .communication-search {
+  width: calc(100% - 32px);
+  margin: 0 16px 12px;
+}
+
+.communication-conversation-list {
+  display: grid;
+  align-content: start;
+  overflow-y: auto;
+}
+
+.communication-conversation {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+  padding: 15px;
+  border: 0;
+  border-top: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: background 160ms ease;
+}
+
+.communication-conversation:hover,
+.communication-conversation.selected {
+  background: var(--brand-primary-soft);
+}
+
+.communication-avatar {
+  display: grid;
+  width: 43px;
+  height: 43px;
+  flex: 0 0 43px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.communication-conversation-info {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.communication-conversation-info strong,
+.communication-conversation-info small,
+.communication-conversation-info > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.communication-conversation-info strong {
+  font-size: 12px;
+}
+
+.communication-conversation-info small,
+.communication-conversation-info > span {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.communication-conversation-meta {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.communication-conversation-meta small {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.communication-conversation-meta b {
+  display: grid;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--brand-primary);
+  color: white;
+  font-size: 10px;
+}
+
+.communication-chat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.communication-chat-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 17px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.communication-chat-heading > div {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 3px;
+}
+
+.communication-chat-heading strong {
+  font-size: 13px;
+}
+
+.communication-chat-heading small {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.communication-demo-tag {
+  padding: 5px 8px;
+  border-radius: 20px;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.communication-chat-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--surface-secondary);
+  font-size: 11px;
+}
+
+.communication-chat-context span {
+  color: var(--text-secondary);
+}
+
+.communication-chat-messages {
+  display: flex;
+  min-height: 280px;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 22px;
+  overflow-y: auto;
+}
+
+.communication-bubble-row {
+  display: flex;
+}
+
+.communication-bubble-row.sent {
+  justify-content: flex-end;
+}
+
+.communication-bubble {
+  max-width: min(80%, 430px);
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface-secondary);
+}
+
+.communication-bubble-row.sent .communication-bubble {
+  border-color: transparent;
+  border-radius: 14px 14px 4px 14px;
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+.communication-bubble p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.communication-bubble small {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.communication-bubble-row.sent .communication-bubble small {
+  color: rgb(255 255 255 / 75%);
+}
+
+.communication-compose {
+  display: flex;
+  gap: 10px;
+  padding: 15px;
+  border-top: 1px solid var(--border);
+}
+
+.communication-compose input {
+  min-width: 0;
+  flex: 1;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.communication-compose input:focus {
+  border-color: var(--brand-primary);
+}
+
+.communication-compose button,
+.communication-mark-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary);
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.communication-compose button:disabled,
+.communication-mark-all:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.communication-record-section {
+  display: grid;
+  gap: 17px;
+}
+
+.communication-record-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.communication-record-summary article {
+  display: grid;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.communication-record-summary span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.communication-record-summary strong {
+  font-size: 27px;
+}
+
+.communication-toolbar {
+  display: flex;
+  gap: 12px;
+}
+
+.communication-toolbar .communication-search {
+  flex: 1;
+}
+
+.communication-toolbar select,
+.communication-status-control select {
+  min-width: 160px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.communication-enquiry-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, .95fr) minmax(0, 1.3fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.communication-enquiry-list {
+  display: grid;
+  gap: 9px;
+}
+
+.communication-enquiry-card {
+  display: grid;
+  width: 100%;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease;
+}
+
+.communication-enquiry-card:hover,
+.communication-enquiry-card.selected {
+  border-color: var(--brand-primary);
+  background: var(--surface-secondary);
+}
+
+.communication-enquiry-card > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.communication-enquiry-id {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.communication-enquiry-card > strong {
+  font-size: 13px;
+}
+
+.communication-enquiry-card > span:not(.communication-status) {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.communication-enquiry-card > small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.communication-status {
+  padding: 5px 8px;
+  border-radius: 20px;
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.status-new {
+  background: rgb(40 116 166 / 12%);
+  color: var(--info);
+}
+
+.status-responded {
+  background: rgb(39 131 75 / 12%);
+  color: var(--success);
+}
+
+.status-in-progress {
+  background: rgb(183 121 31 / 12%);
+  color: var(--warning);
+}
+
+.status-resolved {
+  background: rgb(39 131 75 / 12%);
+  color: var(--success);
+}
+
+.status-closed {
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+}
+
+.communication-enquiry-detail {
+  display: grid;
+  align-content: start;
+  gap: 15px;
+  min-width: 0;
+  padding: 23px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.communication-enquiry-detail h2 {
+  margin: 0;
+  font-size: 21px;
+  overflow-wrap: anywhere;
+}
+
+.communication-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+  padding: 17px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.communication-detail-grid > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.communication-detail-grid small {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.communication-detail-grid strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.communication-enquiry-message {
+  padding: 15px;
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+}
+
+.communication-enquiry-message strong {
+  font-size: 12px;
+}
+
+.communication-enquiry-message p {
+  margin: 7px 0 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.communication-status-control {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.communication-status-control select {
+  width: 100%;
+}
+
+.communication-reply-link {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-weight: 750;
+}
+
+.communication-notification-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 21px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(circle at 95% 10%, var(--brand-primary-soft), transparent 42%),
+    var(--surface);
+}
+
+.communication-notification-summary h2 {
+  margin: 5px 0;
+  font-size: 20px;
+}
+
+.communication-notification-summary p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.communication-notification-list {
+  display: grid;
+  gap: 10px;
+}
+
+.communication-notification {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  transition: border-color 180ms ease;
+}
+
+.communication-notification.unread {
+  border-left: 3px solid var(--brand-primary);
+  background: var(--surface-secondary);
+}
+
+.communication-notification-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-size: 21px;
+}
+
+.communication-notification-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.communication-notification-body strong {
+  font-size: 13px;
+}
+
+.communication-notification-body p {
+  margin: 4px 0;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.communication-notification-body small {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.communication-notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.communication-notification-actions a,
+.communication-notification-actions button {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.communication-notification-actions a:hover,
+.communication-notification-actions button:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+}
+
+.communication-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+}
+
+.communication-empty {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+  padding: 36px 20px;
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 12px;
+}
+
+.communication-empty > span {
+  color: var(--brand-primary);
+  font-size: 29px;
+}
+
+.communication-empty strong {
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.communication-empty p {
+  margin: 0;
+}
+
+.communication-chat-empty {
+  flex: 1;
+  align-content: center;
+}
+
+.communication-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.communication-notice > span {
+  color: var(--success);
+  font-weight: 900;
+}
+
+.communication-notice button {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 19px;
+  cursor: pointer;
+}
+
+.communication-disclaimer {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+@media (max-width: 850px) {
+  .communication-messages {
+    grid-template-columns: 1fr;
+  }
+
+  .communication-inbox {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .communication-conversation-list {
+    max-height: 265px;
+  }
+
+  .communication-chat {
+    min-height: 440px;
+  }
+
+  .communication-enquiry-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .communication-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .communication-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .communication-tabs a {
+    justify-content: center;
+    gap: 5px;
+    padding: 10px 5px;
+    font-size: 10px;
+  }
+
+  .communication-tabs a > span {
+    display: none;
+  }
+
+  .communication-record-summary {
+    gap: 7px;
+  }
+
+  .communication-record-summary article {
+    padding: 12px;
+  }
+
+  .communication-record-summary span {
+    font-size: 10px;
+  }
+
+  .communication-record-summary strong {
+    font-size: 22px;
+  }
+
+  .communication-toolbar {
+    flex-direction: column;
+  }
+
+  .communication-toolbar select {
+    width: 100%;
+  }
+
+  .communication-notification-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .communication-notification {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .communication-notification-body {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .communication-notification-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .communication-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .communication-compose {
+    padding: 10px;
+  }
+
+  .communication-compose button {
+    padding: 10px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .communication-page,
+  .communication-tabs a,
+  .communication-conversation,
+  .communication-enquiry-card,
+  .communication-notification {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+/* Marketplace conversation enhancements */
+.communication-listing-reference {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 11px 13px;
+  border: 1px solid var(--border-color, rgba(128,128,128,.25));
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface-secondary, rgba(128,128,128,.06));
+}
+.communication-listing-reference > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: var(--surface-tertiary, rgba(128,128,128,.12));
+}
+.communication-listing-reference > span:nth-child(2) {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.communication-listing-reference small,
+.communication-presence {
+  font-size: 11px;
+  opacity: .72;
+}
+.communication-listing-reference strong {
+  overflow-wrap: anywhere;
+}
+.communication-participant {
+  display: grid;
+  gap: 3px;
+}
+.communication-presence {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.communication-presence i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #20a464;
+}
+.communication-media-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin: 10px;
+  border: 1px solid var(--border-color, rgba(128,128,128,.25));
+  border-radius: 12px;
+  background: var(--surface-secondary, rgba(128,128,128,.06));
+}
+.communication-media-preview img,
+.communication-media-preview video {
+  width: 90px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.communication-media-preview > div {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.communication-media-preview small {
+  opacity: .7;
+}
+.communication-media-preview button {
+  justify-self: start;
+  border: 0;
+  background: transparent;
+  color: var(--color-danger, #c43d3d);
+  cursor: pointer;
+}
+.communication-attach-control {
+  display: grid;
+  place-items: center;
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  cursor: pointer;
+  background: var(--surface-secondary, rgba(128,128,128,.1));
+}
+.communication-attach-control span:first-child {
+  font-size: 23px;
+}
+.communication-attach-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 600px) {
+  .communication-media-preview {
+    margin: 8px;
+  }
+  .communication-media-preview img,
+  .communication-media-preview video {
+    width: 72px;
+    height: 64px;
+  }
+}

@@ -127,6 +127,32 @@ sessionRouter.get('/me', requireSession, async (_req, res) => {
       (row: { role_key: string }) => row.role_key,
     )
 
+    const permissionsResult = await getDatabasePool().query<{
+  permission_key: string
+}>(
+  `SELECT DISTINCT p.permission_key
+   FROM public.marketplace_permissions p
+   WHERE EXISTS (
+     SELECT 1
+     FROM public.marketplace_user_roles ur
+     JOIN public.marketplace_roles r
+       ON r.role_id = ur.role_id
+     LEFT JOIN public.marketplace_role_permissions rp
+       ON rp.role_id = r.role_id
+     WHERE ur.user_id = $1
+       AND (
+         r.role_key = 'super_admin'
+         OR rp.permission_id = p.permission_id
+       )
+   )
+   ORDER BY p.permission_key`,
+  [user.id],
+)
+
+const permissions: string[] = permissionsResult.rows.map(
+  (row) => row.permission_key,
+)
+
     res.status(200).json({
       authenticated: true,
       user: {
@@ -134,6 +160,7 @@ sessionRouter.get('/me', requireSession, async (_req, res) => {
         email: user.email,
         displayName: user.displayName,
         roles,
+        permissions,
       },
     })
   } catch (error: unknown) {

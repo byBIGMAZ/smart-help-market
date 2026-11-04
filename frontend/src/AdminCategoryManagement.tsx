@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import {
@@ -47,27 +47,58 @@ function AdminCategoryManagement({ onNotice }: Props) {
   const [statusTarget, setStatusTarget] =
     useState<AdminCategory | null>(null)
 
-  async function loadCategories() {
-    setLoading(true)
-    setError('')
+const fetchCategories = useCallback(async () => {
+  const result = await getAdminCategories()
+  return result.categories
+}, [])
 
-    try {
-      const result = await getAdminCategories()
-      setCategories(result.categories)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load marketplace categories.',
-      )
-    } finally {
-      setLoading(false)
-    }
+const loadCategories = useCallback(async () => {
+  setLoading(true)
+  setError('')
+
+  try {
+    const result = await fetchCategories()
+    setCategories(result)
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to load marketplace categories.',
+    )
+  } finally {
+    setLoading(false)
   }
+}, [fetchCategories])
 
-  useEffect(() => {
-    void loadCategories()
-  }, [])
+useEffect(() => {
+  let active = true
+
+  fetchCategories()
+    .then(result => {
+      if (active) {
+        setCategories(result)
+        setError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load marketplace categories.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchCategories])
 
   const filteredCategories = useMemo(() => {
     const query = search.trim().toLowerCase()

@@ -7,7 +7,9 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed:auth-roles": "tsx src/seed-auth-roles.ts",
+    "create:demo-account": "tsx src/create-marketplace-demo-account.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +17,7 @@
   "type": "commonjs",
   "dependencies": {
     "argon2": "^0.45.1",
+    "cloudinary": "^2.11.0",
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",

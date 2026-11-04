@@ -130,33 +130,62 @@ export default function AdminAutomationMonitoring() {
   const [eventType, setEventType] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    setError('')
+const fetchData = useCallback(async () => {
+  return await getAutomationMonitoring({
+    page,
+    pageSize,
+    status,
+    eventType,
+  })
+}, [page, pageSize, status, eventType])
 
-    try {
-      const result = await getAutomationMonitoring({
-        page,
-        pageSize,
-        status,
-        eventType,
-      })
+const loadData = useCallback(async () => {
+  setLoading(true)
+  setError('')
 
-      setData(result)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Could not load automation monitoring data.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [page, pageSize, status, eventType])
+  try {
+    const result = await fetchData()
+    setData(result)
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Could not load automation monitoring data.',
+    )
+  } finally {
+    setLoading(false)
+  }
+}, [fetchData])
 
-  useEffect(() => {
-    void loadData()
-  }, [loadData])
+useEffect(() => {
+  let active = true
+
+  fetchData()
+    .then(result => {
+      if (active) {
+        setData(result)
+        setError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load automation monitoring data.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchData])
 
   function applyStatus(value: string) {
     setStatus(value)

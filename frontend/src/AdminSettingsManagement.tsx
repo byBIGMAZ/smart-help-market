@@ -11,12 +11,14 @@ type EditableSettingKey =
   | 'platform.currency'
   | 'platform.locale'
   | 'platform.timezone'
+  | 'communication.contact_policy'
 
 const EDITABLE_KEYS: EditableSettingKey[] = [
   'platform.name',
   'platform.currency',
   'platform.locale',
   'platform.timezone',
+  'communication.contact_policy',
 ]
 
 const SETTING_LABELS: Record<EditableSettingKey, string> = {
@@ -24,6 +26,7 @@ const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'platform.currency': 'Default Currency',
   'platform.locale': 'Regional Locale',
   'platform.timezone': 'System Timezone',
+  'communication.contact_policy': 'In-App Contact Restrictions',
 }
 
 const SETTING_HELP: Record<EditableSettingKey, string> = {
@@ -31,6 +34,7 @@ const SETTING_HELP: Record<EditableSettingKey, string> = {
   'platform.currency': 'The default currency used for marketplace prices.',
   'platform.locale': 'The regional language and formatting configuration.',
   'platform.timezone': 'The timezone used for platform date and time operations.',
+  'communication.contact_policy': 'Configure phone, email, external link, social handle and off-platform contact restrictions using the JSON policy.',
 }
 
 function getStringValue(value: unknown): string {
@@ -49,36 +53,71 @@ export default function AdminSettingsManagement() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
-  const loadSettings = useCallback(async () => {
-    setLoading(true)
-    setError('')
+const fetchSettings = useCallback(async () => {
+  const response = await getAdminSettings()
 
-    try {
-      const response = await getAdminSettings()
+  const nextValues: Record<string, string> = {}
 
-      setSettings(response.settings)
+  response.settings.forEach(setting => {
+    nextValues[setting.key] = getStringValue(setting.value)
+  })
 
-      const nextValues: Record<string, string> = {}
+  return {
+    settings: response.settings,
+    values: nextValues,
+  }
+}, [])
 
-      response.settings.forEach((setting) => {
-        nextValues[setting.key] = getStringValue(setting.value)
-      })
+const loadSettings = useCallback(async () => {
+  setLoading(true)
+  setError('')
 
-      setValues(nextValues)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load marketplace settings.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  try {
+    const result = await fetchSettings()
 
-  useEffect(() => {
-    void loadSettings()
-  }, [loadSettings])
+    setSettings(result.settings)
+    setValues(result.values)
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to load marketplace settings.',
+    )
+  } finally {
+    setLoading(false)
+  }
+}, [fetchSettings])
+
+useEffect(() => {
+  let active = true
+
+  fetchSettings()
+    .then(result => {
+      if (active) {
+        setSettings(result.settings)
+        setValues(result.values)
+        setError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load marketplace settings.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchSettings])
 
   const handleValueChange = (key: string, value: string) => {
     setValues((current) => ({
@@ -292,6 +331,55 @@ export default function AdminSettingsManagement() {
             )
           },
         )}
+      </div>
+
+      <div className="admin-settings-group">
+        <div className="admin-settings-group-heading">
+          <div>
+            <h3>Contact &amp; Communication Security</h3>
+            <p>Control which contact-sharing patterns are blocked by server validation.</p>
+          </div>
+        </div>
+        {(() => {
+          const key: EditableSettingKey = 'communication.contact_policy'
+          const setting = getSetting(key)
+          if (!setting) return <p>Run the backend settings seed to activate this policy.</p>
+          return (
+            <div className="admin-setting-item" key={key}>
+              <div className="admin-setting-information">
+                <label htmlFor={`setting-${key}`}>{SETTING_LABELS[key]}</label>
+                <p>{SETTING_HELP[key]}</p>
+                <span className="admin-setting-visibility">Private setting</span>
+              </div>
+              <div className="admin-setting-control">
+                <textarea
+                  id={`setting-${key}`}
+                  value={values[key] ?? ''}
+                  onChange={(event) => handleValueChange(key, event.target.value)}
+                  disabled={savingKey !== null}
+                  rows={7}
+                  spellCheck={false}
+                />
+                <button
+                  type="button"
+                  className="admin-primary-button"
+                  onClick={() => {
+                    try {
+                      JSON.parse(values[key] || '')
+                      void handleSave(key)
+                    } catch {
+                      setError('Contact policy must be valid JSON.')
+                      setNotice('')
+                    }
+                  }}
+                  disabled={savingKey !== null || values[key] === getStringValue(setting.value)}
+                >
+                  {savingKey === key ? 'Saving...' : 'Save Contact Policy'}
+                </button>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       <div className="admin-settings-note">

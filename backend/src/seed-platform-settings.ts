@@ -11,6 +11,13 @@ type InitialSetting = {
 
 const initialSettings: InitialSetting[] = [
   {
+    key: 'communication.contact_policy',
+    value: '{"enabled":true,"blockPhoneNumbers":true,"blockEmails":true,"blockExternalLinks":true,"blockSocialHandles":true,"blockOffPlatformRequests":true}',
+    group: 'communication',
+    description: 'Controls contact-sharing restrictions for marketplace messages.',
+    isPublic: false,
+  },
+  {
     key: 'platform.name',
     value: 'SMART HELP MARKET BY BIGMAZ',
     group: 'branding',

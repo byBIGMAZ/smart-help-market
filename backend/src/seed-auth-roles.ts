@@ -17,6 +17,31 @@ const roles = [
     name: 'Marketplace Member',
     description: 'Basic access for an ordinary marketplace account.',
   },
+  {
+    key: 'buyer',
+    name: 'Marketplace Buyer',
+    description: 'Marketplace buyer workspace access.',
+  },
+  {
+    key: 'landlord',
+    name: 'Property Landlord',
+    description: 'Property landlord workspace access.',
+  },
+  {
+    key: 'seller',
+    name: 'Marketplace Seller',
+    description: 'Product seller workspace access.',
+  },
+  {
+    key: 'service_provider',
+    name: 'Service Provider',
+    description: 'Service provider workspace access.',
+  },
+  {
+    key: 'agent',
+    name: 'Marketplace Agent',
+    description: 'Marketplace agent workspace access.',
+  },
 ] as const
 
 const permissions = [
@@ -261,6 +286,27 @@ async function seedAuthRoles() {
       [permissions.map((permission) => permission.key)],
     )
 
+    // The five marketplace workspace roles must have no
+    // administrative permission assignments.
+    const workspaceRolePermissions = await db.query(
+      `
+        SELECT r.role_key, p.permission_key
+        FROM public.marketplace_roles r
+        JOIN public.marketplace_role_permissions rp
+          ON rp.role_id = r.role_id
+        JOIN public.marketplace_permissions p
+          ON p.permission_id = rp.permission_id
+        WHERE r.role_key = ANY($1::text[])
+      `,
+      [['buyer', 'landlord', 'seller', 'service_provider', 'agent']],
+    )
+
+    if (workspaceRolePermissions.rows.length > 0) {
+      throw new Error(
+        'Marketplace workspace roles must not have administrative permissions.',
+      )
+    }
+
     // Verify Super Admin permission assignments.
     const superAdminResult = await db.query<{
       permission_count: string
@@ -330,6 +376,7 @@ async function seedAuthRoles() {
     )
     console.log('Automation permissions: REGISTERED')
     console.log('Restricted roles: VERIFIED')
+    console.log('Marketplace workspace roles: NO ADMIN PERMISSIONS')
 
     for (const role of roleResult.rows) {
       console.log(`${role.role_key} | ${role.role_name}`)

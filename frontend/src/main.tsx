@@ -1,14 +1,18 @@
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
-import AdminApp from './AdminApp.tsx'
+import { RouterProvider } from 'react-router-dom'
 
-const isAdminRoute = window.location.pathname.replace(/\/+$/, '') === '/admin'
+import './index.css'
+import './styles/motion-system.css'
+
+import ThemeProvider from './app/providers/ThemeProvider'
+import { router } from './app/router'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {isAdminRoute ? <AdminApp /> : <App />}
+    <ThemeProvider>
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </StrictMode>,
 )

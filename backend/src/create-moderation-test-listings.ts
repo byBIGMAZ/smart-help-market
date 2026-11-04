@@ -3,16 +3,16 @@ import { getDatabasePool } from './database'
 
 const testListings = [
   {
-    listingKey: 'bigmaz-moderation-test-a',
-    title: 'BIGMAZ Moderation Test A',
+    listingKey: 'bigmaz-moderation-approval-test-20261101',
+    title: 'BIGMAZ Moderation Approval Test 20261101',
     description:
-      'Temporary internal test listing for testing approval, publication and suspension workflows. Not a genuine customer submission.',
+      'Temporary internal test listing for verifying the listing.approved automation notification. Not a genuine customer submission.',
   },
   {
-    listingKey: 'bigmaz-moderation-test-b',
-    title: 'BIGMAZ Moderation Test B',
+    listingKey: 'bigmaz-moderation-rejection-test-20261101',
+    title: 'BIGMAZ Moderation Rejection Test 20261101',
     description:
-      'Temporary internal test listing for testing the rejection workflow. Not a genuine customer submission.',
+      'Temporary internal test listing for verifying the listing.rejected automation notification. Not a genuine customer submission.',
   },
 ]
 

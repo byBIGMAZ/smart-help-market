@@ -7,9 +7,9 @@ async function createTestAccount() {
   const displayName = 'BIGMAZ Status Test Account'
   const password = process.env.TEST_ACCOUNT_PASSWORD
 
-  if (!password || password.length < 12 || password.length > 128) {
+  if (!password || password.length < 6 || password.length > 128) {
     throw new Error(
-      'Set TEST_ACCOUNT_PASSWORD to a unique password of 12–128 characters before running this script.',
+      'Set TEST_ACCOUNT_PASSWORD to a unique password of 6–128 characters before running this script.',
     )
   }
 

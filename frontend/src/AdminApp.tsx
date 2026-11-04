@@ -33,6 +33,12 @@ import {
   type AdminAuditLog,
 } from './services/adminAuditLogs'
 
+import {
+  getAdminNotificationUnreadCount,
+} from './services/adminNotifications'
+
+import AdminNotifications from './AdminNotifications'
+
 import AdminListingModeration from './AdminListingModeration'
 import AdminCategoryManagement from './AdminCategoryManagement'
 import AdminSettingsManagement from './AdminSettingsManagement'
@@ -59,6 +65,7 @@ type AdminSection =
   | 'automation'
   | 'automation-rules'
   | 'automation-monitoring'
+  | 'notifications'
 
 type UserStatusFilter = 'all' | AccountStatus
 
@@ -90,6 +97,8 @@ function AdminApp() {
   const [screen, setScreen] = useState<Screen>('checking')
   const [section, setSection] = useState<AdminSection>('overview')
   const [user, setUser] = useState<AdminUser | null>(null)
+  const [notificationUnreadCount, setNotificationUnreadCount] =
+  useState(0)
   const [overview, setOverview] = useState<AdminOverview | null>(null)
 
   // Authentication
@@ -158,6 +167,49 @@ function AdminApp() {
     const data = await getAdminOverview()
     setOverview(data)
   }, [])
+
+const fetchNotificationUnreadCount = useCallback(async () => {
+  if (!user?.permissions.includes('notifications.view')) {
+    return 0
+  }
+
+  return await getAdminNotificationUnreadCount()
+}, [user])
+
+const loadNotificationUnreadCount = useCallback(async () => {
+  try {
+    const count = await fetchNotificationUnreadCount()
+    setNotificationUnreadCount(count)
+  } catch (err) {
+    console.error(
+      'Unable to load notification unread count:',
+      err instanceof Error ? err.message : 'Unknown error',
+    )
+  }
+}, [fetchNotificationUnreadCount])
+
+useEffect(() => {
+  let active = true
+
+  fetchNotificationUnreadCount()
+    .then(count => {
+      if (active) {
+        setNotificationUnreadCount(count)
+      }
+    })
+    .catch(err => {
+      if (active) {
+        console.error(
+          'Unable to load notification unread count:',
+          err instanceof Error ? err.message : 'Unknown error',
+        )
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchNotificationUnreadCount])
 
   const loadUsers = useCallback(
     async (
@@ -584,6 +636,18 @@ function openAutomationMonitoring() {
     void loadAuditLogs('', '', '', '', 0)
   }
 
+  function openNotifications() {
+  setSection('notifications')
+  setSelectedRoleId(null)
+  setSelectedRoleUserId(null)
+  setError('')
+  setNotice('')
+  setUsersError('')
+  setRolesError('')
+  setAuditError('')
+  void loadNotificationUnreadCount()
+}
+
   // User filters
   function applyUserFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -770,6 +834,7 @@ function openAutomationMonitoring() {
       { key: 'settings', label: 'Platform Settings' },
       { key: 'reports', label: 'Reports & Analytics' },
       { key: 'audit', label: 'Audit Logs' },
+      { key: 'notifications', label: 'Notifications' },
       { key: 'profile', label: 'User Profile' },
     ]
 
@@ -1015,6 +1080,26 @@ function openAutomationMonitoring() {
             <span /> Administrator
           </span>
 
+          {user?.permissions.includes('notifications.view') && (
+  <button
+    type="button"
+    className="admin-notification-bell"
+    onClick={openNotifications}
+    aria-label={`Notifications, ${notificationUnreadCount} unread`}
+    title="Open notifications"
+  >
+    <span aria-hidden="true">♧</span>
+
+    {notificationUnreadCount > 0 && (
+      <span className="admin-notification-bell-count">
+        {notificationUnreadCount > 99
+          ? '99+'
+          : notificationUnreadCount}
+      </span>
+    )}
+  </button>
+)}
+
           <button
             className="admin-secondary-button"
             onClick={handleLogout}
@@ -1179,6 +1264,29 @@ function openAutomationMonitoring() {
             <span aria-hidden="true">🛡</span>
             Role Management
           </button>
+
+          {user?.permissions.includes('notifications.view') && (
+  <button
+    type="button"
+    className={`admin-nav-button ${
+      section === 'notifications' ? 'is-active' : ''
+    }`}
+    aria-current={
+      section === 'notifications' ? 'page' : undefined
+    }
+    onClick={openNotifications}
+  >
+    <span aria-hidden="true">♧</span>
+    Notifications
+    {notificationUnreadCount > 0 && (
+      <span className="admin-notification-nav-count">
+        {notificationUnreadCount > 99
+          ? '99+'
+          : notificationUnreadCount}
+      </span>
+    )}
+  </button>
+)}
 
           <button
             type="button"
@@ -1906,6 +2014,16 @@ function openAutomationMonitoring() {
   <AdminAutomationMonitoring />
 )}
 
+{/* ADMINISTRATOR NOTIFICATION CENTRE */}
+{section === 'notifications' &&
+  user?.permissions.includes('notifications.view') && (
+    <AdminNotifications
+      canManage={user.permissions.includes('notifications.manage')}
+      onNotice={setNotice}
+      onUnreadCountChange={setNotificationUnreadCount}
+    />
+  )}
+
         {/* AUDIT LOGS */}
         {section === 'audit' && (
           <section className="admin-audit-section">
@@ -2164,6 +2282,7 @@ function openAutomationMonitoring() {
           </section>
         )}
 
+
         {/* FOOTER */}
         <footer className="admin-footer">
           <span>SMART HELP MARKET BY BIGMAZ</span>
@@ -2184,18 +2303,23 @@ function openAutomationMonitoring() {
                         : section === 'audit'
                           ? 'Administrative audit activity'
                           : section === 'automation'
-  ? 'Marketplace automation control'
-  : section === 'automation-rules'
-    ? 'Marketplace automation rules'
-    : section === 'automation-monitoring'
-      ? 'Marketplace automation monitoring'
-      : 'Last refreshed: ' +
-                        (overview
-                          ? new Date().toLocaleTimeString('en-NG', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })
-                          : 'Not available')}
+                            ? 'Marketplace automation control'
+                            : section === 'automation-rules'
+                              ? 'Marketplace automation rules'
+                              : section === 'automation-monitoring'
+                                ? 'Marketplace automation monitoring'
+                                : section === 'notifications'
+                                  ? 'Administrator notification centre'
+                                  : 'Last refreshed: ' +
+                                    (overview
+                                      ? new Date().toLocaleTimeString(
+                                          'en-NG',
+                                          {
+                                            hour: '2-digit',
+                                            minute: '2-digit',
+                                          },
+                                        )
+                                      : 'Not available')}
           </span>
         </footer>
       </section>

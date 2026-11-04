@@ -36,9 +36,9 @@ async function provisionSuperAdmin(): Promise<void> {
       throw new Error('Display name must contain 2–100 characters.')
     }
 
-    if (!password || password.length < 12 || password.length > 128) {
+    if (!password || password.length < 6 || password.length > 128) {
       throw new Error(
-        'Password must be supplied securely and contain 12–128 characters.',
+        'Password must be supplied securely and contain 6–128 characters.',
       )
     }
 

@@ -1,0 +1,238 @@
+.marketplace-login-page {
+  display: grid;
+  width: 100%;
+  min-height: 65vh;
+  place-items: center;
+  padding: 36px 18px 50px;
+  background: var(--page-background);
+  color: var(--text-primary);
+}
+
+.marketplace-login-card {
+  width: 100%;
+  max-width: 460px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface);
+  box-shadow: 0 12px 35px rgb(0 0 0 / 5%);
+}
+
+.marketplace-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 35px;
+}
+
+.marketplace-login-logo {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.marketplace-login-brand > div {
+  display: grid;
+  gap: 4px;
+}
+
+.marketplace-login-brand strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+}
+
+.marketplace-login-brand > div > span {
+  color: var(--brand-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.marketplace-login-heading {
+  margin-bottom: 25px;
+}
+
+.marketplace-login-eyebrow {
+  color: var(--brand-primary);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.7px;
+}
+
+.marketplace-login-heading h1 {
+  margin: 9px 0;
+  color: var(--text-primary);
+  font-size: clamp(23px, 5vw, 29px);
+  line-height: 1.25;
+}
+
+.marketplace-login-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.marketplace-login-form {
+  display: grid;
+  gap: 10px;
+}
+
+.marketplace-login-form label {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.marketplace-login-form > input,
+.marketplace-login-password-field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+
+.marketplace-login-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.marketplace-login-form input:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+}
+
+.marketplace-login-password-heading {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.marketplace-login-password-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-secondary);
+}
+
+.marketplace-login-password-field:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+}
+
+.marketplace-login-password-field input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.marketplace-login-password-field input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.marketplace-login-password-field button {
+  padding: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--brand-primary);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.marketplace-login-password-field button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.marketplace-login-error {
+  margin-top: 7px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.marketplace-login-submit {
+  min-height: 47px;
+  margin-top: 13px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 160ms ease, opacity 160ms ease;
+}
+
+.marketplace-login-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.marketplace-login-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.marketplace-login-footer {
+  display: grid;
+  justify-items: center;
+  gap: 13px;
+  margin-top: 25px;
+  padding-top: 19px;
+  border-top: 1px solid var(--border);
+}
+
+.marketplace-login-footer a {
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.marketplace-login-footer a:hover {
+  text-decoration: underline;
+}
+
+.marketplace-login-footer span {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .marketplace-login-page {
+    padding: 20px 13px 35px;
+  }
+
+  .marketplace-login-card {
+    padding: 23px 18px;
+  }
+
+  .marketplace-login-brand {
+    margin-bottom: 28px;
+  }
+}

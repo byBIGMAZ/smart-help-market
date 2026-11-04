@@ -1,0 +1,363 @@
+.marketplace-register-page {
+  display: grid;
+  width: 100%;
+  min-height: 65vh;
+  place-items: center;
+  padding: 36px 18px 50px;
+  background: var(--page-background);
+  color: var(--text-primary);
+}
+
+.marketplace-register-card {
+  width: 100%;
+  max-width: 560px;
+  padding: 32px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface);
+  box-shadow: 0 12px 35px rgb(0 0 0 / 5%);
+}
+
+.marketplace-register-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.marketplace-register-logo {
+  display: grid;
+  width: 45px;
+  height: 45px;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 850;
+}
+
+.marketplace-register-brand > div {
+  display: grid;
+  gap: 4px;
+}
+
+.marketplace-register-brand strong {
+  color: var(--text-primary);
+  font-size: 13px;
+  letter-spacing: 0.4px;
+}
+
+.marketplace-register-brand > div > span {
+  color: var(--brand-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.marketplace-register-heading {
+  margin-bottom: 25px;
+}
+
+.marketplace-register-eyebrow {
+  color: var(--brand-primary);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 1.7px;
+}
+
+.marketplace-register-heading h1 {
+  margin: 9px 0;
+  color: var(--text-primary);
+  font-size: clamp(23px, 5vw, 29px);
+  line-height: 1.25;
+}
+
+.marketplace-register-heading p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.marketplace-register-form {
+  display: grid;
+  gap: 10px;
+}
+
+.marketplace-register-form > label,
+.marketplace-register-section-heading > label {
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.marketplace-register-form > input,
+.marketplace-register-password input {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 13px;
+}
+
+.marketplace-register-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.marketplace-register-form input:focus {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+}
+
+.marketplace-register-section-heading {
+  display: grid;
+  gap: 5px;
+  margin-top: 12px;
+}
+
+.marketplace-register-section-heading > span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.marketplace-register-account-types {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.marketplace-register-account-option {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 13px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-secondary);
+  cursor: pointer;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.marketplace-register-account-option:hover {
+  border-color: var(--brand-primary);
+}
+
+.marketplace-register-account-option.selected {
+  border-color: var(--brand-primary);
+  background: color-mix(in srgb, var(--brand-primary) 7%, var(--surface));
+}
+
+.marketplace-register-account-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.marketplace-register-radio {
+  display: grid;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  margin-top: 2px;
+  place-items: center;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.marketplace-register-account-option.selected .marketplace-register-radio {
+  border-color: var(--brand-primary);
+}
+
+.marketplace-register-account-option.selected .marketplace-register-radio::after {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  content: '';
+}
+
+.marketplace-register-account-option input:focus-visible + .marketplace-register-radio {
+  outline: 3px solid color-mix(in srgb, var(--brand-primary) 25%, transparent);
+  outline-offset: 3px;
+}
+
+.marketplace-register-account-copy {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.marketplace-register-account-copy strong {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.marketplace-register-account-copy > span {
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.marketplace-register-verification {
+  display: grid;
+  gap: 5px;
+  margin: 3px 0 9px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-secondary);
+}
+
+.marketplace-register-verification strong {
+  color: var(--text-primary);
+  font-size: 11px;
+}
+
+.marketplace-register-verification span {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.marketplace-register-password {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-secondary);
+}
+
+.marketplace-register-password:focus-within {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-primary) 14%, transparent);
+}
+
+.marketplace-register-password input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.marketplace-register-password input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.marketplace-register-password button {
+  padding: 7px;
+  border: 0;
+  background: transparent;
+  color: var(--brand-primary);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.marketplace-register-password button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.marketplace-register-hint {
+  margin-top: -5px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.marketplace-register-error {
+  margin-top: 7px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.marketplace-register-submit {
+  min-height: 47px;
+  margin-top: 13px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 160ms ease, opacity 160ms ease;
+}
+
+.marketplace-register-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.marketplace-register-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.marketplace-register-footer {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-top: 25px;
+  padding-top: 19px;
+  border-top: 1px solid var(--border);
+}
+
+.marketplace-register-footer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.marketplace-register-footer a {
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.marketplace-register-footer a:hover {
+  text-decoration: underline;
+}
+
+.marketplace-register-footer > span {
+  color: var(--text-muted);
+  font-size: 10px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+@media (max-width: 480px) {
+  .marketplace-register-page {
+    padding: 20px 13px 35px;
+  }
+
+  .marketplace-register-card {
+    padding: 23px 18px;
+  }
+
+  .marketplace-register-brand {
+    margin-bottom: 25px;
+  }
+
+  .marketplace-register-account-types {
+    grid-template-columns: 1fr;
+  }
+}

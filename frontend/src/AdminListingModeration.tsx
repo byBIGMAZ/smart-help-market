@@ -120,30 +120,77 @@ function AdminListingModeration({ onNotice }: Props) {
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState('')
 
-  const loadListings = useCallback(
-    async (
-      searchValue: string,
-      statusValue: StatusFilter,
-      demoValue: DemoFilter,
-      pageOffset: number,
-    ) => {
-      setLoading(true)
-      setError('')
+const fetchListings = useCallback(
+  async (
+    searchValue: string,
+    statusValue: StatusFilter,
+    demoValue: DemoFilter,
+    pageOffset: number,
+  ) => {
+    return await getAdminModerationListings({
+      search: searchValue,
+      status: statusValue,
+      demo: demoValue,
+      limit: PAGE_SIZE,
+      offset: pageOffset,
+    })
+  },
+  [],
+)
 
-      try {
-        const result = await getAdminModerationListings({
-          search: searchValue,
-          status: statusValue,
-          demo: demoValue,
-          limit: PAGE_SIZE,
-          offset: pageOffset,
-        })
+const loadListings = useCallback(
+  async (
+    searchValue: string,
+    statusValue: StatusFilter,
+    demoValue: DemoFilter,
+    pageOffset: number,
+  ) => {
+    setLoading(true)
+    setError('')
 
+    try {
+      const result = await fetchListings(
+        searchValue,
+        statusValue,
+        demoValue,
+        pageOffset,
+      )
+
+      setListings(result.listings)
+      setTotal(result.pagination.total)
+      setOffset(result.pagination.offset)
+      setHasMore(result.pagination.hasMore)
+    } catch (err) {
+      setListings([])
+      setTotal(0)
+      setHasMore(false)
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to load marketplace listings.',
+      )
+    } finally {
+      setLoading(false)
+    }
+  },
+  [fetchListings],
+)
+
+useEffect(() => {
+  let active = true
+
+  fetchListings('', 'all', 'all', 0)
+    .then(result => {
+      if (active) {
         setListings(result.listings)
         setTotal(result.pagination.total)
         setOffset(result.pagination.offset)
         setHasMore(result.pagination.hasMore)
-      } catch (err) {
+        setError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
         setListings([])
         setTotal(0)
         setHasMore(false)
@@ -152,49 +199,83 @@ function AdminListingModeration({ onNotice }: Props) {
             ? err.message
             : 'Unable to load marketplace listings.',
         )
-      } finally {
+      }
+    })
+    .finally(() => {
+      if (active) {
         setLoading(false)
       }
-    },
-    [],
-  )
+    })
 
-    // Load the main listing directory when the page first opens
-  useEffect(() => {
-    void loadListings('', 'all', 'all', 0)
-  }, [loadListings])
+  return () => {
+    active = false
+  }
+}, [fetchListings])
 
-    const loadReviewQueue = useCallback(async () => {
-    setReviewQueueLoading(true)
-    setReviewQueueError('')
+const fetchReviewQueue = useCallback(async () => {
+  return await getAdminModerationListings({
+    search: '',
+    status: 'pending_review',
+    demo: 'false',
+    limit: 5,
+    offset: 0,
+  })
+}, [])
 
-    try {
-      const result = await getAdminModerationListings({
-        search: '',
-        status: 'pending_review',
-        demo: 'false',
-        limit: 5,
-        offset: 0,
-      })
+const loadReviewQueue = useCallback(async () => {
+  setReviewQueueLoading(true)
+  setReviewQueueError('')
 
-      setReviewQueue(result.listings)
-      setReviewQueueTotal(result.pagination.total)
-    } catch (err) {
-      setReviewQueue([])
-      setReviewQueueTotal(0)
-      setReviewQueueError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load the review queue.',
-      )
-    } finally {
-      setReviewQueueLoading(false)
-    }
-  }, [])
+  try {
+    const result = await fetchReviewQueue()
 
-    useEffect(() => {
-    void loadReviewQueue()
-  }, [loadReviewQueue])
+    setReviewQueue(result.listings)
+    setReviewQueueTotal(result.pagination.total)
+  } catch (err) {
+    setReviewQueue([])
+    setReviewQueueTotal(0)
+    setReviewQueueError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to load the review queue.',
+    )
+  } finally {
+    setReviewQueueLoading(false)
+  }
+}, [fetchReviewQueue])
+
+useEffect(() => {
+  let active = true
+
+  fetchReviewQueue()
+    .then(result => {
+      if (active) {
+        setReviewQueue(result.listings)
+        setReviewQueueTotal(result.pagination.total)
+        setReviewQueueError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setReviewQueue([])
+        setReviewQueueTotal(0)
+        setReviewQueueError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load the review queue.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setReviewQueueLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchReviewQueue])
 
   const pageCounts = useMemo(() => {
     return {

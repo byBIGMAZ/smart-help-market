@@ -20,27 +20,57 @@ export default function AdminAutomation({
   const [error, setError] = useState('')
   const [reason, setReason] = useState('')
 
-  const loadStatus = useCallback(async () => {
-    setLoading(true)
-    setError('')
+const fetchStatus = useCallback(async () => {
+  const response = await getAdminAutomationStatus()
+  return response.automation
+}, [])
 
-    try {
-      const response = await getAdminAutomationStatus()
-      setStatus(response.automation)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to load automation status.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+const loadStatus = useCallback(async () => {
+  setLoading(true)
+  setError('')
 
-  useEffect(() => {
-    void loadStatus()
-  }, [loadStatus])
+  try {
+    const automation = await fetchStatus()
+    setStatus(automation)
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to load automation status.',
+    )
+  } finally {
+    setLoading(false)
+  }
+}, [fetchStatus])
+
+useEffect(() => {
+  let active = true
+
+  fetchStatus()
+    .then(automation => {
+      if (active) {
+        setStatus(automation)
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load automation status.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchStatus])
 
   const runAction = async (
     action: 'enable' | 'pause' | 'resume' | 'emergency-stop',

@@ -1,4 +1,3 @@
-
 import express from 'express'
 import cors from 'cors'
 import type { Server } from 'http'
@@ -6,6 +5,7 @@ import type { Server } from 'http'
 import publicSettingsRouter from './routes/publicSettings'
 import publicCategoriesRouter from './routes/publicCategories'
 import publicListingsRouter from './routes/publicListings'
+import listingImagesRouter from './routes/listingImages'
 import listingModerationRouter from './routes/listingModeration'
 import categoryManagementRouter from './routes/categoryManagement'
 import settingsManagementRouter from './routes/settingsManagement'
@@ -14,6 +14,8 @@ import automationManagementRouter from './routes/automationManagement'
 import automationMonitoringRouter from './routes/automationMonitoring'
 import automationRulesRouter from './routes/automationRules'
 import notificationsRouter from './routes/notifications'
+import messagesRouter from './routes/messages'
+import adminNotificationsRouter from './routes/adminNotifications'
 
 import authRouter from './routes/auth'
 import authSessionRouter from './routes/authSession'
@@ -31,14 +33,14 @@ const PORT = Number(process.env.PORT) || 3000
 
 app.disable('x-powered-by')
 
-// Allowed frontend origins
+// Allowed frontend origins.
 const allowedOrigins = [
   'http://localhost:5173',
   'https://mysterious-goblin-77wq6wqrv96qf4rw-5173.app.github.dev',
   process.env.FRONTEND_ORIGIN,
 ].filter((origin): origin is string => Boolean(origin))
 
-// CORS configuration with session cookie support
+// CORS configuration with session cookie support.
 app.use(
   cors({
     origin: allowedOrigins,
@@ -48,14 +50,15 @@ app.use(
 
 app.use(express.json({ limit: '100kb' }))
 
-// Authentication routes
+// Authentication routes.
 app.use('/api/auth', authRouter)
 app.use('/api/auth', authSessionRouter)
 
-// Personal notification routes
+// Personal notification routes.
 app.use('/api/notifications', notificationsRouter)
+app.use('/api/messages', messagesRouter)
 
-// Protected administration routes
+// Protected administration routes.
 app.use('/api/admin', adminRouter)
 app.use('/api/admin', auditLogsRouter)
 app.use('/api/admin/categories', categoryManagementRouter)
@@ -65,8 +68,9 @@ app.use('/api/admin/reports', reportsRouter)
 app.use('/api/admin/automation', automationManagementRouter)
 app.use('/api/admin/automation', automationMonitoringRouter)
 app.use('/api/admin/automation', automationRulesRouter)
+app.use('/api/admin/notifications', adminNotificationsRouter)
 
-// API health check
+// API health check.
 app.get('/api/health', (_req, res) => {
   res.status(200).json({
     status: 'ok',
@@ -75,27 +79,28 @@ app.get('/api/health', (_req, res) => {
   })
 })
 
-// Public marketplace routes
+// Public marketplace routes.
 app.use('/api/settings/public', publicSettingsRouter)
 app.use('/api/categories/public', publicCategoriesRouter)
 app.use('/api/listings/public', publicListingsRouter)
 
-// Unknown endpoint handler
+// Authenticated listing image management.
+app.use('/api/listings', listingImagesRouter)
+
+// Unknown endpoint handler.
 app.use((_req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
   })
 })
 
-// Start API server
+// Start API server.
 const server: Server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`SMART HELP MARKET API listening on port ${PORT}`)
-
-  // Worker starts only when explicitly enabled.
   startAutomationWorker()
 })
 
-// Graceful shutdown
+// Graceful shutdown.
 let shuttingDown = false
 
 async function shutdown(signal: string): Promise<void> {

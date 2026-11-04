@@ -1,0 +1,360 @@
+
+/*
+ * SMART HELP MARKET BY BIGMAZ
+ * Navigation refinement
+ * Version: 1.0.0
+ */
+
+/* Active desktop navigation */
+
+.navigation-item-active {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-weight: 750;
+}
+
+.navigation-item-active .navigation-item-icon {
+  color: var(--brand-primary);
+}
+
+.navigation-item-active:hover {
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+/* Sidebar brand */
+
+.sidebar-brand {
+  transition: opacity 160ms ease;
+}
+
+.sidebar-brand:hover {
+  opacity: 0.85;
+}
+
+/* Sidebar assistance card */
+
+.sidebar-help {
+  position: relative;
+  text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.sidebar-help:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-tertiary);
+}
+
+.sidebar-help-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-help-arrow {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.sidebar-version {
+  letter-spacing: 0.015em;
+}
+
+/* Header actions */
+
+.top-header-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.top-header-search {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 13px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  background: var(--surface);
+  color: var(--text-secondary);
+
+  font-size: 12px;
+  font-weight: 650;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.top-header-search:hover {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.top-header-search > span:first-child {
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* Theme selector refinements */
+
+.theme-selector button {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.theme-selector button.theme-active {
+  font-weight: 800;
+}
+
+.theme-selector button:focus-visible,
+.top-header-search:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+/* Mobile active navigation */
+
+.navigation-item-mobile.navigation-item-active {
+  background: transparent;
+  color: var(--brand-primary);
+}
+
+.navigation-item-mobile.navigation-item-active
+.navigation-item-icon {
+  color: var(--brand-primary);
+  transform: translateY(-1px);
+}
+
+.navigation-item-mobile.navigation-item-active
+.navigation-item-label {
+  font-weight: 800;
+}
+
+/* Tablet */
+
+@media (max-width: 1050px) {
+  .top-header-actions {
+    gap: 8px;
+  }
+
+  .top-header-search {
+    padding: 0 10px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 720px) {
+  .top-header-actions {
+    gap: 7px;
+  }
+
+  .top-header-search {
+    width: 36px;
+    min-height: 36px;
+    padding: 0;
+  }
+
+  .top-header-search > span:first-child {
+    font-size: 21px;
+  }
+
+  .top-header-search > span:last-child {
+    display: none;
+  }
+
+  .theme-selector button {
+    min-width: 32px;
+    padding: 0 7px;
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-brand,
+  .sidebar-help,
+  .top-header-search,
+  .theme-selector button {
+    transition: none;
+  }
+
+  .navigation-item-mobile.navigation-item-active
+  .navigation-item-icon {
+    transform: none;
+  }
+}
+
+
+/* Account navigation actions */
+.top-header-account-link {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.top-header-account-link:hover {
+  border-color: var(--brand-primary);
+  color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+}
+
+.top-header-account-primary {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary);
+  color: white;
+}
+
+.top-header-account-primary:hover {
+  background: var(--brand-primary);
+  color: white;
+  opacity: 0.9;
+}
+
+.top-header-account-link:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1050px) {
+  .top-header-account-link {
+    padding: 0 9px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 720px) {
+  .top-header-account-link {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-header-account-link {
+    transition: none;
+  }
+}
+
+
+/* Marketplace account identity and notification bell */
+.marketplace-notification-bell {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.marketplace-notification-count {
+  display: inline-flex;
+  min-width: 19px;
+  height: 19px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.top-header-profile-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.top-header-avatar {
+  display: inline-flex;
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.top-header-avatar img,
+.workspace-profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+@media (max-width: 720px) {
+  .top-header-profile-link > span:last-child {
+    display: none;
+  }
+
+  .marketplace-notification-count {
+    min-width: 17px;
+    height: 17px;
+    font-size: 9px;
+  }
+}
+
+
+/* Mobile notification and theme icon visibility */
+@media (max-width: 1050px) {
+  .theme-selector button span:first-child {
+    display: inline-flex !important;
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .mobile-bottom-nav .navigation-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 22px;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .mobile-bottom-nav .navigation-item-label {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .marketplace-top-header,
+  .top-header-actions,
+  .theme-selector {
+    min-width: 0;
+  }
+
+  .theme-selector button {
+    min-width: 34px;
+    width: 34px;
+    padding: 0;
+  }
+}

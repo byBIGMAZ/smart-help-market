@@ -1,0 +1,134 @@
+/*
+ * SMART HELP MARKET BY BIGMAZ
+ * Explore and Categories Pages
+ * Version: 1.0.0
+ */
+
+.browse-page {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 42px 36px 60px;
+}
+
+.browse-intro {
+  margin-bottom: 34px;
+}
+
+.browse-intro h1 {
+  margin: 9px 0 12px;
+  color: var(--text-primary);
+  font-size: clamp(27px, 3vw, 39px);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+}
+
+.browse-intro p {
+  max-width: 650px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.browse-category-section,
+.browse-results-section {
+  margin-top: 36px;
+}
+
+.browse-search-section {
+  margin-bottom: 38px;
+}
+
+.browse-search-section .search-bar {
+  width: 100%;
+  max-width: 1050px;
+}
+
+.browse-category-section .category-card {
+  text-decoration: none;
+}
+
+.browse-category-section .category-card-copy {
+  gap: 7px;
+}
+
+.browse-category-section .category-card-copy small:last-child {
+  color: var(--brand-primary);
+  font-weight: 750;
+}
+
+.browse-results-section .listing-grid {
+  margin-top: 25px;
+}
+
+.browse-results-section .listing-footer {
+  margin-top: 20px;
+}
+
+.browse-results-section .listing-card {
+  height: 100%;
+}
+
+.browse-page .filter-tabs {
+  flex-wrap: wrap;
+}
+
+.browse-page .category-card:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 4px;
+}
+
+.browse-page .filter-tabs button:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .browse-page {
+    padding: 32px 24px 50px;
+  }
+}
+
+@media (max-width: 720px) {
+  .browse-page {
+    padding: 26px 16px 35px;
+  }
+
+  .browse-intro {
+    margin-bottom: 25px;
+  }
+
+  .browse-intro h1 {
+    font-size: 27px;
+  }
+
+  .browse-intro p {
+    font-size: 13px;
+  }
+
+  .browse-category-section,
+  .browse-results-section {
+    margin-top: 28px;
+  }
+
+  .browse-search-section {
+    margin-bottom: 28px;
+  }
+
+  .browse-search-section .search-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .browse-search-section .search-field,
+  .browse-search-section .location-field {
+    width: 100%;
+  }
+
+  .browse-search-section .search-button {
+    width: 100%;
+  }
+}

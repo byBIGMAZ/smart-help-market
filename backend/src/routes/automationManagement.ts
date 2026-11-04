@@ -218,10 +218,10 @@ router.post(
         `
           UPDATE public.marketplace_automation_control
           SET
-            is_enabled = $2,
-            is_paused = $3,
-            pause_reason = $4,
-            updated_by = $5,
+            is_enabled = $1,
+            is_paused = $2,
+            pause_reason = $3,
+            updated_by = $4,
             updated_at = NOW()
           WHERE control_id = 1
           RETURNING

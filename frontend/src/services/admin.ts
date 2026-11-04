@@ -3,6 +3,7 @@ export interface AdminUser {
   id: string
   displayName: string
   roles: string[]
+  permissions: string[]
 }
 
 export interface AdminOverview {

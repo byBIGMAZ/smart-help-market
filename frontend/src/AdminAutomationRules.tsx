@@ -59,27 +59,58 @@ export default function AdminAutomationRules({ onNotice }: Props) {
     JSON.stringify(EMPTY_FORM.actions, null, 2),
   )
 
-  const loadRules = useCallback(async () => {
-    setLoading(true)
-    setError('')
+const fetchRules = useCallback(async () => {
+  const response = await getAutomationRules()
+  return response.rules
+}, [])
 
-    try {
-      const response = await getAutomationRules()
-      setRules(response.rules)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Could not load automation rules.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+const loadRules = useCallback(async () => {
+  setLoading(true)
+  setError('')
 
-  useEffect(() => {
-    void loadRules()
-  }, [loadRules])
+  try {
+    const result = await fetchRules()
+    setRules(result)
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Could not load automation rules.',
+    )
+  } finally {
+    setLoading(false)
+  }
+}, [fetchRules])
+
+useEffect(() => {
+  let active = true
+
+  fetchRules()
+    .then(result => {
+      if (active) {
+        setRules(result)
+        setError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Could not load automation rules.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchRules])
 
   function updateField<K extends keyof AutomationRuleInput>(
     field: K,

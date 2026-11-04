@@ -1,0 +1,236 @@
+/*
+ * SMART HELP MARKET BY BIGMAZ
+ * Shared motion and interaction system
+ */
+
+:root {
+  --motion-instant: 120ms;
+  --motion-fast: 180ms;
+  --motion-normal: 260ms;
+  --motion-smooth: 380ms;
+  --motion-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  --motion-lift: translateY(-3px);
+  --motion-press: scale(0.985);
+}
+
+/* Page entrances */
+@keyframes shm-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shm-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shm-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shm-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shm-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes shm-soft-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+@keyframes shm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Automatic route entrance */
+.marketplace-page-content > * {
+  animation: shm-page-enter 380ms var(--motion-enter) both;
+}
+
+/* Reusable animation utilities */
+.shm-animate-fade {
+  animation: shm-fade-in var(--motion-normal) var(--motion-enter) both;
+}
+
+.shm-animate-rise {
+  animation: shm-rise-in var(--motion-smooth) var(--motion-enter) both;
+}
+
+.shm-animate-scale {
+  animation: shm-scale-in var(--motion-normal) var(--motion-enter) both;
+}
+
+.shm-animate-slide {
+  animation: shm-slide-in var(--motion-smooth) var(--motion-enter) both;
+}
+
+.shm-animate-pulse {
+  animation: shm-soft-pulse 1.5s ease-in-out infinite;
+}
+
+.shm-animate-spin {
+  animation: shm-spin 800ms linear infinite;
+}
+
+/* Staggered entrances */
+.shm-stagger > * {
+  animation: shm-rise-in 420ms var(--motion-enter) both;
+}
+
+.shm-stagger > *:nth-child(1) { animation-delay: 30ms; }
+.shm-stagger > *:nth-child(2) { animation-delay: 70ms; }
+.shm-stagger > *:nth-child(3) { animation-delay: 110ms; }
+.shm-stagger > *:nth-child(4) { animation-delay: 150ms; }
+.shm-stagger > *:nth-child(5) { animation-delay: 190ms; }
+.shm-stagger > *:nth-child(6) { animation-delay: 230ms; }
+.shm-stagger > *:nth-child(n+7) { animation-delay: 260ms; }
+
+/* Interactive marketplace cards */
+.marketplace-page-content [class*="card"],
+.marketplace-page-content [class*="tile"] {
+  transition:
+    transform var(--motion-normal) var(--motion-spring),
+    box-shadow var(--motion-normal) ease,
+    border-color var(--motion-fast) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .marketplace-page-content [class*="card"]:hover,
+  .marketplace-page-content [class*="tile"]:hover {
+    transform: var(--motion-lift);
+  }
+
+  .marketplace-page-content button:hover,
+  .marketplace-page-content [role="button"]:hover {
+    filter: brightness(1.035);
+  }
+}
+
+/* Press feedback */
+.marketplace-page-content button:active,
+.marketplace-page-content [role="button"]:active {
+  transform: var(--motion-press);
+}
+
+/* Focus feedback */
+.marketplace-page-content input:focus-visible,
+.marketplace-page-content select:focus-visible,
+.marketplace-page-content textarea:focus-visible,
+.marketplace-page-content button:focus-visible,
+.marketplace-page-content a:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+/* Modal and overlay utilities */
+.shm-modal-backdrop {
+  animation: shm-fade-in 180ms ease both;
+}
+
+.shm-modal-content {
+  animation: shm-scale-in 240ms var(--motion-enter) both;
+  transform-origin: center;
+}
+
+/* Loading placeholders */
+.shm-skeleton {
+  animation: shm-soft-pulse 1.4s ease-in-out infinite;
+  background: var(--surface-secondary);
+  border-radius: var(--radius-md);
+}
+
+/* Image and media transitions */
+.shm-media {
+  overflow: hidden;
+}
+
+.shm-media img,
+.shm-media video {
+  transition: transform 450ms var(--motion-spring);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .shm-media:hover img {
+    transform: scale(1.035);
+  }
+}
+
+/* Theme changes */
+body,
+.marketplace-shell,
+.marketplace-workspace {
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+/* Reduced motion and accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .marketplace-page-content > *,
+  .shm-animate-fade,
+  .shm-animate-rise,
+  .shm-animate-scale,
+  .shm-animate-slide,
+  .shm-animate-pulse,
+  .shm-animate-spin,
+  .shm-stagger > *,
+  .shm-modal-backdrop,
+  .shm-modal-content,
+  .shm-skeleton {
+    animation: none !important;
+  }
+
+  .marketplace-page-content *,
+  .shm-media img,
+  .shm-media video,
+  body,
+  .marketplace-shell,
+  .marketplace-workspace {
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .marketplace-page-content [class*="card"]:hover,
+  .marketplace-page-content [class*="tile"]:hover,
+  .marketplace-page-content button:active,
+  .marketplace-page-content [role="button"]:active {
+    transform: none !important;
+  }
+}

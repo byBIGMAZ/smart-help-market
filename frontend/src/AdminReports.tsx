@@ -452,33 +452,62 @@ export default function AdminReports() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
-  const loadReports = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    setNotice('')
+const fetchReports = useCallback(async () => {
+  return await getAdminReports({
+    from,
+    to,
+    granularity,
+  })
+}, [from, to, granularity])
 
-    try {
-      const result = await getAdminReports({
-        from,
-        to,
-        granularity,
-      })
+const loadReports = useCallback(async () => {
+  setLoading(true)
+  setError('')
+  setNotice('')
 
-      setReport(result)
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Reports could not be loaded.',
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [from, to, granularity])
+  try {
+    const result = await fetchReports()
+    setReport(result)
+  } catch (err: unknown) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Reports could not be loaded.',
+    )
+  } finally {
+    setLoading(false)
+  }
+}, [fetchReports])
 
-  useEffect(() => {
-    void loadReports()
-  }, [loadReports])
+useEffect(() => {
+  let active = true
+
+  fetchReports()
+    .then(result => {
+      if (active) {
+        setReport(result)
+        setError('')
+      }
+    })
+    .catch(err => {
+      if (active) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Reports could not be loaded.',
+        )
+      }
+    })
+    .finally(() => {
+      if (active) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    active = false
+  }
+}, [fetchReports])
 
   const handleExport = () => {
     if (!report) return
