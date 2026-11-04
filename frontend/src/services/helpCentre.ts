@@ -92,13 +92,13 @@ export async function sendHelpMessage(message: string, conversationId?: string, 
   )
 }
 
-export async function submitHelpFeedback(assistantMessageId: string, helpful: boolean) {
+export async function submitHelpFeedback(assistantMessageId: string, helpful: boolean, correctedIntent?: string) {
   return readApi<{ status: string; message: string }>(
     await fetch('/api/help-centre/feedback', {
       method: 'POST',
       credentials: 'include',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assistantMessageId, helpful }),
+      body: JSON.stringify({ assistantMessageId, helpful, ...(correctedIntent ? { correctedIntent } : {}) }),
     }),
   )
 }
