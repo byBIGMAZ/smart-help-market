@@ -27,13 +27,10 @@ interface DashboardConfig {
   actions: WorkspaceLink[]
 }
 
-export const workspaces: Record<Role, {
-  title: string
-  description: string
-  links: WorkspaceLink[]
-}> = {
+const dashboardConfigs: Record<Role, DashboardConfig> = {
   buyer: {
-    title: 'Bu your favourite discoveries and purchase enquiries organised.',
+    greeting: 'Your marketplace activity',
+    introduction: 'Keep your favourite discoveries and purchase enquiries organised.',
     stats: [
       { label: 'Saved items', value: '3', caption: 'Items in your collection', icon: '♡' },
       { label: 'Open enquiries', value: '2', caption: 'Awaiting a response', icon: '✉' },
