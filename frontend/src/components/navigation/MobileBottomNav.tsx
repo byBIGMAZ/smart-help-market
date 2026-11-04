@@ -33,13 +33,13 @@ export default function MobileBottomNav() {
     { label: 'Categories', icon: '◇', to: '/categories' },
     { label: 'Notifications', icon: '🔔', to: user ? `/${accountRole}/notifications` : '/login' },
     {
-      label: 'Account',
+      label: 'Dashboard',
       icon: user?.avatarUrl ? (
         <img className="mobile-account-avatar-image" src={user.avatarUrl} alt="" />
       ) : (
         <span className="mobile-account-avatar-placeholder" aria-hidden="true">♙</span>
       ),
-      to: user ? `/${accountRole}/account` : '/login',
+      to: user ? `/${accountRole}/dashboard` : '/login',
     },
   ]
 
