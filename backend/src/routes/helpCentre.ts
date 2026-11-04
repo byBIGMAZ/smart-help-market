@@ -153,12 +153,29 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     const previous = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
     searchText = `${previous} ${rawMessage}`.trim()
     delete nextContext.pendingSearchText
-    if (normalize(rawMessage) === 'any location') delete nextContext.selectedLocation
-    else nextContext.selectedLocation = rawMessage.trim()
+    let locationConfirmation = ''
+    if (normalize(rawMessage) === 'any location') {
+      delete nextContext.selectedLocation
+      delete nextContext.selectedLocationVerified
+    } else {
+      nextContext.selectedLocation = rawMessage.trim()
+      try {
+        const geoEnabled = await getSetting('geo.enabled', false)
+        if (geoEnabled === true) {
+          const resolved = await resolveGeographicLocation(rawMessage)
+          if (resolved.status === 'resolved' && resolved.result) {
+            nextContext.selectedLocationVerified = resolved.result.displayName
+            locationConfirmation = ` I also resolved the area as ${resolved.result.displayName}. Location data: ${resolved.result.attribution}.`
+          }
+        }
+      } catch {
+        // Geographic lookup is optional. Keep the user's original location for listing search.
+      }
+    }
     nextContext.awaiting = 'budget'
     nextContext.pendingBudgetSearchText = searchText
     return {
-      text: 'Great. What budget range should I use? You can also choose any budget and I will show the available matches.',
+      text: `Great. What budget range should I use? You can also choose any budget and I will show the available matches.${locationConfirmation}`,
       suggestions: ['Below ₦200k', '₦200k to ₦350k', '₦350k to ₦500k', 'Any budget'],
       context: nextContext,
     }
@@ -363,7 +380,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
        CASE WHEN concat_ws(' ', l.title, l.location_display) ILIKE $3 THEN 0 ELSE 1 END,
        l.created_at DESC
      LIMIT 5`,
-    [category, patterns, `%${normalize(searchText)}%`, budget.min, budget.max],
+    [category, patterns, `%${normalize(searchText)}%`, budget.min, budget.max, typeof nextContext.selectedLocation === 'string' ? nextContext.selectedLocation : null],
   )
 
   if (result.rows.length) {
