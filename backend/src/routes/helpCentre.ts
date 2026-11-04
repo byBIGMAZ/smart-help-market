@@ -115,6 +115,14 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   let searchText = rawMessage
   const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
 
+  if (['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support', 'report a problem', 'report an issue', 'submit a complaint', 'i have a complaint', 'need an admin'].some((term) => message.includes(term))) {
+    return {
+      text: 'Of course. I can pass this conversation to the support team. Please add a short subject and explain what you need so an administrator can follow up.',
+      needsAdmin: true,
+      context: nextContext,
+    }
+  }
+
   if (awaiting === 'location') {
     const previous = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
     searchText = `${previous} ${rawMessage}`.trim()
@@ -135,14 +143,6 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     searchText = `${previous} ${rawMessage}`.trim()
     delete nextContext.pendingBudgetSearchText
     delete nextContext.awaiting
-  }
-
-  if (['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support', 'report a problem', 'report an issue', 'submit a complaint', 'i have a complaint', 'need an admin'].some((term) => message.includes(term))) {
-    return {
-      text: 'Of course. I can pass this conversation to the support team. Please add a short subject and explain what you need so an administrator can follow up.',
-      needsAdmin: true,
-      context: nextContext,
-    }
   }
 
   const lastSearch = typeof context.lastSearchText === 'string' ? context.lastSearchText : ''
