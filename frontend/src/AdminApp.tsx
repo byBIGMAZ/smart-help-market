@@ -38,6 +38,7 @@ import {
 } from './services/adminNotifications'
 
 import AdminNotifications from './AdminNotifications'
+import AdminProfileApprovals from './AdminProfileApprovals'
 
 import AdminListingModeration from './AdminListingModeration'
 import AdminCategoryManagement from './AdminCategoryManagement'
@@ -50,6 +51,7 @@ import AdminAutomationMonitoring from './AdminAutomationMonitoring'
 import './AdminApp.css'
 import './AdminAuditLogs.css'
 import './AdminSystemTheme.css'
+import './AdminProfileApprovals.css'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
@@ -66,6 +68,7 @@ type AdminSection =
   | 'automation-rules'
   | 'automation-monitoring'
   | 'notifications'
+  | 'profile-approvals'
 
 type UserStatusFilter = 'all' | AccountStatus
 
@@ -621,6 +624,18 @@ function openAutomationMonitoring() {
   setError('')
   setNotice('')
 }
+
+  function openProfileApprovals() {
+    if (!user?.roles.includes('super_admin')) return
+    setSection('profile-approvals')
+    setSelectedRoleId(null)
+    setSelectedRoleUserId(null)
+    setError('')
+    setNotice('')
+    setUsersError('')
+    setRolesError('')
+    setAuditError('')
+  }
 
   function openAuditLogs() {
     setSection('audit')
@@ -1287,6 +1302,18 @@ function openAutomationMonitoring() {
     )}
   </button>
 )}
+
+          {user?.roles.includes('super_admin') && (
+            <button
+              type="button"
+              className={`admin-nav-button ${section === 'profile-approvals' ? 'is-active' : ''}`}
+              aria-current={section === 'profile-approvals' ? 'page' : undefined}
+              onClick={openProfileApprovals}
+            >
+              <span aria-hidden="true">✓</span>
+              Profile Approvals
+            </button>
+          )}
 
           <button
             type="button"
@@ -2023,6 +2050,11 @@ function openAutomationMonitoring() {
       onUnreadCountChange={setNotificationUnreadCount}
     />
   )}
+
+        {/* PROFILE APPROVAL CENTRE */}
+        {section === 'profile-approvals' && user?.roles.includes('super_admin') && (
+          <AdminProfileApprovals />
+        )}
 
         {/* AUDIT LOGS */}
         {section === 'audit' && (
