@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import EscrowExplainer from '../../components/experience/EscrowExplainer'
+import SearchDiscovery from '../../components/experience/SearchDiscovery'
 import { getPublicPlatformSettings } from '../../services/platformSettings'
 import {
   getPublicCategories,
@@ -191,27 +192,6 @@ function App() {
     )
   }
 
-  function selectPopularSearch(term: string) {
-    setSearch(term)
-
-    if (term === 'Electronics') {
-      setCategory(
-        marketplaceCategories.find((item) => item.key === 'products')?.key ??
-          'All',
-      )
-    } else if (term === 'Repairs') {
-      setCategory(
-        marketplaceCategories.find((item) => item.key === 'services')?.key ??
-          'All',
-      )
-    } else {
-      setCategory('All')
-    }
-
-    document.getElementById('discover')?.scrollIntoView({
-      behavior: 'smooth',
-    })
-  }
 
   return (
     <main className="marketplace">
@@ -311,54 +291,15 @@ function App() {
           <span className="search-hint">Search across the marketplace</span>
         </div>
 
-        <form
-          className="search-bar"
-          onSubmit={(event) => {
-            event.preventDefault()
-            document.getElementById('discover')?.scrollIntoView({
-              behavior: 'smooth',
-            })
+        <SearchDiscovery
+          search={search}
+          location={location}
+          onSearchChange={setSearch}
+          onLocationChange={setLocation}
+          onSubmit={() => {
+            document.getElementById('discover')?.scrollIntoView({ behavior: 'smooth' })
           }}
-        >
-          <label className="search-field">
-            <span aria-hidden="true">⌕</span>
-            <span className="sr-only">Search listings</span>
-            <input
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Try “apartment”, “laptop”, “electrician”..."
-            />
-          </label>
-
-          <label className="location-field">
-            <span aria-hidden="true">⌖</span>
-            <span className="sr-only">Filter by location</span>
-            <input
-              value={location}
-              onChange={(event) => setLocation(event.target.value)}
-              placeholder="City or state"
-            />
-          </label>
-
-          <button className="button button-primary search-button" type="submit">
-            Search <span aria-hidden="true">→</span>
-          </button>
-        </form>
-
-        <div className="popular-searches">
-          <span>Popular:</span>
-
-          {['Self-contained', 'Apartments', 'Electronics', 'Repairs'].map(
-            (term) => (
-              <button
-                key={term}
-                onClick={() => selectPopularSearch(term)}
-              >
-                {term}
-              </button>
-            ),
-          )}
-        </div>
+        />
       </section>
 
       <section className="categories-section" id="categories">
