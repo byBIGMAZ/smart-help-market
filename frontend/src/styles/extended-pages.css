@@ -2192,3 +2192,28 @@
   .workspace-nav.workspace-nav-viewport:not(.workspace-nav-open){transform:translateX(-105%)!important}
   .workspace-nav.workspace-nav-viewport.workspace-nav-open{transform:translateX(0)!important}
 }
+
+
+.landlord-analytics-kpis>.landlord-kpi-link{
+  display:grid;align-content:start;gap:7px;min-width:0;padding:17px;
+  border:1px solid var(--border);border-radius:16px;background:var(--surface);
+  box-shadow:var(--shadow-sm);color:var(--text-primary);text-decoration:none;
+  transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+}
+.landlord-analytics-kpis>.landlord-kpi-link:hover{
+  transform:translateY(-3px);border-color:var(--brand-primary);box-shadow:var(--shadow-md)
+}
+.landlord-analytics-kpis>.landlord-kpi-link>span:nth-child(2){
+  color:var(--text-secondary);font-size:11px;font-weight:650
+}
+.landlord-analytics-kpis>.landlord-kpi-link>strong{
+  color:var(--text-primary);font-size:clamp(21px,2.3vw,28px);overflow-wrap:anywhere
+}
+.landlord-analytics-kpis>.landlord-kpi-link>small{
+  color:var(--text-muted);font-size:10px;line-height:1.5
+}
+.landlord-analytics-kpis>.landlord-kpi-link:focus-visible{
+  outline:3px solid var(--brand-primary);outline-offset:2px
+}
+@media(max-width:680px){.landlord-analytics-kpis>.landlord-kpi-link{padding:13px}}
+@media(prefers-reduced-motion:reduce){.landlord-analytics-kpis>.landlord-kpi-link{transition:none}.landlord-analytics-kpis>.landlord-kpi-link:hover{transform:none}}
