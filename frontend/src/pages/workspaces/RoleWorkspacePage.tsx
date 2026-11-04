@@ -334,6 +334,14 @@ const sectionRecords: Record<Role, Record<string, WorkspaceRecord[]>> = {
   },
 }
 
+const dashboardActivityPaths: Record<Role, string[]> = {
+  buyer: ['/buyer/saved', '/buyer/saved', '/explore'],
+  landlord: ['/landlord/properties', '/landlord/properties', '/landlord/inspections'],
+  seller: ['/seller/products', '/seller/products', '/seller/orders'],
+  provider: ['/provider/services', '/provider/services', '/provider/bookings'],
+  agent: ['/agent/listings', '/agent/clients', '/agent/commissions'],
+}
+
 const dashboardStatPaths: Record<Role, string[]> = {
   buyer: ['/buyer/saved', '/buyer/enquiries', '/buyer/inspections', '/buyer/transactions'],
   landlord: ['/landlord/properties', '/landlord/properties', '/landlord/tenants', '/landlord/inspections'],
@@ -1118,7 +1126,7 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
                     <div><span>Location</span><strong>{[submission.neighbourhood, submission.city, submission.state, submission.country].filter(Boolean).join(', ') || 'Not provided'}</strong></div>
                     <div className="shm-tenant-submission-bio"><span>About the tenant</span><p>{submission.bio || 'No biography supplied.'}</p></div>
                     <div className="shm-tenant-documents"><strong>Uploaded documents</strong>
-                      {submission.documents.length ? submission.documents.map((doc, index) => <a key={index} href={doc.dataUrl} download={doc.name} target="_blank" rel="noreferrer">{doc.name} ↗</a>) : <small>No supporting documents uploaded.</small>}
+                      {(submission.documents || []).length ? (submission.documents || []).map((doc, index) => <a key={index} href={doc.dataUrl} download={doc.name} target="_blank" rel="noreferrer">{doc.name} ↗</a>) : <small>No supporting documents uploaded.</small>}
                     </div>
                     <small>Tenant submission updated {new Date(submission.updatedAt).toLocaleString('en-NG')}</small>
                   </div>
@@ -2133,7 +2141,7 @@ export default function RoleWorkspacePage() {
 
                   <div className="workspace-activity-list">
                     {dashboard.activity.map((item, index) => (
-                      <article className="workspace-activity-item" key={item.title}>
+                      <Link className="workspace-activity-item" key={item.title} to={dashboardActivityPaths[role][index] || `/${role}/dashboard`}>
                         <span className="workspace-activity-marker">
                           {String(index + 1).padStart(2, '0')}
                         </span>
@@ -2144,7 +2152,7 @@ export default function RoleWorkspacePage() {
                         <span className="workspace-status">
                           {item.status}
                         </span>
-                      </article>
+                      </Link>
                     ))}
                   </div>
                 </section>
