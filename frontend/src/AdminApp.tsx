@@ -54,6 +54,7 @@ import './AdminSystemTheme.css'
 import './AdminProfileApprovals.css'
 import ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
 import WorkspaceFloatingSidebar from './components/navigation/WorkspaceFloatingSidebar'
+import HelpCentreWidget from './components/help/HelpCentreWidget'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
@@ -2487,7 +2488,8 @@ function openAutomationMonitoring() {
           </span>
         </footer>
       </section>
-    </main>
+            <HelpCentreWidget />
+</main>
   )
 }
 
