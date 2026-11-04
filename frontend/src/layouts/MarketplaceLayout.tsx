@@ -4,6 +4,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import DesktopSidebar from '../components/navigation/DesktopSidebar'
 import TopHeader from '../components/navigation/TopHeader'
@@ -25,7 +26,8 @@ const DEFAULT_PLATFORM_NAME = 'SMART HELP MARKET BY BIGMAZ'
 export default function MarketplaceLayout({
   children,
 }: MarketplaceLayoutProps) {
-  const { pathname } = useLocation()\n  const [platformName, setPlatformName] = useState(
+  const { pathname } = useLocation()
+  const [platformName, setPlatformName] = useState(
     DEFAULT_PLATFORM_NAME,
   )
 
@@ -64,7 +66,7 @@ export default function MarketplaceLayout({
       </div>
 
       <MobileBottomNav />
-      {!['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(pathname.split('/').filter(Boolean)[0] || '') && <QuickNavigationOrb />
+      {!['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(pathname.split('/').filter(Boolean)[0] || '') && <QuickNavigationOrb />}
     </div>
   )
 }
