@@ -2,7 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import { getDatabasePool } from '../database'
 import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession'
 import { requirePermission } from '../auth/requirePermission'
-import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, type BigmazIntent } from '../intelligence/bigmazEngine'
+import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, hashIntentFeatures, type BigmazIntent, type IntentWeight } from '../intelligence/bigmazEngine'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
@@ -110,14 +110,33 @@ function parseBudget(text: string): { min: number | null; max: number | null } {
   return { min: null, max: null }
 }
 
+async function predictIntent(message: string) {
+  const featureHashes = hashIntentFeatures(message)
+  const [examples, weights] = await Promise.all([
+    getDatabasePool().query<{ phrase: string; intent_key: BigmazIntent }>(
+      `SELECT phrase, intent_key FROM public.marketplace_ai_training_examples
+       WHERE approved = TRUE ORDER BY approved_at DESC NULLS LAST LIMIT 1000`,
+    ).catch(() => ({ rows: [] as Array<{ phrase: string; intent_key: BigmazIntent }> })),
+    featureHashes.length
+      ? getDatabasePool().query<IntentWeight>(
+          `SELECT feature_hash, intent_key, weight::float AS weight
+           FROM public.marketplace_ai_intent_weights
+           WHERE feature_hash = ANY($1::text[])`,
+          [featureHashes],
+        ).catch(() => ({ rows: [] as IntentWeight[] }))
+      : Promise.resolve({ rows: [] as IntentWeight[] }),
+  ])
+  return classifyBigmazIntent(
+    message,
+    examples.rows.map((row) => ({ phrase: row.phrase, intent: row.intent_key })),
+    weights.rows,
+  )
+}
+
 async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[], preferredRole?: string): Promise<AssistantResult> {
   const message = normalize(rawMessage)
   const nextContext = { ...context }
-  const learnedExamples = await getDatabasePool().query<{ phrase: string; intent_key: BigmazIntent }>(
-    `SELECT phrase, intent_key FROM public.marketplace_ai_training_examples
-     WHERE approved = TRUE ORDER BY approved_at DESC NULLS LAST LIMIT 1000`,
-  ).catch(() => ({ rows: [] as Array<{ phrase: string; intent_key: BigmazIntent }> }))
-  const prediction = classifyBigmazIntent(rawMessage, learnedExamples.rows.map((row) => ({ phrase: row.phrase, intent: row.intent_key })))
+  const prediction = await predictIntent(rawMessage)
   let searchText = rawMessage
   const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
 
@@ -535,13 +554,13 @@ router.post('/chat', async (req: Request, res: Response) => {
         intent: classifyBigmazIntent(message).intent,
       })],
     )
-    const prediction = classifyBigmazIntent(message)
+    const prediction = await predictIntent(message)
     await client.query(
       `INSERT INTO public.marketplace_ai_learning_events
-       (user_id, conversation_id, assistant_message_id, intent_key, confidence, meaningful_token_count, model_version)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+       (user_id, conversation_id, assistant_message_id, intent_key, confidence, meaningful_token_count, model_version, feature_hashes)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
       [userId, conversationId, assistantMessage.rows[0].id, prediction.intent,
-       prediction.confidence, countMeaningfulTokens(message), getBigmazModelVersion()],
+       prediction.confidence, countMeaningfulTokens(message), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(message))],
     )
     await client.query(
       `UPDATE public.marketplace_help_conversations
@@ -578,7 +597,16 @@ router.post('/chat', async (req: Request, res: Response) => {
 router.post('/feedback', async (req: Request, res: Response) => {
   const messageId = typeof req.body?.assistantMessageId === 'string' ? req.body.assistantMessageId : ''
   const helpful = req.body?.helpful
-  if (!/^[1-9]\d*$/.test(messageId) || typeof helpful !== 'boolean') {
+  const allowedIntents: BigmazIntent[] = [
+    'greeting', 'property_search', 'roommate_search', 'product_search',
+    'service_search', 'neighbourhood_question', 'escrow_explanation',
+    'navigation', 'support', 'general',
+  ]
+  const correctedIntent = typeof req.body?.correctedIntent === 'string'
+    && allowedIntents.includes(req.body.correctedIntent as BigmazIntent)
+    ? req.body.correctedIntent as BigmazIntent
+    : null
+  if (!/^[1-9]\d*$/.test(messageId) || typeof helpful !== 'boolean' || (req.body?.correctedIntent && !correctedIntent)) {
     res.status(400).json({ error: 'A valid assistant response and feedback rating are required.' })
     return
   }
@@ -595,19 +623,60 @@ router.post('/feedback', async (req: Request, res: Response) => {
       res.status(404).json({ error: 'Assistant response not found.' })
       return
     }
-    await db.query(
-      `INSERT INTO public.marketplace_ai_feedback (user_id, message_id, helpful)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (user_id, message_id) DO UPDATE SET helpful = EXCLUDED.helpful`,
-      [userIdFrom(res), messageId, helpful],
+    const previous = await db.query<{ corrected_intent: string | null }>(
+      'SELECT corrected_intent FROM public.marketplace_ai_feedback WHERE user_id = $1 AND message_id = $2',
+      [userIdFrom(res), messageId],
     )
     await db.query(
-      `UPDATE public.marketplace_ai_learning_events
-       SET outcome = $2
-       WHERE assistant_message_id = $1`,
-      [messageId, helpful ? 'helpful' : 'not_helpful'],
+      `INSERT INTO public.marketplace_ai_feedback (user_id, message_id, helpful, corrected_intent)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (user_id, message_id) DO UPDATE
+       SET helpful = EXCLUDED.helpful, corrected_intent = EXCLUDED.corrected_intent`,
+      [userIdFrom(res), messageId, helpful, correctedIntent],
     )
-    res.status(201).json({ status: 'ok', message: 'Thank you. Your feedback will help us evaluate and improve BIGMAZ AI.' })
+    const event = await db.query<{ intent_key: BigmazIntent; feature_hashes: string[] }>(
+      `SELECT intent_key, feature_hashes FROM public.marketplace_ai_learning_events
+       WHERE assistant_message_id = $1 LIMIT 1`,
+      [messageId],
+    )
+    if (event.rowCount) {
+      await db.query(
+        `UPDATE public.marketplace_ai_learning_events SET outcome = $2 WHERE assistant_message_id = $1`,
+        [messageId, helpful ? 'helpful' : 'not_helpful'],
+      )
+      const hashes = Array.isArray(event.rows[0].feature_hashes) ? event.rows[0].feature_hashes : []
+      const correctionChanged = Boolean(correctedIntent && previous.rows[0]?.corrected_intent !== correctedIntent)
+      if (correctionChanged) {
+        for (const featureHash of hashes) {
+          await db.query(
+            `INSERT INTO public.marketplace_ai_intent_weights (feature_hash, intent_key, weight, sample_count)
+             VALUES ($1, $2, 0.12, 1)
+             ON CONFLICT (feature_hash, intent_key) DO UPDATE
+             SET weight = LEAST(1, GREATEST(-1, public.marketplace_ai_intent_weights.weight + 0.12)),
+                 sample_count = public.marketplace_ai_intent_weights.sample_count + 1,
+                 updated_at = NOW()`,
+            [featureHash, correctedIntent],
+          )
+          if (event.rows[0].intent_key !== correctedIntent) {
+            await db.query(
+              `INSERT INTO public.marketplace_ai_intent_weights (feature_hash, intent_key, weight, sample_count)
+               VALUES ($1, $2, -0.06, 1)
+               ON CONFLICT (feature_hash, intent_key) DO UPDATE
+               SET weight = LEAST(1, GREATEST(-1, public.marketplace_ai_intent_weights.weight - 0.06)),
+                   sample_count = public.marketplace_ai_intent_weights.sample_count + 1,
+                   updated_at = NOW()`,
+              [featureHash, event.rows[0].intent_key],
+            )
+          }
+        }
+      }
+    }
+    res.status(201).json({
+      status: 'ok',
+      message: correctedIntent
+        ? 'Thank you. BIGMAZ AI has recorded your correction for its adaptive intent model.'
+        : 'Thank you. Your feedback will help us evaluate and improve BIGMAZ AI.',
+    })
   } catch {
     res.status(500).json({ error: 'Your feedback could not be saved.' })
   }
