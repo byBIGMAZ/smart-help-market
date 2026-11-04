@@ -53,6 +53,7 @@ import './AdminAuditLogs.css'
 import './AdminSystemTheme.css'
 import './AdminProfileApprovals.css'
 import ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
+import WorkspaceFloatingSidebar from './components/navigation/WorkspaceFloatingSidebar'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
@@ -117,6 +118,7 @@ function formatAction(value: string): string {
 function AdminApp() {
   const [screen, setScreen] = useState<Screen>('checking')
   const [section, setSection] = useState<AdminSection>('overview')
+  const [sectionHistory, setSectionHistory] = useState<AdminSection[]>([])
   const [user, setUser] = useState<AdminUser | null>(null)
   const [notificationUnreadCount, setNotificationUnreadCount] =
   useState(0)
@@ -539,8 +541,27 @@ useEffect(() => {
   }
 
   // Navigation
+  function navigateAdminSection(nextSection: AdminSection) {
+    if (nextSection === section) return
+    setSectionHistory((current) => [...current, section])
+    setSection(nextSection)
+  }
+
+  function goBackAdminSection() {
+    const previousSection = sectionHistory[sectionHistory.length - 1]
+    if (previousSection) {
+      setSectionHistory((current) => current.slice(0, -1))
+      setSection(previousSection)
+      return
+    }
+    if (section !== 'overview') {
+      navigateAdminSection('overview')
+      return
+    }
+    if (window.history.length > 1) window.history.back()
+  }
   function openUsers() {
-    setSection('users')
+    navigateAdminSection('users')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
@@ -552,7 +573,7 @@ useEffect(() => {
   }
 
   function openOverview() {
-    setSection('overview')
+    navigateAdminSection('overview')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setUsersError('')
@@ -563,7 +584,7 @@ useEffect(() => {
   }
 
   function openRoles() {
-    setSection('roles')
+    navigateAdminSection('roles')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
@@ -573,7 +594,7 @@ useEffect(() => {
   }
 
   function openModeration() {
-    setSection('moderation')
+    navigateAdminSection('moderation')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setUsersError('')
@@ -584,7 +605,7 @@ useEffect(() => {
   }
 
   function openCategories() {
-    setSection('categories')
+    navigateAdminSection('categories')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setUsersError('')
@@ -595,7 +616,7 @@ useEffect(() => {
   }
 
   function openSettings() {
-  setSection('settings')
+  navigateAdminSection('settings')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -606,7 +627,7 @@ useEffect(() => {
 }
 
 function openReports() {
-  setSection('reports')
+  navigateAdminSection('reports')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -617,7 +638,7 @@ function openReports() {
 }
 
 function openAutomation() {
-  setSection('automation')
+  navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -628,7 +649,7 @@ function openAutomation() {
 }
 
 function openAutomationRules() {
-  setSection('automation-rules')
+  navigateAdminSection('automation-rules')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -639,7 +660,7 @@ function openAutomationRules() {
 }
 
 function openAutomationMonitoring() {
-  setSection('automation-monitoring')
+  navigateAdminSection('automation-monitoring')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -651,7 +672,7 @@ function openAutomationMonitoring() {
 
   function openProfileApprovals() {
     if (!user?.roles.includes('super_admin')) return
-    setSection('profile-approvals')
+    navigateAdminSection('profile-approvals')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
@@ -662,7 +683,7 @@ function openAutomationMonitoring() {
   }
 
   function openAuditLogs() {
-    setSection('audit')
+    navigateAdminSection('audit')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
@@ -676,7 +697,7 @@ function openAutomationMonitoring() {
   }
 
   function openNotifications() {
-  setSection('notifications')
+  navigateAdminSection('notifications')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setError('')
@@ -686,6 +707,24 @@ function openAutomationMonitoring() {
   setAuditError('')
   void loadNotificationUnreadCount()
 }
+
+  function handleAdminSidebarNavigation(path: string) {
+    switch (path as AdminSection) {
+      case 'overview': openOverview(); break
+      case 'users': openUsers(); break
+      case 'roles': openRoles(); break
+      case 'moderation': openModeration(); break
+      case 'categories': openCategories(); break
+      case 'settings': openSettings(); break
+      case 'reports': openReports(); break
+      case 'audit': openAuditLogs(); break
+      case 'automation': openAutomation(); break
+      case 'automation-rules': openAutomationRules(); break
+      case 'automation-monitoring': openAutomationMonitoring(); break
+      case 'notifications': openNotifications(); break
+      case 'profile-approvals': openProfileApprovals(); break
+    }
+  }
 
   // User filters
   function applyUserFilters(event: FormEvent<HTMLFormElement>) {
@@ -1154,7 +1193,37 @@ function openAutomationMonitoring() {
         </div>
       </header>
 
+      <WorkspaceFloatingSidebar
+        links={[
+          { label: 'Overview', path: 'overview' },
+          { label: 'User Management', path: 'users' },
+          { label: 'Listing Moderation', path: 'moderation' },
+          { label: 'Categories', path: 'categories' },
+          { label: 'Platform Settings', path: 'settings' },
+          { label: 'Reports & Analytics', path: 'reports' },
+          { label: 'Automation Control', path: 'automation' },
+          { label: 'Automation Rules', path: 'automation-rules' },
+          { label: 'Automation Monitoring', path: 'automation-monitoring' },
+          { label: 'Role Management', path: 'roles' },
+          ...(user?.permissions.includes('notifications.view') ? [{ label: 'Notifications', path: 'notifications' }] : []),
+          ...(user?.roles.includes('super_admin') ? [{ label: 'Profile Approvals', path: 'profile-approvals' }] : []),
+          { label: 'Audit Logs', path: 'audit' },
+        ]}
+        onNavigate={handleAdminSidebarNavigation}
+        activePath={section}
+      />
+
       <section className="admin-content">
+        <nav className="admin-route-controls" aria-label="Administration page controls">
+          <button type="button" className="admin-secondary-button" onClick={goBackAdminSection}>
+            <span aria-hidden="true">←</span> Back
+          </button>
+          {section !== 'overview' && (
+            <button type="button" className="admin-secondary-button" onClick={openOverview}>
+              <span aria-hidden="true">⌂</span> Dashboard
+            </button>
+          )}
+        </nav>
         <div className="admin-page-heading">
           <div>
             <span className="admin-kicker">PLATFORM CONTROL CENTRE</span>
