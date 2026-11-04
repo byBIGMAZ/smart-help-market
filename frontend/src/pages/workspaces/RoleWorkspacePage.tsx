@@ -16,6 +16,7 @@ interface WorkspaceRecord {
   title: string
   description: string
   status: string
+  path?: string
 }
 
 interface DashboardStat {
@@ -271,9 +272,9 @@ const sectionRecords: Record<Role, Record<string, WorkspaceRecord[]>> = {
   },
   landlord: {
     properties: [
-      { title: 'Self-contained property, Nearby', description: '2 sample units · Property management preview.', status: 'Available' },
-      { title: 'Self-contained property, Nearby', description: '1 sample unit · Property management preview.', status: 'Available' },
-      { title: 'Two-bedroom apartment, GRA', description: 'Sample residential property.', status: 'Occupied' },
+      { title: 'Student Self-Contained Apartment', description: 'Demonstration accommodation listing around Ekosodin, Benin City.', status: 'Available', path: '/listing/student-self-contained-ekosodin' },
+      { title: 'Affordable Self-Contained Room', description: 'Demonstration accommodation listing around BDPA, Benin City.', status: 'Available', path: '/listing/self-contained-bdpa-benin' },
+      { title: 'Modern Two-Bedroom Apartment', description: 'Demonstration residential apartment in GRA, Benin City.', status: 'Occupied', path: '/listing/two-bedroom-apartment-benin' },
     ],
     inspections: [
       { title: 'Prospective tenant inspection', description: 'Sample inspection request.', status: 'Pending' },
@@ -2268,11 +2269,12 @@ export default function RoleWorkspacePage() {
                     role="button"
                     tabIndex={0}
                     aria-label={`View details for ${record.title}`}
-                    onClick={() => setSelectedWorkspaceRecord(record)}
+                    onClick={() => record.path ? navigate(record.path) : setSelectedWorkspaceRecord(record)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
                         event.preventDefault()
-                        setSelectedWorkspaceRecord(record)
+                        if (record.path) navigate(record.path)
+                        else setSelectedWorkspaceRecord(record)
                       }
                     }}
                   >
