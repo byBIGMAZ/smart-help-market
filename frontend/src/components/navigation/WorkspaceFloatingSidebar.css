@@ -1,0 +1,25 @@
+/* Draggable, viewport-persistent workspace navigation launcher */
+.shm-workspace-float-root{position:fixed;inset:0;z-index:1900;pointer-events:none}
+.shm-workspace-float-backdrop{position:fixed;inset:0;z-index:1;border:0;background:rgb(7 15 28 / .13);backdrop-filter:blur(1.5px);pointer-events:auto}
+.shm-workspace-float-trigger{position:fixed;z-index:3;display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid color-mix(in srgb,var(--brand-primary) 42%,var(--border));border-radius:50%;background:var(--surface);color:var(--brand-primary);box-shadow:0 8px 26px rgb(0 0 0 / .2);opacity:.5;cursor:grab;touch-action:none;pointer-events:auto;transform:translate(-50%,-50%);transition:opacity .22s ease,background .2s ease,color .2s ease,border-color .2s ease}
+.shm-workspace-float-trigger:hover,.shm-workspace-float-trigger:focus-visible,.shm-workspace-float-trigger.is-open{opacity:1}
+.shm-workspace-float-trigger:active{cursor:grabbing}
+.shm-workspace-float-trigger>span{font-size:23px;line-height:1;font-weight:700}
+.shm-workspace-float-trigger:not(.is-open){animation:shm-workspace-float-nudge 5.6s ease-in-out infinite}
+.shm-workspace-float-trigger i{position:absolute;inset:-5px;border:1px solid var(--brand-primary);border-radius:50%;opacity:.25;pointer-events:none}
+.shm-workspace-float-trigger.is-open{background:var(--brand-primary);color:#fff;border-color:transparent}
+.shm-workspace-float-panel{position:fixed;z-index:2;display:flex;flex-direction:column;overflow:hidden;border:1px solid color-mix(in srgb,var(--text-primary) 16%,transparent);border-radius:19px;background:color-mix(in srgb,var(--surface) 76%,transparent);color:var(--text-primary);box-shadow:0 22px 65px rgb(0 0 0 / .24),inset 0 1px 0 rgb(255 255 255 / .36);-webkit-backdrop-filter:blur(28px) saturate(165%);backdrop-filter:blur(28px) saturate(165%);pointer-events:auto;animation:shm-workspace-panel-enter .24s cubic-bezier(.2,.8,.2,1) both}
+.shm-workspace-float-panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 13px;border-bottom:1px solid color-mix(in srgb,var(--text-primary) 10%,transparent)}
+.shm-workspace-float-panel-head>div{display:grid;gap:4px}
+.shm-workspace-float-panel-head span{color:var(--brand-primary);font-size:9px;font-weight:850;letter-spacing:.14em}
+.shm-workspace-float-panel-head strong{font-size:14px}
+.shm-workspace-float-panel-head button{display:grid;width:34px;height:34px;place-items:center;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--surface) 72%,transparent);color:var(--text-primary);font-size:23px;cursor:pointer}
+.shm-workspace-float-panel nav{display:grid;gap:5px;overflow-y:auto;overscroll-behavior:contain;padding:10px;scrollbar-width:thin}
+.shm-workspace-float-panel nav a{display:flex;align-items:center;gap:11px;min-height:43px;padding:9px 11px;border:1px solid transparent;border-radius:11px;color:var(--text-primary);font-size:12px;font-weight:700;text-decoration:none;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.shm-workspace-float-panel nav a:hover,.shm-workspace-float-panel nav a.is-active{border-color:color-mix(in srgb,var(--brand-primary) 30%,transparent);background:color-mix(in srgb,var(--brand-primary) 13%,transparent);color:var(--brand-primary)}
+.shm-workspace-float-link-index{display:grid;flex:0 0 27px;width:27px;height:27px;place-items:center;border-radius:8px;background:color-mix(in srgb,var(--surface-secondary) 75%,transparent);color:var(--text-muted);font-size:9px;font-weight:850}
+.shm-workspace-float-link-arrow{margin-left:auto;color:var(--brand-primary);font-size:20px}
+@keyframes shm-workspace-float-nudge{0%,86%,100%{transform:translate(-50%,-50%) rotate(0)}88%{transform:translate(calc(-50% - 3px),-50%) rotate(-4deg)}90%{transform:translate(calc(-50% + 3px),-50%) rotate(4deg)}92%{transform:translate(calc(-50% - 2px),-50%) rotate(-2deg)}94%{transform:translate(-50%,-50%) rotate(0)}}
+@keyframes shm-workspace-panel-enter{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:600px){.shm-workspace-float-trigger{width:49px;height:49px}.shm-workspace-float-panel{border-radius:16px}.shm-workspace-float-panel nav a{min-height:41px}}
+@media(prefers-reduced-motion:reduce){.shm-workspace-float-trigger,.shm-workspace-float-trigger i,.shm-workspace-float-panel,.shm-workspace-float-panel nav a{animation:none!important;transition:none!important}}
