@@ -31,6 +31,7 @@ export default function MobileBottomNav() {
     { label: 'Home', icon: '⌂', to: '/' },
     { label: 'Explore', icon: '⌕', to: '/explore' },
     { label: 'Categories', icon: '◇', to: '/categories' },
+    { label: 'Help', icon: '✦', to: '/help' },
     { label: 'Notifications', icon: '🔔', to: user ? `/${accountRole}/notifications` : '/login' },
     {
       label: 'Dashboard',
