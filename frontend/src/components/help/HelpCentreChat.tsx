@@ -338,7 +338,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
                   {message.metadata?.suggestions && message.metadata.suggestions.length > 0 && (
                     <div className="help-chat-suggestions">{message.metadata.suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void submitMessage(undefined, suggestion)}>{suggestion}</button>)}</div>
                   )}
-                  {message.sender === 'assistant' && /^\\d+$/.test(message.id) && (
+                  {message.sender === 'assistant' && /^\d+$/.test(message.id) && (
                     <div className="help-message-feedback" aria-label="Rate this response">
                       {feedbackSent[message.id] !== undefined
                         ? <small>Thanks for helping BIGMAZ AI improve.</small>
