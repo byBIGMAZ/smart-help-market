@@ -39,10 +39,13 @@ export default function HelpCentreWidget() {
   }, [pathname])
 
   useEffect(() => {
-    if (!position) return
-    setPosition({
-      x: Math.max(28, Math.min(viewport.width - 28, position.x)),
-      y: Math.max(32, Math.min(viewport.height - 32, position.y)),
+    setPosition((current) => {
+      if (!current) return current
+      const next = {
+        x: Math.max(28, Math.min(viewport.width - 28, current.x)),
+        y: Math.max(32, Math.min(viewport.height - 32, current.y)),
+      }
+      return next.x === current.x && next.y === current.y ? current : next
     })
   }, [viewport.width, viewport.height])
 
