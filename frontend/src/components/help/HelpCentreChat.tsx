@@ -9,6 +9,7 @@ import {
   sendHelpMessage,
   submitHelpFeedback,
   type HelpConversation,
+  type HelpGuide,
   type HelpMessage,
   type HelpUsage,
 } from '../../services/helpCentre'
@@ -75,6 +76,35 @@ function timeGreeting(): string {
   if (hour >= 12 && hour < 17) return 'Good afternoon'
   if (hour >= 17 && hour < 21) return 'Good evening'
   return 'Working late?'
+}
+
+function InteractiveGuide({ guide }: { guide: HelpGuide }) {
+  const [stepIndex, setStepIndex] = useState(0)
+  const step = guide.steps[stepIndex]
+  if (!step) return null
+
+  return (
+    <section className="help-interactive-guide" aria-label="Interactive escrow explanation">
+      <div className="help-guide-topline">
+        <strong>How escrow typically works</strong>
+        <span>STEP {stepIndex + 1} OF {guide.steps.length}</span>
+      </div>
+      <div className="help-guide-progress" aria-hidden="true">
+        <span style={{ width: `${((stepIndex + 1) / guide.steps.length) * 100}%` }}/>
+      </div>
+      <div className="help-guide-step">
+        <span className="help-guide-step-icon">{step.icon}</span>
+        <div><strong>{step.title}</strong><p>{step.description}</p></div>
+      </div>
+      <div className="help-guide-controls">
+        <button type="button" onClick={() => setStepIndex((current) => Math.max(0, current - 1))} disabled={stepIndex === 0}>Previous</button>
+        {stepIndex < guide.steps.length - 1
+          ? <button type="button" onClick={() => setStepIndex((current) => Math.min(guide.steps.length - 1, current + 1))}>Next step ↗</button>
+          : <button type="button" onClick={() => setStepIndex(0)}>Replay guide ↻</button>}
+      </div>
+      <p className="help-guide-disclaimer">{guide.disclaimer}</p>
+    </section>
+  )
 }
 
 function GuestPreview() {
@@ -228,6 +258,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
           suggestions: result.suggestions,
           actions: result.actions,
           matches: result.matches || [],
+          guide: result.guide || null,
         },
         createdAt: new Date().toISOString(),
       }])
@@ -331,6 +362,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
                 <div className="help-message-content">
                   {message.sender === 'admin' && <small>SUPPORT TEAM</small>}
                   <p>{message.text}</p>
+                  {message.metadata?.guide?.kind === 'escrow' && <InteractiveGuide guide={message.metadata.guide}/>}
                   {message.metadata?.matches?.map((match) => (
                     <Link className="help-match-card" to={`/listing/${encodeURIComponent(match.key)}`} key={match.key} onClick={onClose}>
                       <span className="help-match-icon">{match.icon || '◈'}</span>
