@@ -123,6 +123,28 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     delete nextContext.awaiting
   }
 
+  if (['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support'].some((term) => message.includes(term))) {
+    return {
+      text: 'Of course. I can pass this conversation to the support team. Please add a short subject and explain what you need so an administrator can follow up.',
+      needsAdmin: true,
+      context: nextContext,
+    }
+  }
+
+  const lastSearch = typeof context.lastSearchText === 'string' ? context.lastSearchText : ''
+  if (!awaiting && lastSearch && ['show me more', 'show all available options', 'try another location', 'change my location'].some((term) => message.includes(term))) {
+    searchText = lastSearch
+    if (message.includes('another location') || message.includes('change my location')) {
+      nextContext.pendingSearchText = lastSearch
+      nextContext.awaiting = 'location'
+      return {
+        text: 'Which new area should I search? I will keep your original property requirements and update the location.',
+        suggestions: ['Auchi', 'Benin City', 'Abuja', 'Lagos', 'Any location'],
+        context: nextContext,
+      }
+    }
+  }
+
   const searchMessage = normalize(searchText)
   const actions = routeForRequest(rawMessage, roles)
   if (actions.length) {
@@ -446,6 +468,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       actions: answer.actions || [],
       matches: answer.matches || [],
       usage: { used: used + 1, limit, remaining: Math.max(0, limit - used - 1) },
+      needsAdmin: answer.needsAdmin === true,
     })
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined)
