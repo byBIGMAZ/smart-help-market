@@ -73,6 +73,7 @@ async function setupHelpCentreTables() {
         confidence NUMERIC(6,5) NOT NULL DEFAULT 0,
         meaningful_token_count INTEGER NOT NULL DEFAULT 0,
         model_version TEXT NOT NULL,
+        feature_hashes JSONB NOT NULL DEFAULT '[]'::jsonb,
         outcome TEXT NOT NULL DEFAULT 'unrated'
           CHECK (outcome IN ('unrated', 'helpful', 'not_helpful')),
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -105,8 +106,25 @@ async function setupHelpCentreTables() {
       )
     `)
     await db.query('ALTER TABLE public.marketplace_ai_learning_events ADD COLUMN IF NOT EXISTS assistant_message_id BIGINT REFERENCES public.marketplace_help_messages(message_id) ON DELETE SET NULL')
+    await db.query('ALTER TABLE public.marketplace_ai_learning_events ADD COLUMN IF NOT EXISTS feature_hashes JSONB NOT NULL DEFAULT \'[]\'::jsonb')
+    await db.query('ALTER TABLE public.marketplace_ai_feedback ADD COLUMN IF NOT EXISTS corrected_intent TEXT')
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS public.marketplace_ai_intent_weights (
+        feature_hash TEXT NOT NULL,
+        intent_key TEXT NOT NULL CHECK (intent_key IN (
+          'greeting', 'property_search', 'roommate_search', 'product_search',
+          'service_search', 'neighbourhood_question', 'escrow_explanation',
+          'navigation', 'support', 'general'
+        )),
+        weight NUMERIC(8,5) NOT NULL DEFAULT 0,
+        sample_count INTEGER NOT NULL DEFAULT 0,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (feature_hash, intent_key)
+      )
+    `)
     await db.query('CREATE INDEX IF NOT EXISTS idx_ai_learning_events_created ON public.marketplace_ai_learning_events(created_at DESC)')
     await db.query('CREATE INDEX IF NOT EXISTS idx_ai_training_examples_approved ON public.marketplace_ai_training_examples(approved, intent_key)')
+    await db.query('CREATE INDEX IF NOT EXISTS idx_ai_intent_weights_intent ON public.marketplace_ai_intent_weights(intent_key, updated_at DESC)')
     for (const [key, value, group, description, isPublic] of initialSettings) {
       await db.query(
         `INSERT INTO public.platform_settings (setting_key, setting_value, setting_group, description, is_public)
@@ -131,9 +149,9 @@ async function setupHelpCentreTables() {
        WHERE table_schema = 'public'
          AND table_name = ANY($1::text[])
        ORDER BY table_name`,
-      [['marketplace_ai_learning_events', 'marketplace_ai_feedback', 'marketplace_ai_training_examples']],
+      [['marketplace_ai_learning_events', 'marketplace_ai_feedback', 'marketplace_ai_training_examples', 'marketplace_ai_intent_weights']],
     )
-    if (intelligenceTables.rowCount !== 3) throw new Error('BIGMAZ Intelligence database verification failed.')
+    if (intelligenceTables.rowCount !== 4) throw new Error('BIGMAZ Intelligence database verification failed.')
     intelligenceTables.rows.forEach((row) => console.log(`Verified public.${row.table_name}`))
     console.log(`Verified ${initialSettings.length} Help Centre settings.`)
   } catch (error) {
