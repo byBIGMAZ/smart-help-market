@@ -131,7 +131,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     delete nextContext.awaiting
   }
 
-  if (['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support'].some((term) => message.includes(term))) {
+  if (['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support', 'report a problem', 'report an issue', 'submit a complaint', 'i have a complaint', 'need an admin'].some((term) => message.includes(term))) {
     return {
       text: 'Of course. I can pass this conversation to the support team. Please add a short subject and explain what you need so an administrator can follow up.',
       needsAdmin: true,
