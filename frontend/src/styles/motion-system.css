@@ -201,3 +201,8 @@
 .shm-billboard-face small{font-size:10px!important}
 .shm-billboard-pole{height:24px!important;width:6px!important}
 @media(max-width:760px){.shm-location-billboard{top:7px!important;right:10px!important;min-width:170px!important;max-width:190px!important}.shm-billboard-face{padding:10px 12px!important}.shm-billboard-face strong{font-size:17px!important}.shm-billboard-face small{font-size:9px!important}.shm-billboard-pole{height:18px!important}}
+
+
+/* Vehicle branding is derived from the public platform name setting. */
+.shm-vehicle-brand{position:absolute;z-index:5;top:38%;left:50%;display:block;max-width:80%;overflow:hidden;color:#fff;font-size:7px;font-weight:1000;letter-spacing:.08em;line-height:1;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 2px #000,0 0 3px #000;transform:translateX(-50%);pointer-events:none}
+.shm-road-bus:after{content:attr(data-brand)!important;display:grid;place-items:center;color:#fff!important;font-size:8px!important;font-weight:1000!important;letter-spacing:.08em;text-shadow:0 1px 2px #000}
