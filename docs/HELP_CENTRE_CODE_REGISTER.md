@@ -4,9 +4,9 @@
 The Help Centre is an account-linked guided marketplace assistant. It can guide users to existing marketplace routes, ask follow-up questions, search published listings in PostgreSQL, preserve conversations, enforce monthly message allowances, and escalate requests to the administrator support inbox.
 
 ## Frontend files
-- `frontend/src/components/help/HelpCentreWidget.tsx`: fixed, draggable, viewport-aware floating launcher, guest preview entry point and glass panel.
+- `frontend/src/components/help/HelpCentreWidget.tsx`: fixed, non-draggable viewport launcher, guest preview entry point and glass panel.
 - `frontend/src/components/help/HelpCentreWidget.css`: launcher fade, pulse, glass panel and reduced-motion styles.
-- `frontend/src/components/help/HelpCentreChat.tsx`: signed-in chat, guest preview, typing state, suggestions, listing cards, conversation history, usage display and support escalation form.
+- `frontend/src/components/help/HelpCentreChat.tsx`: signed-in chat, rotating animated guest scenarios, local-time greetings, response feedback and intent-correction controls, suggestions, listing cards, conversation history, usage display and support escalation form.
 - `frontend/src/components/help/HelpCentreChat.css`: chat layout, message bubbles, result cards, typing animations, responsive layout and theme-aware styles.
 - `frontend/src/services/helpCentre.ts`: typed client for Help Centre conversations, usage, chat and support cases.
 - `frontend/src/pages/public/HelpCentrePage.tsx`: full Help Centre page with saved conversation history.
@@ -14,14 +14,15 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `frontend/src/layouts/MarketplaceLayout.tsx`: mounts the floating assistant throughout public and role workspace pages.
 - `frontend/src/components/navigation/MobileBottomNav.tsx`: direct mobile Help Centre shortcut.
 - `frontend/src/styles/marketplace-layout.css`: six-column mobile navigation layout.
-- `frontend/src/AdminHelpCentre.tsx`: administrator support case inbox, thread review, case status and replies.
+- `frontend/src/AdminHelpCentre.tsx`: administrator support case inbox, thread review, case status and replies, plus BIGMAZ Intelligence performance summary.
 - `frontend/src/AdminHelpCentre.css`: administrator inbox styling.
 - `frontend/src/AdminApp.tsx`: adds the support inbox to administrator navigation and mounts the floating assistant.
 - `frontend/src/AdminSettingsManagement.tsx`: administrator controls for assistant availability, included monthly messages, and proposed package size and price.
 
 ## Backend files
-- `backend/src/setup-help-centre-tables.ts`: creates the four Help Centre tables and inserts default private platform settings without overwriting existing values.
-- `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, guided intent routing, published listing search, escalation, administrator inbox and replies.
+- `backend/src/setup-help-centre-tables.ts`: creates Help Centre and BIGMAZ Intelligence learning tables and inserts default private platform settings without overwriting existing values.
+- `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
+- `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
 - `backend/src/server.ts`: mounts the Help Centre API at `/api/help-centre`.
 - `backend/package.json`: adds `npm run setup:help-centre`.
 
@@ -30,13 +31,19 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `marketplace_help_messages`: user, assistant and administrator messages.
 - `marketplace_help_usage`: per-user monthly message counts.
 - `marketplace_help_support_cases`: requests escalated to administrators.
+- `marketplace_ai_learning_events`: records intent, confidence, model version, hashed language features and response outcome without storing the original message text.
+- `marketplace_ai_feedback`: stores user ratings and optional corrected intent labels.
+- `marketplace_ai_training_examples`: stores curated examples, which only influence the classifier after approval.
+- `marketplace_ai_intent_weights`: bounded online feature weights updated only when a user explicitly corrects the understood intent.
 
 ## Main API routes
 - `GET /api/help-centre/public-config`: guest-safe assistant availability preview.
 - `GET /api/help-centre/status`: signed-in user's monthly quota.
 - `GET /api/help-centre/conversations`: conversation history.
 - `GET /api/help-centre/conversations/:conversationId/messages`: owned conversation thread.
-- `POST /api/help-centre/chat`: send a message and receive guided answer, route actions or published listing matches.
+- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified answer, route actions or published listing matches.
+- `POST /api/help-centre/feedback`: rate a response and optionally correct the assistant's understood intent.
+- `GET /api/help-centre/admin/intelligence/summary`: administrator metrics for interactions, feedback and reviewed learning examples.
 - `POST /api/help-centre/support-cases`: escalate a conversation to administrators.
 - `GET /api/help-centre/admin/cases`: administrator support inbox.
 - `GET /api/help-centre/admin/cases/:caseId/messages`: support conversation history.
@@ -61,5 +68,9 @@ Then run the frontend production build from the frontend folder:
 npm run build
 ```
 
-## Current capability boundary
-The current assistant uses a deterministic guided intent engine, contextual follow-up questions, navigation matching and live published-listing database search. It is not yet connected to a generative AI model provider. Paid message package values are configuration only; no payment is collected or simulated.
+## Current BIGMAZ Intelligence capability boundary
+The first proprietary engine version is a hybrid lexical/statistical intent classifier. It uses token and n-gram similarity, semantic cue scoring, curated examples and bounded online feature-weight updates from explicit user intent corrections. It does not call an external generative AI API and is not yet a general-purpose language model. It does not yet train neural language-model weights or perform open-ended reasoning at the level of a large foundation model.
+
+The Help Centre still uses the existing contextual workflow for published property/product/service listing search. Dedicated geocoding, road-distance routing, live neighbourhood-discussion retrieval, full roommate-profile matching, interactive escrow animations and model-training evaluation/rollback remain later implementation phases. The escrow answer is explicitly educational and does not claim that live escrow is operational. Guest scenarios are labelled as previews and do not pretend to run live searches. User corrections are stored as hashed feature signals and bounded weights; they do not store raw message text in the learning-event table. A negative rating alone does not retrain the classifier.
+
+Paid message package values are configuration only; no payment is collected or simulated. Database setup and production builds must be run in Codespaces and their output checked before treating this implementation as verified.
