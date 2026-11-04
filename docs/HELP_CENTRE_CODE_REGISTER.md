@@ -22,12 +22,9 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 ## Backend files
 - `backend/src/setup-help-centre-tables.ts`: creates Help Centre and BIGMAZ Intelligence learning tables and inserts default private platform settings without overwriting existing values.
 - `backend/src/setup-geographic-intelligence.ts`: safely adds nullable listing coordinates, geocoding status metadata, a server-side geocode cache, geographic indexes and centrally managed private geographic settings. Uses one PostgreSQL client for the entire setup transaction.
-- `backend/src/geography/geocoding.ts`: server-side Nominatim adapter with persistent cache lookup, strict query validation, a serialized 1.1-second provider request interval, country restriction, result validation and OpenStreetMap attribution.
-- `backend/src/routes/geography.ts`: explicit, non-autocomplete public geocoding endpoint with a per-IP request window and generic provider error handling.
 - `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
 - `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
-- `backend/src/geography/geocoding.ts`: server-side Nominatim lookup with backend-only User-Agent configuration, Nigerian country restriction, provider request pacing, timeout, input validation, coordinate validation, multiple candidate results, OpenStreetMap attribution and PostgreSQL cache.
-- `backend/src/routes/geography.ts`: explicit location-search API with IP-based rate limiting and no autocomplete.
+- `backend/src/intelligence/geocoding.ts`: server-side Nominatim resolver used by the assistant's property-location follow-up. It validates Nigerian results, uses a serialized 1.1-second provider request interval, applies a timeout, caches successful coordinates and includes OpenStreetMap attribution.
 - `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
 - `backend/src/server.ts`: mounts the Help Centre API at `/api/help-centre` and geographic lookup at `/api/geography`.
 - `backend/package.json`: adds `npm run setup:help-centre`.
@@ -50,15 +47,13 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - A partial index supports geographic queries over published listings with coordinates.
 
 ## Geographic API route
-- `GET /api/geography/geocode?q=Auchi%2C%20Edo%20State`: explicit location lookup. Returns up to the configured candidate limit, marks cache hits, and includes OpenStreetMap attribution. The route is disabled unless `geo.enabled` is true and a valid server environment variable is configured. It is not an autocomplete endpoint.
 
 ## Main API routes
 - `GET /api/help-centre/public-config`: guest-safe assistant availability preview.
 - `GET /api/help-centre/status`: signed-in user's monthly quota.
 - `GET /api/help-centre/conversations`: conversation history.
 - `GET /api/help-centre/conversations/:conversationId/messages`: owned conversation thread.
-- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified answer, route actions or published listing matches.
-- `GET /api/geography/geocode?q=...`: explicit geographic search returning up to the configured number of location candidates. It is rate-limited by client IP and is not an autocomplete endpoint.
+- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified answer, route actions or published listing matches and, when enabled, resolves a user-selected property location.
 - `POST /api/help-centre/feedback`: rate a response and optionally correct the assistant's understood intent.
 - `GET /api/help-centre/admin/intelligence/summary`: administrator metrics for interactions, feedback and reviewed learning examples.
 - `POST /api/help-centre/support-cases`: escalate a conversation to administrators.
@@ -104,6 +99,6 @@ npm run build
 ## Current BIGMAZ Intelligence capability boundary
 The first proprietary engine version is a hybrid lexical/statistical intent classifier. It uses token and n-gram similarity, semantic cue scoring, curated examples and bounded online feature-weight updates from explicit user intent corrections. It does not call an external generative AI API and is not yet a general-purpose language model. It does not yet train neural language-model weights or perform open-ended reasoning at the level of a large foundation model.
 
-The Help Centre still uses the existing contextual workflow for published property/product/service listing search. Server-side Nominatim geocoding, candidate results, IP rate limiting and its PostgreSQL cache are implemented, but geographic lookup remains disabled by default until `BIGMAZ_GEO_USER_AGENT` is configured and an administrator enables it. Automatic geocoding of every listing, map-radius search, road-distance routing, live neighbourhood-discussion retrieval, full roommate-profile matching, interactive escrow animations and model-training evaluation/rollback remain later implementation phases. Provider credentials must be held in backend environment secrets, never in public platform settings or frontend code. The escrow answer is explicitly educational and does not claim that live escrow is operational. Guest scenarios are labelled as previews and do not pretend to run live searches. User corrections are stored as hashed feature signals and bounded weights; they do not store raw message text in the learning-event table. A negative rating alone does not retrain the classifier.
+The Help Centre uses the existing contextual workflow for published property/product/service listing search. When a user supplies a location during a property search, BIGMAZ can resolve it through the server-side Nominatim adapter if geographic lookup is enabled. It currently confirms the resolved place name but still filters published listings by their stored location text; coordinate-radius matching, automatic geocoding of every listing, road-distance routing, live neighbourhood-discussion retrieval, full roommate-profile matching, interactive escrow animations and model-training evaluation/rollback remain later implementation phases. Geographic lookup remains disabled by default until `BIGMAZ_GEO_USER_AGENT` is configured and an administrator enables it.
 
 Paid message package values are configuration only; no payment is collected or simulated. Database setup and production builds must be run in Codespaces and their output checked before treating this implementation as verified.
