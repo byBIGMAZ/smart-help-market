@@ -13,6 +13,7 @@ const ListingEditorPage = lazy(() => import('../pages/owner/ListingEditorPage'))
 const LoginPage = lazy(() => import('../pages/public/LoginPage'))
 const RegisterPage = lazy(() => import('../pages/public/RegisterPage'))
 const InformationPage = lazy(() => import('../pages/public/InformationPage'))
+const EscrowProPage = lazy(() => import('../pages/public/EscrowProPage'))
 const PasswordRecoveryPage = lazy(() => import('../pages/public/PasswordRecoveryPage'))
 const RoleWorkspacePage = lazy(() => import('../pages/workspaces/RoleWorkspacePage'))
 const CommunicationPage = lazy(() => import('../pages/communication/CommunicationPage'))
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
   { path: '/about', element: marketplacePage(<InformationPage />) },
   { path: '/contact', element: marketplacePage(<InformationPage />) },
   { path: '/how-it-works', element: marketplacePage(<InformationPage />) },
+  { path: '/escrow-pro', element: marketplacePage(<EscrowProPage />) },
   { path: '/help', element: marketplacePage(<InformationPage />) },
   { path: '/faqs', element: marketplacePage(<InformationPage />) },
   { path: '/terms', element: marketplacePage(<InformationPage />) },
