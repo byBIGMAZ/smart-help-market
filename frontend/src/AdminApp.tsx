@@ -2475,7 +2475,9 @@ function openAutomationMonitoring() {
                                 ? 'Marketplace automation monitoring'
                                 : section === 'notifications'
                                   ? 'Administrator notification centre'
-                                  : 'Last refreshed: ' +
+                                  : section === 'help-support'
+                                    ? 'Help Centre support inbox'
+                                    : 'Last refreshed: ' +
                                     (overview
                                       ? new Date().toLocaleTimeString(
                                           'en-NG',
