@@ -181,7 +181,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy', 'for sale', 'self contained', 'self-contained', 'accommodation', 'bedsitter', 'hostel']
+  const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy property', 'buy a house', 'for sale', 'self contained', 'self-contained', 'accommodation', 'bedsitter', 'hostel']
   const productTerms = ['product', 'laptop', 'phone', 'computer', 'furniture', 'electronics', 'buy a', 'shop']
   const serviceTerms = ['service', 'plumber', 'plumbing', 'electrician', 'electrical', 'cleaning', 'repair', 'mechanic', 'designer']
   const category = propertyTerms.some((term) => searchMessage.includes(term))
