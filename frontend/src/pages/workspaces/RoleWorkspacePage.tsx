@@ -1891,7 +1891,13 @@ export default function RoleWorkspacePage() {
           <button
             type="button"
             className="workspace-back-button"
-            onClick={() => navigate(window.history.length > 1 ? -1 : `/${role}/dashboard`)}
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1)
+              } else {
+                navigate(`/${role}/dashboard`)
+              }
+            }}
             aria-label="Go back to the previous page"
             title="Go back"
           >
