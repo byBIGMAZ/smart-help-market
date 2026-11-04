@@ -48,7 +48,7 @@ function routeForRequest(message: string, roles: string[]): SuggestedAction[] {
   const text = normalize(message)
   const role = ['buyer', 'landlord', 'seller', 'provider', 'agent'].find((item) => roles.includes(item)) || 'buyer'
   const routes: Array<{ terms: string[]; label: string; path: string }> = [
-    { terms: ['neighbourhood', 'neighborhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${role}/community` },
+    { terms: ['neighbourhood', 'neighborhood', 'neighboarhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${role}/community` },
     { terms: ['saved', 'favourite', 'favorite', 'wishlist'], label: 'Open saved items', path: '/buyer/saved' },
     { terms: ['my message', 'messages', 'inbox', 'chat'], label: 'Open messages', path: `/${role}/messages` },
     { terms: ['notification', 'alerts'], label: 'Open notifications', path: `/${role}/notifications` },
@@ -78,7 +78,7 @@ function routeForRequest(message: string, roles: string[]): SuggestedAction[] {
   return match ? [{ label: match.label, path: match.path }] : []
 }
 
-async function answerMessage(userId: string, rawMessage: string, context: Record<string, unknown>, roles: string[]): Promise<AssistantResult> {
+async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[]): Promise<AssistantResult> {
   const message = normalize(rawMessage)
   const pendingSearch = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
   const isLocationAnswer = Boolean(pendingSearch) && rawMessage.trim().length <= 80
@@ -96,7 +96,7 @@ async function answerMessage(userId: string, rawMessage: string, context: Record
     }
   }
 
-  const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy', 'for sale', 'self contained', 'self-contained']
+  const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy', 'for sale', 'self contained', 'self-contained', 'accommodation', 'bedsitter', 'hostel']
   const productTerms = ['product', 'laptop', 'phone', 'computer', 'furniture', 'electronics', 'buy a', 'shop']
   const serviceTerms = ['service', 'plumber', 'plumbing', 'electrician', 'electrical', 'cleaning', 'repair', 'mechanic', 'designer']
   const category = propertyTerms.some((term) => message.includes(term))
@@ -360,7 +360,7 @@ router.post('/chat', async (req: Request, res: Response) => {
        WHERE ur.user_id = $1 ORDER BY r.role_key`,
       [userId],
     )
-    const answer = await answerMessage(userId, message, context, roleResult.rows.map((row) => row.role_key))
+    const answer = await answerMessage(message, context, roleResult.rows.map((row) => row.role_key))
     await client.query(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)`,
