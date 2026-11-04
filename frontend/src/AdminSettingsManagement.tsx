@@ -13,6 +13,8 @@ type EditableSettingKey =
   | 'platform.timezone'
   | 'communication.contact_policy'
   | 'help.assistant.enabled'
+  | 'help.ai.learning_enabled'
+  | 'help.ai.feedback_enabled'
   | 'help.messages.free_limit'
   | 'help.messages.pack_size'
   | 'help.messages.pack_price_ngn'
@@ -24,6 +26,8 @@ const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'platform.timezone': 'System Timezone',
   'communication.contact_policy': 'In-App Contact Restrictions',
   'help.assistant.enabled': 'Help Assistant Enabled',
+  'help.ai.learning_enabled': 'Adaptive Learning Enabled',
+  'help.ai.feedback_enabled': 'Response Feedback Enabled',
   'help.messages.free_limit': 'Included Monthly Messages',
   'help.messages.pack_size': 'Paid Package Message Quantity',
   'help.messages.pack_price_ngn': 'Paid Package Price (NGN)',
@@ -36,6 +40,8 @@ const SETTING_HELP: Record<EditableSettingKey, string> = {
   'platform.timezone': 'The timezone used for platform date and time operations.',
   'communication.contact_policy': 'Configure phone, email, external link, social handle and off-platform contact restrictions using the JSON policy.',
   'help.assistant.enabled': 'Turn the SMART HELP assistant on or off for signed-in users.',
+  'help.ai.learning_enabled': 'Allow BIGMAZ AI to update bounded intent weights from explicit user corrections. Disable this to pause adaptive model updates.',
+  'help.ai.feedback_enabled': 'Allow users to rate assistant responses and submit corrections.',
   'help.messages.free_limit': 'Number of assistant messages each user receives per calendar month before the usage limit is reached.',
   'help.messages.pack_size': 'Number of additional assistant messages in a future paid package.',
   'help.messages.pack_price_ngn': 'Proposed package price in Nigerian Naira. This is configuration only until payment processing is integrated.',
@@ -147,7 +153,7 @@ useEffect(() => {
 
     try {
       let settingValue: unknown = value
-      if (key === 'help.assistant.enabled') {
+      if (key === 'help.assistant.enabled' || key === 'help.ai.learning_enabled' || key === 'help.ai.feedback_enabled') {
         if (value !== 'true' && value !== 'false') {
           setError('Choose true or false for this setting.')
           setNotice('')
@@ -406,19 +412,21 @@ useEffect(() => {
       <div className="admin-settings-group">
         <div className="admin-settings-group-heading">
           <div>
-            <h3>SMART HELP Centre &amp; Usage Limits</h3>
-            <p>Control assistant availability and the included monthly message allowance. Paid packages remain disabled until secure payment processing is connected.</p>
+            <h3>SMART HELP Centre &amp; BIGMAZ Intelligence</h3>
+            <p>Control assistant availability, adaptive learning, response feedback and monthly usage. Learning uses explicit corrections and can be paused here.</p>
           </div>
         </div>
         {([
           'help.assistant.enabled',
+          'help.ai.learning_enabled',
+          'help.ai.feedback_enabled',
           'help.messages.free_limit',
           'help.messages.pack_size',
           'help.messages.pack_price_ngn',
         ] as EditableSettingKey[]).map((key) => {
           const setting = getSetting(key)
           if (!setting) return null
-          const isBoolean = key === 'help.assistant.enabled'
+          const isBoolean = key === 'help.assistant.enabled' || key === 'help.ai.learning_enabled' || key === 'help.ai.feedback_enabled'
           return (
             <div className="admin-setting-item" key={key}>
               <div className="admin-setting-information">
