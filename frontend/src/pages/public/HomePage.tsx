@@ -17,6 +17,13 @@ import '../../AppSystemTheme.css'
 
 type Category = 'All' | string
 
+const HERO_PROMPTS = [
+  'Looking for a place to call home? Start here.',
+  'Need a product or a helping hand? We bring options closer.',
+  'Have something to offer? Your next customer could be here.',
+  'Whatever moves you forward, find it in one place.',
+]
+
 function formatCurrency(
   amount: number,
   currency: string,
@@ -73,7 +80,7 @@ function App() {
   const [listingsError, setListingsError] = useState('')
 
   useEffect(() => {
-    const timer = window.setInterval(() => setHeroPromptIndex((current) => (current + 1) % heroPrompts.length), 4600)
+    const timer = window.setInterval(() => setHeroPromptIndex((current) => (current + 1) % HERO_PROMPTS.length), 4600)
     return () => window.clearInterval(timer)
   }, [])
 
