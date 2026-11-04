@@ -2161,3 +2161,34 @@
 @media(max-width:760px){.workspace-heading-actions{width:100%;justify-content:space-between;gap:7px}.workspace-navigation-trigger{padding:0 10px}.workspace-heading-actions .extended-secondary{flex:1;text-align:center}.workspace-signout-icon{margin-left:auto}}
 @media(max-width:560px){.shm-record-detail-grid{grid-template-columns:1fr}.shm-record-modal-backdrop{padding:10px}.shm-record-modal{max-height:90vh;padding:19px}.workspace-navigation-trigger{font-size:11px}.workspace-heading-actions .extended-secondary{font-size:11px;padding-inline:8px}}
 @media(prefers-reduced-motion:reduce){.workspace-navigation-trigger,.landlord-operations-list>a{transition:none}.landlord-operations-list>a:hover{transform:none}}
+
+
+/* The workspace navigation drawer is now opened by the header Navigation button. */
+.workspace-nav.workspace-nav-viewport:not(.workspace-nav-open){
+  visibility:hidden!important;opacity:0!important;pointer-events:none!important;
+  transform:translateX(-12px)!important;
+}
+.workspace-nav.workspace-nav-viewport.workspace-nav-open{
+  visibility:visible!important;opacity:1!important;pointer-events:auto!important;
+  transform:translateX(0)!important;
+}
+.workspace-menu-backdrop{display:block!important}
+.workspace-activity-list .workspace-activity-item{
+  display:flex;align-items:center;gap:13px;color:var(--text-primary);
+  text-decoration:none;cursor:pointer;
+}
+.workspace-activity-list .workspace-activity-item:hover{
+  border-color:var(--brand-primary);background:var(--brand-primary-soft);
+}
+.workspace-activity-list .workspace-activity-item:focus-visible{
+  outline:3px solid var(--brand-primary);outline-offset:2px;
+}
+@media(min-width:761px){
+  .workspace-nav.workspace-nav-viewport{top:88px!important;left:20px!important}
+  .workspace-nav.workspace-nav-viewport:not(.workspace-nav-open){transform:translateX(-12px)!important}
+}
+@media(max-width:760px){
+  .workspace-nav.workspace-nav-viewport{top:0!important;left:0!important}
+  .workspace-nav.workspace-nav-viewport:not(.workspace-nav-open){transform:translateX(-105%)!important}
+  .workspace-nav.workspace-nav-viewport.workspace-nav-open{transform:translateX(0)!important}
+}
