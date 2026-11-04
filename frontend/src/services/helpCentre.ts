@@ -5,11 +5,18 @@ export interface HelpUsage {
   period: string
 }
 
+export interface HelpGuide {
+  kind: 'escrow'
+  steps: Array<{ title: string; description: string; icon: string }>
+  disclaimer: string
+}
+
 export interface HelpMessage {
   id: string
   sender: 'user' | 'assistant' | 'admin'
   text: string
   metadata?: {
+    guide?: HelpGuide | null
     suggestions?: string[]
     actions?: Array<{ label: string; path: string }>
     matches?: Array<{
@@ -77,6 +84,7 @@ export async function sendHelpMessage(message: string, conversationId?: string, 
     conversationId: string
     assistantMessageId: string
     reply: string
+    guide?: HelpGuide | null
     suggestions: string[]
     actions: Array<{ label: string; path: string }>
     matches: NonNullable<HelpMessage['metadata']>['matches']
