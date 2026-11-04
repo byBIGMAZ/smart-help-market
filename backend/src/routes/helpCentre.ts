@@ -543,6 +543,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       [userId],
     )
     const answer = await answerMessage(message, context, roleResult.rows.map((row) => row.role_key), preferredRole)
+    const prediction = await predictIntent(message)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)
@@ -551,17 +552,23 @@ router.post('/chat', async (req: Request, res: Response) => {
         suggestions: answer.suggestions || [],
         actions: answer.actions || [],
         matches: answer.matches || [],
-        intent: classifyBigmazIntent(message).intent,
+        intent: prediction.intent,
+        modelVersion: prediction.modelVersion,
       })],
     )
-    const prediction = await predictIntent(message)
-    await client.query(
-      `INSERT INTO public.marketplace_ai_learning_events
-       (user_id, conversation_id, assistant_message_id, intent_key, confidence, meaningful_token_count, model_version, feature_hashes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
-      [userId, conversationId, assistantMessage.rows[0].id, prediction.intent,
-       prediction.confidence, countMeaningfulTokens(message), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(message))],
+    const learningEnabled = await client.query<{ setting_value: unknown }>(
+      'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1',
+      ['help.ai.learning_enabled'],
     )
+    if (learningEnabled.rows[0]?.setting_value !== false) {
+      await client.query(
+        `INSERT INTO public.marketplace_ai_learning_events
+         (user_id, conversation_id, assistant_message_id, intent_key, confidence, meaningful_token_count, model_version, feature_hashes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
+        [userId, conversationId, assistantMessage.rows[0].id, prediction.intent,
+         prediction.confidence, countMeaningfulTokens(message), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(message))],
+      )
+    }
     await client.query(
       `UPDATE public.marketplace_help_conversations
        SET context = $2::jsonb, updated_at = NOW(), status = CASE WHEN $3 THEN 'needs_admin' ELSE status END
@@ -595,6 +602,11 @@ router.post('/chat', async (req: Request, res: Response) => {
 })
 
 router.post('/feedback', async (req: Request, res: Response) => {
+  const feedbackEnabled = await getSetting('help.ai.feedback_enabled', true).catch(() => true)
+  if (feedbackEnabled === false) {
+    res.status(503).json({ error: 'Response feedback is currently disabled.' })
+    return
+  }
   const messageId = typeof req.body?.assistantMessageId === 'string' ? req.body.assistantMessageId : ''
   const helpful = req.body?.helpful
   const allowedIntents: BigmazIntent[] = [
@@ -646,7 +658,8 @@ router.post('/feedback', async (req: Request, res: Response) => {
       )
       const hashes = Array.isArray(event.rows[0].feature_hashes) ? event.rows[0].feature_hashes : []
       const correctionChanged = Boolean(correctedIntent && previous.rows[0]?.corrected_intent !== correctedIntent)
-      if (correctionChanged) {
+      const learningEnabled = await getSetting('help.ai.learning_enabled', true).catch(() => true)
+      if (correctionChanged && learningEnabled !== false) {
         for (const featureHash of hashes) {
           await db.query(
             `INSERT INTO public.marketplace_ai_intent_weights (feature_hash, intent_key, weight, sample_count)
