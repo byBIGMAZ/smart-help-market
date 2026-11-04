@@ -112,7 +112,6 @@ export default function TopHeader({
                 </span>
               )}
             </Link>
-    </Link>
           </>
         ) : (
           <>
