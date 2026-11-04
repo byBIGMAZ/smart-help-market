@@ -492,4 +492,64 @@ router.patch('/admin/cases/:caseId', requirePermission('dashboard.view'), async 
   }
 })
 
+
+router.get('/admin/cases/:caseId/messages', requirePermission('dashboard.view'), async (req, res) => {
+  const caseId = req.params.caseId
+  if (typeof caseId !== 'string' || !/^[1-9]\\d*$/.test(caseId)) {
+    res.status(400).json({ error: 'Invalid support case.' })
+    return
+  }
+  try {
+    const result = await getDatabasePool().query(
+      `SELECT m.message_id::text AS id, m.sender_type AS sender,
+              m.message_text AS text, m.created_at AS "createdAt"
+       FROM public.marketplace_help_messages m
+       JOIN public.marketplace_help_support_cases c ON c.conversation_id = m.conversation_id
+       WHERE c.case_id = $1
+       ORDER BY m.message_id ASC`,
+      [caseId],
+    )
+    res.json({ messages: result.rows })
+  } catch {
+    res.status(500).json({ error: 'Support conversation could not be loaded.' })
+  }
+})
+
+router.post('/admin/cases/:caseId/reply', requirePermission('dashboard.view'), async (req, res) => {
+  const caseId = req.params.caseId
+  const message = typeof req.body?.message === 'string' ? req.body.message.trim().slice(0, 2000) : ''
+  if (typeof caseId !== 'string' || !/^[1-9]\\d*$/.test(caseId) || !message) {
+    res.status(400).json({ error: 'A valid case and reply message are required.' })
+    return
+  }
+  try {
+    const result = await getDatabasePool().query<{ conversation_id: string; user_id: string }>(
+      'SELECT conversation_id::text, user_id::text FROM public.marketplace_help_support_cases WHERE case_id = $1',
+      [caseId],
+    )
+    if (!result.rowCount) {
+      res.status(404).json({ error: 'Support case not found.' })
+      return
+    }
+    const item = result.rows[0]
+    await getDatabasePool().query(
+      `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text)
+       VALUES ($1, 'admin', $2)`,
+      [item.conversation_id, message],
+    )
+    await getDatabasePool().query(
+      `INSERT INTO public.marketplace_notifications (recipient_user_id, audience, notification_type, title, message, metadata)
+       VALUES ($1, 'user', 'help_support_reply', 'Support team replied', $2, $3::jsonb)`,
+      [item.user_id, message, JSON.stringify({ caseId })],
+    )
+    await getDatabasePool().query(
+      'UPDATE public.marketplace_help_conversations SET updated_at = NOW() WHERE conversation_id = $1',
+      [item.conversation_id],
+    )
+    res.status(201).json({ status: 'ok', message: 'Reply sent to the user.' })
+  } catch {
+    res.status(500).json({ error: 'Support reply could not be sent.' })
+  }
+})
+
 export default router
