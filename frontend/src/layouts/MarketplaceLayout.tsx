@@ -8,6 +8,7 @@ import {
 import DesktopSidebar from '../components/navigation/DesktopSidebar'
 import TopHeader from '../components/navigation/TopHeader'
 import MobileBottomNav from '../components/navigation/MobileBottomNav'
+import AmbientExperience from '../components/experience/AmbientExperience'
 
 import { getPublicPlatformSettings } from '../services/platformSettings'
 
@@ -50,6 +51,7 @@ export default function MarketplaceLayout({
 
   return (
     <div className="marketplace-shell">
+      <AmbientExperience />
       <DesktopSidebar platformName={platformName} />
 
       <div className="marketplace-workspace">
