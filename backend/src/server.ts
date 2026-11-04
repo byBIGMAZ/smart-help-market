@@ -16,6 +16,7 @@ import automationRulesRouter from './routes/automationRules'
 import notificationsRouter from './routes/notifications'
 import messagesRouter from './routes/messages'
 import helpCentreRouter from './routes/helpCentre'
+import geographyRouter from './routes/geography'
 import adminNotificationsRouter from './routes/adminNotifications'
 
 import authRouter from './routes/auth'
@@ -59,6 +60,7 @@ app.use('/api/auth', authSessionRouter)
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/messages', messagesRouter)
 app.use('/api/help-centre', helpCentreRouter)
+app.use('/api/geography', geographyRouter)
 
 // Protected administration routes.
 app.use('/api/admin', adminRouter)
