@@ -62,6 +62,7 @@ function App() {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [saved, setSaved] = useState<string[]>([])
+  const [heroPromptIndex, setHeroPromptIndex] = useState(0)
 
   const [platformName, setPlatformName] = useState(
     'SMART HELP MARKET BY BIGMAZ',
