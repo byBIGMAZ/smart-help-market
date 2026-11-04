@@ -46,7 +46,7 @@ async function readApi<T>(response: Response): Promise<T> {
 }
 
 export async function getHelpStatus(): Promise<HelpUsage & { enabled: boolean }> {
-  return readApi(await fetch('/api/help-centre/status', {
+  return readApi<HelpUsage & { enabled: boolean }>(await fetch('/api/help-centre/status', {
     credentials: 'include',
     headers: { Accept: 'application/json' },
   }))
