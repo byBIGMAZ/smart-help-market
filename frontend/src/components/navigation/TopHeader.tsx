@@ -112,19 +112,7 @@ export default function TopHeader({
                 </span>
               )}
             </Link>
-            <Link
-              className="top-header-account-link top-header-account-primary top-header-profile-link"
-              to={`/${accountRole}/account`}
-            >
-              <span className="top-header-avatar" aria-hidden="true">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="" />
-                ) : (
-                  (user.displayName?.trim().charAt(0) || 'A').toUpperCase()
-                )}
-              </span>
-              <span>{user.displayName || 'My account'}</span>
-            </Link>
+    </Link>
           </>
         ) : (
           <>
