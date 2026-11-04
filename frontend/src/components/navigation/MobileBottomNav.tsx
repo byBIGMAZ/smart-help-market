@@ -31,12 +31,14 @@ export default function MobileBottomNav() {
     { label: 'Home', icon: '⌂', to: '/' },
     { label: 'Explore', icon: '⌕', to: '/explore' },
     { label: 'Categories', icon: '◇', to: '/categories' },
-    ...(user ? [{ label: 'Notifications', icon: '🔔', to: `/${accountRole}/notifications` }] : []),
+    { label: 'Notifications', icon: '🔔', to: user ? `/${accountRole}/notifications` : '/login' },
     {
       label: 'Account',
-      icon: user
-        ? (user.displayName?.trim().charAt(0) || 'A').toUpperCase()
-        : '♙',
+      icon: user?.avatarUrl ? (
+        <img className="mobile-account-avatar-image" src={user.avatarUrl} alt="" />
+      ) : (
+        <span className="mobile-account-avatar-placeholder" aria-hidden="true">♙</span>
+      ),
       to: user ? `/${accountRole}/account` : '/login',
     },
   ]
