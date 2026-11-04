@@ -47,6 +47,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
   const [conversations, setConversations] = useState<HelpConversation[]>([])
   const [conversationId, setConversationId] = useState('')
   const [usage, setUsage] = useState<HelpUsage | null>(null)
+  const [assistantEnabled, setAssistantEnabled] = useState(true)
   const [input, setInput] = useState('')
   const [typing, setTyping] = useState(false)
   const [sending, setSending] = useState(false)
@@ -68,6 +69,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
         const [status, history] = await Promise.all([getHelpStatus(), getHelpConversations()])
         if (!active) return
         setUsage(status)
+        setAssistantEnabled(status.enabled)
         setConversations(history)
         if (history[0]) {
           setConversationId(history[0].id)
@@ -248,11 +250,12 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
             </form>
           )}
 
+          {!assistantEnabled && <div className="help-chat-error" role="status">The Help Centre assistant is temporarily disabled by the administrator.</div>}
           <div className="help-chat-composer-wrap">
             {usage && <div className="help-chat-usage"><span>{usage.remaining} of {usage.limit} included messages remaining this month</span><span>{usage.used}/{usage.limit}</span></div>}
             <form className="help-chat-composer" onSubmit={(event) => void submitMessage(event)}>
-              <textarea value={input} onChange={(event) => setInput(event.target.value)} placeholder="Ask me anything about the marketplace..." rows={1} maxLength={1200} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }}/>
-              <button type="submit" disabled={!input.trim() || sending} aria-label="Send message">↑</button>
+              <textarea value={input} onChange={(event) => setInput(event.target.value)} disabled={!assistantEnabled} placeholder="Ask me anything about the marketplace..." rows={1} maxLength={1200} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }}/>
+              <button type="submit" disabled={!assistantEnabled || !input.trim() || sending} aria-label="Send message">↑</button>
             </form>
             <div className="help-chat-footer"><span>Responses use marketplace information available to the assistant.</span><button type="button" onClick={() => setShowSupport((current) => !current)}>Need a person?</button></div>
           </div>
