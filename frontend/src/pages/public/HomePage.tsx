@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import EscrowExplainer from '../../components/experience/EscrowExplainer'
 import SearchDiscovery from '../../components/experience/SearchDiscovery'
@@ -94,7 +94,7 @@ function App() {
     setShowGuestWelcome(false)
   }
 
-  function handleGuestEmail(event: React.FormEvent<HTMLFormElement>) {
+  function handleGuestEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const email = guestEmail.trim()
     if (!email) return
@@ -610,6 +610,8 @@ function App() {
         </Link>
 
         <p>Properties, products and services in one place.</p>
+
+        <nav className="shm-footer-links" aria-label="Marketplace information"><Link to="/escrow-pro">Escrow Pro</Link><Link to="/how-it-works">How it works</Link><Link to="/help">Help centre</Link></nav>
 
         <span>
           © {new Date().getFullYear()} {platformName}
