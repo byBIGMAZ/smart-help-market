@@ -1112,3 +1112,9 @@
   .admin-welcome-panel{padding-right:16px;padding-bottom:150px}
   .admin-welcome-panel>.shm-profile-photo-card{top:auto;right:16px;bottom:12px;transform:none}
 }
+
+
+.admin-stat-card-action{width:100%;font:inherit;text-align:left;color:inherit;cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.admin-stat-card-action:hover{transform:translateY(-3px);border-color:var(--admin-accent,#a6ed69);box-shadow:0 12px 28px #0003}
+.admin-stat-card-action:focus-visible{outline:3px solid var(--admin-accent,#a6ed69);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){.admin-stat-card-action{transition:none}.admin-stat-card-action:hover{transform:none}}
