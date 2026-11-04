@@ -25,7 +25,7 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `backend/src/geography/geocoding.ts`: canonical server-side Nominatim resolver with persistent PostgreSQL cache, strict coordinate validation, Nigeria country restriction, a serialized 1.1-second provider request interval, provider timeout and OpenStreetMap attribution.
 - `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
 - `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
-- `backend/src/intelligence/geocoding.ts`: server-side Nominatim resolver used by the assistant's property-location follow-up. It validates Nigerian results, uses a serialized 1.1-second provider request interval, applies a timeout, caches successful coordinates and includes OpenStreetMap attribution.
+- `backend/src/geography/geocoding.ts`: canonical server-side Nominatim resolver used by the assistant's property-location follow-up. It validates Nigerian results, uses a serialized 1.1-second provider request interval, applies a timeout, caches successful coordinates and includes OpenStreetMap attribution.
 - `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
 - `backend/package.json`: adds `npm run setup:help-centre`.
 
@@ -79,7 +79,7 @@ The public OpenStreetMap Nominatim endpoint is only a low-volume pilot option. I
 
 ## Geocoding provider configuration
 - The current provider adapter supports Nominatim only. Its public endpoint is a low-volume pilot option, not a guaranteed commercial production service.
-- Set `BIGMAZ_GEO_USER_AGENT` as a backend Codespaces/production environment secret. The value must identify SMART HELP MARKET and include a valid contact method, in accordance with the provider usage policy.
+- Set `GEOCODING_USER_AGENT` as a backend Codespaces/production environment secret. The value must identify SMART HELP MARKET and include a valid contact method, in accordance with the provider usage policy.
 - Keep `geo.enabled=false` until the User-Agent is configured and the service has been tested. Enable it only through the private administrator platform settings.
 - Provider calls are paced to at least 1.1 seconds apart within one backend process. The provider's usage policy must be reviewed before production or multi-instance deployment; this in-process pacing is not a distributed rate limiter.
 - Successful lookups are cached server-side. No provider credential or API key is exposed to the browser.
