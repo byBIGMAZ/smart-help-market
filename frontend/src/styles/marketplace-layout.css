@@ -485,7 +485,7 @@
 
     min-height: var(--shell-mobile-nav-height);
 
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     align-items: center;
 
     padding: 7px 8px calc(
