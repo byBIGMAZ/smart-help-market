@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { getMarketplaceUser, type MarketplaceUser } from '../../services/marketplaceAuth'
 import {
   createHelpSupportCase,
@@ -41,6 +41,7 @@ function GuestPreview() {
 }
 
 export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: Mode; onClose?: () => void }) {
+  const { pathname } = useLocation()
   const [user, setUser] = useState<MarketplaceUser | null>(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [messages, setMessages] = useState<HelpMessage[]>([])
@@ -119,7 +120,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
     setMessages((current) => [...current, optimistic])
     try {
       await new Promise((resolve) => window.setTimeout(resolve, 420))
-      const result = await sendHelpMessage(value, conversationId || undefined)
+      const result = await sendHelpMessage(value, conversationId || undefined, pathname)
       setConversationId(result.conversationId)
       setMessages((current) => [...current, {
         id: `assistant-${Date.now()}`,
