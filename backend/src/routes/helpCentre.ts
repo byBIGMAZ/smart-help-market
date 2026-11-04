@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express'
 import { getDatabasePool } from '../database'
 import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession'
 import { requirePermission } from '../auth/requirePermission'
+import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, type BigmazIntent } from '../intelligence/bigmazEngine'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
@@ -112,10 +113,15 @@ function parseBudget(text: string): { min: number | null; max: number | null } {
 async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[], preferredRole?: string): Promise<AssistantResult> {
   const message = normalize(rawMessage)
   const nextContext = { ...context }
+  const learnedExamples = await getDatabasePool().query<{ phrase: string; intent_key: BigmazIntent }>(
+    `SELECT phrase, intent_key FROM public.marketplace_ai_training_examples
+     WHERE approved = TRUE ORDER BY approved_at DESC NULLS LAST LIMIT 1000`,
+  ).catch(() => ({ rows: [] as Array<{ phrase: string; intent_key: BigmazIntent }> }))
+  const prediction = classifyBigmazIntent(rawMessage, learnedExamples.rows.map((row) => ({ phrase: row.phrase, intent: row.intent_key })))
   let searchText = rawMessage
   const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
 
-  if (['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support', 'report a problem', 'report an issue', 'submit a complaint', 'i have a complaint', 'need an admin'].some((term) => message.includes(term))) {
+  if (prediction.intent === 'support' || ['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support', 'report a problem', 'report an issue', 'submit a complaint', 'i have a complaint', 'need an admin'].some((term) => message.includes(term))) {
     return {
       text: 'Of course. I can pass this conversation to the support team. Please add a short subject and explain what you need so an administrator can follow up.',
       needsAdmin: true,
@@ -181,16 +187,56 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
+  if (prediction.intent === 'greeting') {
+    return {
+      text: 'Hello! 😊 I am ready to help you explore the marketplace, find what you need or understand how SMART HELP MARKET works. What would you like to do?',
+      suggestions: ['Find accommodation', 'Find a roommate', 'Find a product', 'Find a service'],
+      context: nextContext,
+    }
+  }
+
+  if (prediction.intent === 'escrow_explanation') {
+    return {
+      text: 'Escrow is a transaction arrangement where a payment is held by an authorised independent provider until the agreed conditions are met. In a typical transaction, the buyer pays into escrow, the seller completes the agreed delivery or service, the buyer confirms or a defined dispute process is followed, and the funds are released according to the agreement. Important: this is an educational explanation of the escrow concept. It does not mean SMART HELP MARKET currently holds or protects funds through a live escrow service. Always check the active payment and transaction terms before paying.',
+      suggestions: ['Explain the buyer protection steps', 'What happens if there is a dispute?', 'How do I inspect a property?'],
+      context: nextContext,
+    }
+  }
+
+  if (prediction.intent === 'roommate_search') {
+    return {
+      text: 'I understand you are looking for a roommate or flatmate. I can take you to the roommate matching area where you can review the available matching features. I will not invent a match or show a profile that has not been published.',
+      actions: [{ label: 'Open roommate matching', path: '/buyer/roommates' }],
+      suggestions: ['What should I consider before sharing accommodation?', 'Find a property to rent'],
+      context: nextContext,
+    }
+  }
+
+  if (prediction.intent === 'neighbourhood_question') {
+    return {
+      text: 'You want to understand the neighbourhood, not just the property. The Neighbourhood Space is where community members share local experiences and discussions. I can open it for you. I will distinguish residents’ reports from independently verified facts, and I will not claim to have checked discussions that are not yet connected to this assistant.',
+      actions: [{ label: 'Open neighbourhood space', path: '/buyer/community' }],
+      suggestions: ['Find accommodation', 'Ask about electricity and water', 'Ask about road conditions'],
+      context: nextContext,
+    }
+  }
+
   const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy property', 'buy a house', 'for sale', 'self contained', 'self-contained', 'accommodation', 'bedsitter', 'hostel']
   const productTerms = ['product', 'laptop', 'phone', 'computer', 'furniture', 'electronics', 'buy a', 'shop']
   const serviceTerms = ['service', 'plumber', 'plumbing', 'electrician', 'electrical', 'cleaning', 'repair', 'mechanic', 'designer']
-  const category = propertyTerms.some((term) => searchMessage.includes(term))
+  const category = prediction.intent === 'property_search'
     ? 'properties'
-    : productTerms.some((term) => searchMessage.includes(term))
+    : prediction.intent === 'product_search'
       ? 'products'
-      : serviceTerms.some((term) => searchMessage.includes(term))
+      : prediction.intent === 'service_search'
         ? 'services'
-        : null
+        : propertyTerms.some((term) => searchMessage.includes(term))
+          ? 'properties'
+          : productTerms.some((term) => searchMessage.includes(term))
+            ? 'products'
+            : serviceTerms.some((term) => searchMessage.includes(term))
+              ? 'services'
+              : null
 
   if (!category && (message.includes('how do i') || message.includes('where can i') || message.includes('how can i'))) {
     const role = roles.find((item) => ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(item)) || 'buyer'
@@ -478,14 +524,24 @@ router.post('/chat', async (req: Request, res: Response) => {
       [userId],
     )
     const answer = await answerMessage(message, context, roleResult.rows.map((row) => row.role_key), preferredRole)
-    await client.query(
+    const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
-       VALUES ($1, 'assistant', $2, $3::jsonb)`,
+       VALUES ($1, 'assistant', $2, $3::jsonb)
+       RETURNING message_id::text AS id`,
       [conversationId, answer.text, JSON.stringify({
         suggestions: answer.suggestions || [],
         actions: answer.actions || [],
         matches: answer.matches || [],
+        intent: classifyBigmazIntent(message).intent,
       })],
+    )
+    const prediction = classifyBigmazIntent(message)
+    await client.query(
+      `INSERT INTO public.marketplace_ai_learning_events
+       (user_id, conversation_id, assistant_message_id, intent_key, confidence, meaningful_token_count, model_version)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [userId, conversationId, assistantMessage.rows[0].id, prediction.intent,
+       prediction.confidence, countMeaningfulTokens(message), getBigmazModelVersion()],
     )
     await client.query(
       `UPDATE public.marketplace_help_conversations
@@ -502,6 +558,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     await client.query('COMMIT')
     res.json({
       conversationId,
+      assistantMessageId: assistantMessage.rows[0].id,
       reply: answer.text,
       suggestions: answer.suggestions || [],
       actions: answer.actions || [],
@@ -515,6 +572,80 @@ router.post('/chat', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'The assistant could not process your message. Please try again.' })
   } finally {
     client.release()
+  }
+})
+
+router.post('/feedback', async (req: Request, res: Response) => {
+  const messageId = typeof req.body?.assistantMessageId === 'string' ? req.body.assistantMessageId : ''
+  const helpful = req.body?.helpful
+  if (!/^[1-9]\\d*$/.test(messageId) || typeof helpful !== 'boolean') {
+    res.status(400).json({ error: 'A valid assistant response and feedback rating are required.' })
+    return
+  }
+  try {
+    const db = getDatabasePool()
+    const ownership = await db.query(
+      `SELECT m.message_id
+       FROM public.marketplace_help_messages m
+       JOIN public.marketplace_help_conversations c ON c.conversation_id = m.conversation_id
+       WHERE m.message_id = $1 AND c.user_id = $2 AND m.sender_type = 'assistant'`,
+      [messageId, userIdFrom(res)],
+    )
+    if (!ownership.rowCount) {
+      res.status(404).json({ error: 'Assistant response not found.' })
+      return
+    }
+    await db.query(
+      `INSERT INTO public.marketplace_ai_feedback (user_id, message_id, helpful)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (user_id, message_id) DO UPDATE SET helpful = EXCLUDED.helpful`,
+      [userIdFrom(res), messageId, helpful],
+    )
+    await db.query(
+      `UPDATE public.marketplace_ai_learning_events
+       SET outcome = $2
+       WHERE assistant_message_id = $1`,
+      [messageId, helpful ? 'helpful' : 'not_helpful'],
+    )
+    res.status(201).json({ status: 'ok', message: 'Thank you. Your feedback will help us evaluate and improve BIGMAZ AI.' })
+  } catch {
+    res.status(500).json({ error: 'Your feedback could not be saved.' })
+  }
+})
+
+router.get('/admin/intelligence/summary', requirePermission('dashboard.view'), async (_req, res) => {
+  try {
+    const [events, feedback, examples] = await Promise.all([
+      getDatabasePool().query(
+        `SELECT COUNT(*)::int AS interactions,
+                COUNT(*) FILTER (WHERE outcome = 'helpful')::int AS helpful,
+                COUNT(*) FILTER (WHERE outcome = 'not_helpful')::int AS not_helpful,
+                COUNT(DISTINCT intent_key)::int AS intents_observed
+         FROM public.marketplace_ai_learning_events
+         WHERE created_at >= NOW() - INTERVAL '30 days'`,
+      ),
+      getDatabasePool().query(
+        `SELECT COUNT(*)::int AS ratings,
+                COUNT(*) FILTER (WHERE helpful = TRUE)::int AS positive
+         FROM public.marketplace_ai_feedback
+         WHERE created_at >= NOW() - INTERVAL '30 days'`,
+      ),
+      getDatabasePool().query(
+        `SELECT COUNT(*) FILTER (WHERE approved = TRUE)::int AS approved,
+                COUNT(*) FILTER (WHERE approved = FALSE)::int AS pending
+         FROM public.marketplace_ai_training_examples`,
+      ),
+    ])
+    res.json({
+      engine: 'BIGMAZ Intelligence Engine',
+      modelVersion: getBigmazModelVersion(),
+      period: 'last_30_days',
+      interactions: events.rows[0],
+      feedback: feedback.rows[0],
+      trainingExamples: examples.rows[0],
+    })
+  } catch {
+    res.status(500).json({ error: 'BIGMAZ Intelligence metrics could not be loaded.' })
   }
 })
 
