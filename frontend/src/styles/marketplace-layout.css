@@ -578,3 +578,36 @@
   }
 }
 
+
+
+/* Preserve the mobile account photo slot and notification item */
+@media (max-width: 720px) {
+  .mobile-bottom-nav .navigation-item-icon:has(.mobile-account-avatar-image),
+  .mobile-bottom-nav .navigation-item-icon:has(.mobile-account-avatar-placeholder) {
+    width: 25px;
+    height: 25px;
+    min-height: 25px;
+    overflow: hidden;
+    border: 1px solid var(--border-strong, var(--border));
+    border-radius: 50%;
+    background: var(--brand-primary-soft);
+    color: var(--brand-primary);
+  }
+
+  .mobile-account-avatar-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .mobile-account-avatar-placeholder {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-items: center;
+    font-size: 18px;
+    line-height: 1;
+  }
+}
