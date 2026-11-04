@@ -78,18 +78,56 @@ function routeForRequest(message: string, roles: string[]): SuggestedAction[] {
   return match ? [{ label: match.label, path: match.path }] : []
 }
 
+function amountFrom(value: string, unit = ''): number {
+  const amount = Number(value.replace(/,/g, ''))
+  if (!Number.isFinite(amount)) return 0
+  const normalizedUnit = unit.toLowerCase()
+  if (normalizedUnit === 'k' || normalizedUnit === 'thousand') return amount * 1000
+  if (normalizedUnit === 'm' || normalizedUnit === 'million') return amount * 1000000
+  return amount
+}
+
+function parseBudget(text: string): { min: number | null; max: number | null } {
+  const range = text.match(/(?:between|from)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?\\s*(?:to|and|-)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  if (range) return { min: amountFrom(range[1], range[2] || ''), max: amountFrom(range[3], range[4] || range[2] || '') }
+  const maximum = text.match(/(?:under|below|less than|up to|maximum|max|within)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  if (maximum) return { min: null, max: amountFrom(maximum[1], maximum[2] || '') }
+  const minimum = text.match(/(?:above|over|more than|at least)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  if (minimum) return { min: amountFrom(minimum[1], minimum[2] || ''), max: null }
+  return { min: null, max: null }
+}
+
 async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[]): Promise<AssistantResult> {
   const message = normalize(rawMessage)
-  const pendingSearch = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
-  const isLocationAnswer = Boolean(pendingSearch) && rawMessage.trim().length <= 80
-  const searchText = isLocationAnswer ? `${pendingSearch} ${rawMessage}` : rawMessage
   const nextContext = { ...context }
-  if (isLocationAnswer) delete nextContext.pendingSearchText
+  let searchText = rawMessage
+  const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
 
+  if (awaiting === 'location') {
+    const previous = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
+    searchText = `${previous} ${rawMessage}`.trim()
+    delete nextContext.pendingSearchText
+    nextContext.awaiting = 'budget'
+    nextContext.pendingBudgetSearchText = searchText
+    return {
+      text: 'Great. What budget range should I use? You can also choose any budget and I will show the available matches.',
+      suggestions: ['Below ₦200k', '₦200k to ₦350k', '₦350k to ₦500k', 'Any budget'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'budget') {
+    const previous = typeof context.pendingBudgetSearchText === 'string' ? context.pendingBudgetSearchText : ''
+    searchText = `${previous} ${rawMessage}`.trim()
+    delete nextContext.pendingBudgetSearchText
+    delete nextContext.awaiting
+  }
+
+  const searchMessage = normalize(searchText)
   const actions = routeForRequest(rawMessage, roles)
   if (actions.length) {
     return {
-      text: `I found the right place for that. Use the shortcut below and I’ll take you directly there.`,
+      text: 'I found the right place for that. Use the shortcut below and I will take you directly there.',
       actions,
       suggestions: ['What else can you help me with?', 'Find something in the marketplace'],
       context: nextContext,
@@ -99,29 +137,30 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy', 'for sale', 'self contained', 'self-contained', 'accommodation', 'bedsitter', 'hostel']
   const productTerms = ['product', 'laptop', 'phone', 'computer', 'furniture', 'electronics', 'buy a', 'shop']
   const serviceTerms = ['service', 'plumber', 'plumbing', 'electrician', 'electrical', 'cleaning', 'repair', 'mechanic', 'designer']
-  const category = propertyTerms.some((term) => message.includes(term))
+  const category = propertyTerms.some((term) => searchMessage.includes(term))
     ? 'properties'
-    : productTerms.some((term) => message.includes(term))
+    : productTerms.some((term) => searchMessage.includes(term))
       ? 'products'
-      : serviceTerms.some((term) => message.includes(term))
+      : serviceTerms.some((term) => searchMessage.includes(term))
         ? 'services'
         : null
 
   if (!category && (message.includes('how do i') || message.includes('where can i') || message.includes('how can i'))) {
+    const role = roles.find((item) => ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(item)) || 'buyer'
     return {
-      text: 'I can guide you around the marketplace. Tell me the feature you want to use, or choose one of these common destinations.',
+      text: 'I can guide you around the marketplace. Tell me the feature you want to use, or choose one of these destinations.',
       actions: [
-        { label: 'My dashboard', path: `/${roles.find((role) => ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(role)) || 'buyer'}/dashboard` },
+        { label: 'My dashboard', path: `/${role}/dashboard` },
         { label: 'Explore marketplace', path: '/explore' },
-        { label: 'My messages', path: '/buyer/messages' },
-        { label: 'Neighbourhood space', path: '/buyer/community' },
+        { label: 'My messages', path: `/${role}/messages` },
+        { label: 'Neighbourhood space', path: `/${role}/community` },
       ],
       suggestions: ['How do I save a listing?', 'How do I contact a landlord?', 'How do I create a listing?'],
       context: nextContext,
     }
   }
 
-  if (!category && !pendingSearch) {
+  if (!category) {
     return {
       text: 'I can help you find properties, products and services, or guide you to any feature on the website. What are you trying to do?',
       suggestions: ['Find a property to rent', 'Find a product', 'Find a service', 'Help me navigate the website', 'Speak to an administrator'],
@@ -129,7 +168,10 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  if (category === 'properties' && !isLocationAnswer && !/\b(in|at|around|near|within)\s+[a-z]/i.test(rawMessage)) {
+  const hasLocation = /\\b(in|at|around|near|within)\\s+[a-z]/i.test(searchText)
+  const hasBudget = /(?:₦|\\b(?:under|below|less than|up to|maximum|max|budget|between|above|over|at least)\\b|\\d\\s*[km]\\b)/i.test(searchText)
+
+  if (category === 'properties' && !hasLocation && awaiting !== 'budget') {
     const locations = await getDatabasePool().query<{ location: string }>(
       `SELECT DISTINCT location_display AS location
        FROM public.marketplace_listings
@@ -139,15 +181,27 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     )
     const choices = locations.rows.map((row) => row.location).filter(Boolean)
     nextContext.pendingSearchText = rawMessage
+    nextContext.awaiting = 'location'
     return {
-      text: 'Which area would you prefer? I can narrow the available property listings by location.',
+      text: 'Which area would you prefer? I will check the published property listings for that location.',
       suggestions: [...choices, 'Any location'].slice(0, 8),
+      context: nextContext,
+    }
+  }
+
+  if (category === 'properties' && !hasBudget && awaiting !== 'budget') {
+    nextContext.pendingBudgetSearchText = searchText
+    nextContext.awaiting = 'budget'
+    return {
+      text: 'What budget range should I use? You can choose a range or ask me to show every available match.',
+      suggestions: ['Below ₦200k', '₦200k to ₦350k', '₦350k to ₦500k', 'Any budget'],
       context: nextContext,
     }
   }
 
   const terms = normalize(searchText).split(' ').filter((word) => word.length > 2 && !['the', 'for', 'and', 'with', 'from', 'near', 'around', 'find', 'need', 'want', 'looking', 'show', 'available', 'please', 'some'].includes(word)).slice(0, 8)
   const patterns = terms.map((term) => `%${term}%`)
+  const budget = parseBudget(searchText)
   const result = await getDatabasePool().query<ListingMatch>(
     `SELECT
        l.listing_key AS key,
@@ -167,26 +221,28 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
          cardinality($2::text[]) = 0
          OR concat_ws(' ', l.title, l.description, l.location_display, c.category_name, l.listing_tag) ILIKE ANY($2::text[])
        )
+       AND ($4::numeric IS NULL OR l.price >= $4)
+       AND ($5::numeric IS NULL OR l.price <= $5)
      ORDER BY
        CASE WHEN concat_ws(' ', l.title, l.location_display) ILIKE $3 THEN 0 ELSE 1 END,
        l.created_at DESC
      LIMIT 5`,
-    [category, patterns, `%${normalize(searchText)}%`],
+    [category, patterns, `%${normalize(searchText)}%`, budget.min, budget.max],
   )
 
   if (result.rows.length) {
     return {
-      text: `I searched the published ${category} listings and found ${result.rows.length} possible match${result.rows.length === 1 ? '' : 'es'}. Open any result to see its full details.`,
+      text: `I checked the published ${category} listings and found ${result.rows.length} possible match${result.rows.length === 1 ? '' : 'es'}. Open a result to review its details and availability.`,
       matches: result.rows,
       suggestions: ['Show me more options', 'Change my location', 'Speak to an administrator'],
-      context: nextContext,
+      context: { ...nextContext, lastSearchText: searchText },
     }
   }
 
   return {
-    text: `I couldn't find a published ${category} listing that matches those details right now. Would you like to broaden the search or try another location?`,
+    text: `I could not find a published ${category} listing matching those details right now. Would you like to broaden the search or try another location?`,
     suggestions: ['Show all available options', 'Try another location', 'Search another category', 'Speak to an administrator'],
-    context: nextContext,
+    context: { ...nextContext, lastSearchText: searchText },
   }
 }
 
