@@ -4,13 +4,15 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 import DesktopSidebar from '../components/navigation/DesktopSidebar'
 import TopHeader from '../components/navigation/TopHeader'
 import MobileBottomNav from '../components/navigation/MobileBottomNav'
 import AmbientExperience from '../components/experience/AmbientExperience'
 import QuickNavigationOrb from '../components/navigation/QuickNavigationOrb'
+import WorkspaceFloatingSidebar from '../components/navigation/WorkspaceFloatingSidebar'
+import { workspaces, type Role } from '../pages/workspaces/RoleWorkspacePage'
 
 import { getPublicPlatformSettings } from '../services/platformSettings'
 
@@ -27,6 +29,12 @@ export default function MarketplaceLayout({
   children,
 }: MarketplaceLayoutProps) {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const routeRole = pathname.split('/').filter(Boolean)[0]
+  const isWorkspaceRoute = ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(routeRole || '')
+  const workspaceRole = (isWorkspaceRoute ? routeRole : null) as Role | null
+  const workspaceLinks = workspaceRole ? workspaces[workspaceRole].links : []
+  const isWorkspaceOverview = workspaceRole ? pathname === `/${workspaceRole}/dashboard` || pathname === `/${workspaceRole}` : false
   const [platformName, setPlatformName] = useState(
     DEFAULT_PLATFORM_NAME,
   )
@@ -59,6 +67,38 @@ export default function MarketplaceLayout({
 
       <div className="marketplace-workspace">
         <TopHeader platformName={platformName} />
+
+        {workspaceRole && (
+          <>
+            <nav className="workspace-route-controls" aria-label="Dashboard page controls">
+              <button
+                type="button"
+                className="workspace-route-back"
+                onClick={() => {
+                  if (window.history.length > 1) navigate(-1)
+                  else navigate(`/${workspaceRole}/dashboard`)
+                }}
+                aria-label="Go back to the previous page"
+                title="Go back"
+              >
+                <span aria-hidden="true">←</span>
+                <span>Back</span>
+              </button>
+              {!isWorkspaceOverview && (
+                <Link
+                  className="workspace-route-dashboard"
+                  to={`/${workspaceRole}/dashboard`}
+                  aria-label="Go to dashboard overview"
+                  title="Go to dashboard"
+                >
+                  <span aria-hidden="true">⌂</span>
+                  <span>Dashboard</span>
+                </Link>
+              )}
+            </nav>
+            <WorkspaceFloatingSidebar links={workspaceLinks} />
+          </>
+        )}
 
         <div className="marketplace-page-content">
           {children}
