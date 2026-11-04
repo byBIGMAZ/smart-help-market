@@ -36,7 +36,8 @@ export default function AmbientExperience() {
 
   const edo = /edo/i.test(location)
   return (
-    <div className={`shm-ambient shm-ambient-${night ? 'night' : 'day'}`} aria-label="Marketplace atmosphere">\n      <span key={route.pathname} className="shm-route-progress" aria-hidden="true" />
+    <div className={`shm-ambient shm-ambient-${night ? 'night' : 'day'}`} aria-label="Marketplace atmosphere">
+      <span key={route.pathname} className="shm-route-progress" aria-hidden="true" />
       <div className="shm-ambient-sky" aria-hidden="true">
         {night && Array.from({ length: 28 }, (_, index) => (
           <i key={index} className="shm-star" style={{ '--star-index': index, left: `${(index * 37 + 9) % 97}%`, top: `${(index * 61 + 4) % 90}%` } as CSSProperties} />
