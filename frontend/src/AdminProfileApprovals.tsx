@@ -82,7 +82,19 @@ function readRequests(): ProfileRequest[] {
   } catch {
     // Ignore malformed local preview records and retain the sample queue.
   }
-  return [...linkedRequests, ...initialRequests]
+  let savedSamples = initialRequests
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    if (raw) {
+      const parsed: unknown = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        savedSamples = (parsed as ProfileRequest[]).filter((item) => !item.sourceStorageKey)
+      }
+    }
+  } catch {
+    // Use the built-in sample history when saved preview data is unavailable.
+  }
+  return [...linkedRequests, ...savedSamples]
 }
 
 function formatDate(value: string) {
@@ -109,7 +121,7 @@ export default function AdminProfileApprovals() {
   function persist(next: ProfileRequest[]) {
     setRequests(next)
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next.filter((item) => !item.sourceStorageKey)))
     } catch {
       setNotice('Updated in this session only. Browser storage is unavailable.')
     }
