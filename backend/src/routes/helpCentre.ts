@@ -148,11 +148,19 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     if (message.includes('show me more')) resultOffset = readNumber(context.searchOffset, 0)
     else resultOffset = 0
     if (message.includes('another location') || message.includes('change my location')) {
+      const locations = await getDatabasePool().query<{ location: string }>(
+        `SELECT DISTINCT location_display AS location
+         FROM public.marketplace_listings
+         WHERE status = 'published' AND length(trim(location_display)) > 0
+         ORDER BY location_display
+         LIMIT 8`,
+      )
       nextContext.pendingSearchText = lastSearch
       nextContext.awaiting = 'location'
+      delete nextContext.selectedLocation
       return {
-        text: 'Which new area should I search? I will keep your original property requirements and update the location.',
-        suggestions: ['Auchi', 'Benin City', 'Abuja', 'Lagos', 'Any location'],
+        text: 'Which new area should I search? I will keep your original requirements and update only the location.',
+        suggestions: [...locations.rows.map((row) => row.location), 'Any location'].slice(0, 8),
         context: nextContext,
       }
     }
