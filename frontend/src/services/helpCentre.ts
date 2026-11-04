@@ -79,6 +79,7 @@ export async function sendHelpMessage(message: string, conversationId?: string) 
     suggestions: string[]
     actions: Array<{ label: string; path: string }>
     matches: NonNullable<HelpMessage['metadata']>['matches']
+    needsAdmin: boolean
     usage: HelpUsage
   }>(
     await fetch('/api/help-centre/chat', {
