@@ -184,7 +184,7 @@ useEffect(() => {
     <section className="admin-settings-section">
       <div className="admin-section-heading">
         <div>
-          <h2>Marketplace Settings</h2>
+          <h2><span className="admin-animated-gear admin-settings-heading-gear" aria-hidden="true">⚙</span> Marketplace Settings</h2>
           <p className="admin-users-description">
             Manage the identity and regional configuration of the
             marketplace.
