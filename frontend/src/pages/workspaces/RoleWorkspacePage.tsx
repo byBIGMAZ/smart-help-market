@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import { getMarketplaceUser, type MarketplaceUser } from '../../services/marketplaceAuth'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
 import '../../styles/extended-pages.css'
 
 type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
@@ -457,6 +457,7 @@ function NeighbourhoodCommunity({ createMode = false }: { createMode?: boolean }
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({})
   const [replies, setReplies] = useState<Record<number, string[]>>({})
   const [notice, setNotice] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
 
   const visiblePosts = posts.filter((post) =>
     (areaFilter === 'All areas' || post.area === areaFilter) &&
@@ -1593,6 +1594,7 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
 
 export default function RoleWorkspacePage() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const parts = pathname.split('/').filter(Boolean)
   const role = (parts[0] in workspaces ? parts[0] : 'buyer') as Role
   const workspace = workspaces[role]
@@ -1689,6 +1691,21 @@ export default function RoleWorkspacePage() {
 
   const title = isDashboard ? 'Overview' : active.label
 
+  async function handleWorkspaceSignOut() {
+    if (signingOut) return
+    setSigningOut(true)
+    setNotice('')
+    try {
+      await marketplaceLogout()
+      setMarketplaceUser(null)
+      navigate('/', { replace: true })
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Unable to sign out. Please try again.')
+    } finally {
+      setSigningOut(false)
+    }
+  }
+
   return (
     <main className="extended-page workspace-page">
       <div className="workspace-heading">
@@ -1697,9 +1714,23 @@ export default function RoleWorkspacePage() {
           <h1>{workspace.title}</h1>
           <p>{workspace.description}</p>
         </div>
-        <Link className="extended-secondary" to="/explore">
-          Browse marketplace
-        </Link>
+        <div className="workspace-heading-actions">
+          <Link className="extended-secondary" to="/explore">
+            Browse marketplace
+          </Link>
+          <button
+            type="button"
+            className="workspace-signout-icon"
+            onClick={() => void handleWorkspaceSignOut()}
+            disabled={signingOut}
+            aria-label={signingOut ? 'Signing out' : 'Sign out'}
+            title={signingOut ? 'Signing out...' : 'Sign out'}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M10 17l5-5-5-5M15 12H3m9-7h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {isDemoAccount && (
