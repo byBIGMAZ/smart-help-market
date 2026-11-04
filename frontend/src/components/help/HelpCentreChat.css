@@ -147,3 +147,22 @@
 .help-feedback-correction button{padding:7px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface-secondary);color:var(--text-primary);font-size:9px;font-weight:750;cursor:pointer}
 .help-feedback-correction button:first-child{border-color:var(--brand-primary);background:var(--brand-primary);color:white}
 .help-feedback-correction button:disabled{opacity:.45;cursor:not-allowed}
+
+.help-interactive-guide{display:grid;gap:10px;margin-top:10px;padding:12px;border:1px solid color-mix(in srgb,var(--brand-primary) 28%,var(--border));border-radius:13px;background:color-mix(in srgb,var(--brand-primary-soft) 38%,var(--surface))}
+.help-guide-topline{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.help-guide-topline strong{font-size:10px}
+.help-guide-topline span{font-size:8px;font-weight:850;letter-spacing:.08em;color:var(--brand-primary)}
+.help-guide-progress{height:4px;overflow:hidden;border-radius:10px;background:var(--border)}
+.help-guide-progress span{display:block;height:100%;border-radius:10px;background:var(--brand-primary);transition:width .3s ease}
+.help-guide-step{display:flex;align-items:flex-start;gap:10px;min-height:100px;padding:9px 0;animation:help-guide-step-enter .28s ease both}
+.help-guide-step-icon{display:grid;flex:0 0 40px;place-items:center;width:40px;height:40px;border-radius:12px;background:var(--surface);font-size:22px}
+.help-guide-step>div{display:grid;gap:6px}
+.help-guide-step strong{font-size:11px}
+.help-guide-step p{font-size:10px;line-height:1.65;color:var(--text-secondary)}
+.help-guide-controls{display:flex;justify-content:space-between;gap:8px}
+.help-guide-controls button{min-height:32px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text-primary);font-size:9px;font-weight:800;cursor:pointer}
+.help-guide-controls button:last-child{border-color:var(--brand-primary);background:var(--brand-primary);color:white}
+.help-guide-controls button:disabled{opacity:.4;cursor:not-allowed}
+.help-guide-disclaimer{margin:0;padding-top:8px;border-top:1px solid var(--border);font-size:8px;line-height:1.55;color:var(--text-muted)}
+@keyframes help-guide-step-enter{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.help-guide-progress span,.help-guide-step{animation:none!important;transition:none!important}}
