@@ -518,7 +518,9 @@ function App() {
         </div>
       </section>
 
-      <EscrowExplainer />\n\n      <section className="cta-section">
+      <EscrowExplainer />
+
+      <section className="cta-section">
         <div>
           <span className="section-kicker">HAVE SOMETHING TO OFFER?</span>
           <h2>Bring your next opportunity to the market.</h2>
