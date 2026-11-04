@@ -2,7 +2,8 @@ import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
-import '../../styles/extended-pages.css'\nimport ProfilePhotoSlideshow from '../../components/profile/ProfilePhotoSlideshow'
+import '../../styles/extended-pages.css'
+import ProfilePhotoSlideshow from '../../components/profile/ProfilePhotoSlideshow'
 
 type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
 
