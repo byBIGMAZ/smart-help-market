@@ -31,9 +31,12 @@ export default function MarketplaceLayout({
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const routeRole = pathname.split('/').filter(Boolean)[0]
+  const isOwnerWorkspaceRoute = pathname.startsWith('/owner/')
   const isWorkspaceRoute = ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(routeRole || '')
-  const workspaceRole = (isWorkspaceRoute ? routeRole : null) as Role | null
-  const workspaceLinks = workspaceRole ? workspaces[workspaceRole].links : []
+  const workspaceRole = (isWorkspaceRoute ? routeRole : isOwnerWorkspaceRoute ? 'landlord' : null) as Role | null
+  const workspaceLinks = workspaceRole
+    ? [...workspaces[workspaceRole].links, ...(isOwnerWorkspaceRoute ? [{ label: 'My Listings', path: '/owner/listings' }] : [])]
+    : []
   const isWorkspaceOverview = workspaceRole ? pathname === `/${workspaceRole}/dashboard` || pathname === `/${workspaceRole}` : false
   const [platformName, setPlatformName] = useState(
     DEFAULT_PLATFORM_NAME,
