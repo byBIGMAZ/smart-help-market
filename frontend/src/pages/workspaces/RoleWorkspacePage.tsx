@@ -334,6 +334,14 @@ const sectionRecords: Record<Role, Record<string, WorkspaceRecord[]>> = {
   },
 }
 
+const dashboardStatPaths: Record<Role, string[]> = {
+  buyer: ['/buyer/saved', '/buyer/enquiries', '/buyer/inspections', '/buyer/transactions'],
+  landlord: ['/landlord/properties', '/landlord/properties', '/landlord/tenants', '/landlord/inspections'],
+  seller: ['/seller/products', '/seller/products', '/seller/orders', '/seller/inventory'],
+  provider: ['/provider/services', '/provider/bookings', '/provider/bookings', '/provider/availability'],
+  agent: ['/agent/listings', '/agent/clients', '/agent/inspections', '/agent/commissions'],
+}
+
 const demoWorkspaces: { role: Role; label: string; path: string }[] = [
   { role: 'buyer', label: 'Buyer', path: '/buyer/dashboard' },
   { role: 'landlord', label: 'Landlord', path: '/landlord/dashboard' },
@@ -1990,7 +1998,7 @@ export default function RoleWorkspacePage() {
 
               <div className="workspace-stats workspace-stats-four">
                 {dashboard.stats.map((stat, index) => (
-                  <article className="workspace-stat-card" key={stat.label}>
+                  <Link className="workspace-stat-card workspace-stat-card-link" key={stat.label} to={dashboardStatPaths[role][index] || `/${role}/dashboard`}>
                     <span className="workspace-stat-icon" aria-hidden="true">
                       {stat.icon}
                     </span>
@@ -2000,7 +2008,7 @@ export default function RoleWorkspacePage() {
                     <span className="workspace-stat-index">
                       {String(index + 1).padStart(2, '0')}
                     </span>
-                  </article>
+                  </Link>
                 ))}
               </div>
 
@@ -2081,21 +2089,21 @@ export default function RoleWorkspacePage() {
                         <Link to="/landlord/complaints">Manage cases ↗</Link>
                       </div>
                       <div className="landlord-operations-list">
-                        <div>
+                        <Link to="/landlord/complaints">
                           <span className="landlord-operation-icon">!</span>
                           <span><strong>Complaints</strong><small>1 open · 1 under review</small></span>
-                          <b>2</b>
-                        </div>
-                        <div>
+                          <b>2</b><i aria-hidden="true">↗</i>
+                        </Link>
+                        <Link to="/landlord/maintenance">
                           <span className="landlord-operation-icon">⚒</span>
                           <span><strong>Maintenance</strong><small>1 requested · 1 in progress</small></span>
-                          <b>2</b>
-                        </div>
-                        <div>
+                          <b>2</b><i aria-hidden="true">↗</i>
+                        </Link>
+                        <Link to="/landlord/inspections">
                           <span className="landlord-operation-icon">⌕</span>
                           <span><strong>Inspections</strong><small>1 pending · 1 completed</small></span>
-                          <b>2</b>
-                        </div>
+                          <b>2</b><i aria-hidden="true">↗</i>
+                        </Link>
                       </div>
                       <p className="landlord-chart-footnote">Counts reflect the illustrative records in the management modules.</p>
                     </article>
@@ -2238,7 +2246,19 @@ export default function RoleWorkspacePage() {
 
               <div className="workspace-list">
                 {records.map((record, index) => (
-                  <article key={`${record.title}-${index}`}>
+                  <article
+                    key={`${record.title}-${index}`}
+                    className="workspace-record-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedWorkspaceRecord(record)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedWorkspaceRecord(record)
+                      }
+                    }}
+                  >
                     <span className="workspace-list-icon" aria-hidden="true">
                       {role === 'buyer' ? '♡' :
                         role === 'landlord' ? '⌂' :
@@ -2252,9 +2272,12 @@ export default function RoleWorkspacePage() {
                     <span className="workspace-record-status">{record.status}</span>
                     <button
                       type="button"
-                      onClick={() => setNotice(`Selected: ${record.title}`)}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setSelectedWorkspaceRecord(record)
+                      }}
                     >
-                      View
+                      View details
                     </button>
                   </article>
                 ))}
@@ -2279,6 +2302,22 @@ export default function RoleWorkspacePage() {
                 ))}
               </div>
 
+              {selectedWorkspaceRecord && (
+                <div className="shm-record-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedWorkspaceRecord(null) }}>
+                  <section className="shm-record-modal" role="dialog" aria-modal="true" aria-labelledby="workspace-record-modal-title">
+                    <button type="button" className="shm-record-modal-close" onClick={() => setSelectedWorkspaceRecord(null)} aria-label="Close record details">×</button>
+                    <span className="extended-kicker">{active.label.toUpperCase()} DETAILS</span>
+                    <h3 id="workspace-record-modal-title">{selectedWorkspaceRecord.title}</h3>
+                    <p>{selectedWorkspaceRecord.description}</p>
+                    <div className="shm-record-detail-grid">
+                      <div><span>Record type</span><strong>{active.label}</strong></div>
+                      <div><span>Status</span><strong>{selectedWorkspaceRecord.status}</strong></div>
+                      {role === 'landlord' && section === 'properties' && <div className="shm-record-modal-note">Property information shown here is the selected property record. Full listing images, pricing, unit availability and location will populate from the saved listing once listing storage is connected.</div>}
+                    </div>
+                    <button type="button" className="extended-secondary" onClick={() => setSelectedWorkspaceRecord(null)}>Close details</button>
+                  </section>
+                </div>
+              )}
               {notice && <p className="extended-success" role="status">{notice}</p>}
             </>
           )}
