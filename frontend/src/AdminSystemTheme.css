@@ -397,3 +397,37 @@
 .admin-shell .admin-welcome-panel.admin-time-night{background:radial-gradient(ellipse at 82% 5%,#536ba055,transparent 52%),linear-gradient(120deg,#10172b,#080d18)!important;color:#f3f5ff}
 .admin-shell .admin-welcome-panel.admin-time-morning h2,.admin-shell .admin-welcome-panel.admin-time-afternoon h2,.admin-shell .admin-welcome-panel.admin-time-evening h2,.admin-shell .admin-welcome-panel.admin-time-night h2{color:inherit!important}
 .admin-shell .admin-welcome-panel.admin-time-morning p,.admin-shell .admin-welcome-panel.admin-time-afternoon p,.admin-shell .admin-welcome-panel.admin-time-evening p,.admin-shell .admin-welcome-panel.admin-time-night p{color:inherit!important;opacity:.78}
+
+
+/* Super Admin time scene follows the active application theme. */
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-morning,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-afternoon,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-evening {
+  color: #17231b !important;
+  border-color: #d8e2d5 !important;
+}
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-morning {
+  background: radial-gradient(ellipse at 82% 5%, #ffd77888, transparent 52%), linear-gradient(120deg, #edf6e8, #ffffff) !important;
+}
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-afternoon {
+  background: radial-gradient(ellipse at 82% 5%, #a9e6ff99, transparent 54%), linear-gradient(120deg, #e8f6fb, #ffffff) !important;
+}
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-evening {
+  background: radial-gradient(ellipse at 82% 5%, #f4a06b88, transparent 52%), linear-gradient(120deg, #fff0e5, #fffaf5) !important;
+}
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-morning h2,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-afternoon h2,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-evening h2 {
+  color: #17231b !important;
+}
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-morning p,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-afternoon p,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-evening p {
+  color: #425448 !important;
+  opacity: 1 !important;
+}
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-morning .admin-panel-label,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-afternoon .admin-panel-label,
+:root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-evening .admin-panel-label {
+  color: #397b2b !important;
+}
