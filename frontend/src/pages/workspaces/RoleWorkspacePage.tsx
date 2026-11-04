@@ -457,7 +457,6 @@ function NeighbourhoodCommunity({ createMode = false }: { createMode?: boolean }
   const [replyDrafts, setReplyDrafts] = useState<Record<number, string>>({})
   const [replies, setReplies] = useState<Record<number, string[]>>({})
   const [notice, setNotice] = useState('')
-  const [signingOut, setSigningOut] = useState(false)
 
   const visiblePosts = posts.filter((post) =>
     (areaFilter === 'All areas' || post.area === areaFilter) &&
@@ -1615,6 +1614,7 @@ export default function RoleWorkspacePage() {
   const isRoommates = section === 'roommates'
 
   const [notice, setNotice] = useState('')
+  const [signingOut, setSigningOut] = useState(false)
   const [search, setSearch] = useState('')
   const [created, setCreated] = useState<string[]>([])
   const [isDemoAccount, setIsDemoAccount] = useState(false)
