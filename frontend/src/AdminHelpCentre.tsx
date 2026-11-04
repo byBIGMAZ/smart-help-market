@@ -11,6 +11,13 @@ interface SupportCase {
   email: string
   conversationId: string
 }
+interface IntelligenceSummary {
+  engine: string
+  modelVersion: string
+  interactions: { interactions: number; helpful: number; not_helpful: number; intents_observed: number }
+  feedback: { ratings: number; positive: number }
+  trainingExamples: { approved: number; pending: number }
+}
 interface SupportMessage {
   id: string
   sender: 'user' | 'assistant' | 'admin'
@@ -37,6 +44,7 @@ export default function AdminHelpCentre() {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [intelligence, setIntelligence] = useState<IntelligenceSummary | null>(null)
 
   const loadCases = useCallback(async () => {
     setLoading(true)
@@ -45,6 +53,9 @@ export default function AdminHelpCentre() {
       const data = await api<{ cases: SupportCase[] }>('/api/help-centre/admin/cases')
       setCases(data.cases)
       setSelected((current) => current ? data.cases.find((item) => item.id === current.id) || null : data.cases[0] || null)
+      void api<IntelligenceSummary>('/api/help-centre/admin/intelligence/summary')
+        .then(setIntelligence)
+        .catch(() => setIntelligence(null))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Support inbox could not be loaded.')
     } finally {
@@ -108,6 +119,21 @@ export default function AdminHelpCentre() {
       </div>
       {error && <div className="admin-error" role="alert">{error}</div>}
       {notice && <div className="admin-message" role="status">{notice}</div>}
+      {intelligence && (
+        <section className="admin-ai-intelligence" aria-label="BIGMAZ Intelligence overview">
+          <div className="admin-ai-intelligence-heading">
+            <div><span className="admin-kicker">PROPRIETARY INTELLIGENCE</span><h3>{intelligence.engine}</h3></div>
+            <span>{intelligence.modelVersion}</span>
+          </div>
+          <div className="admin-ai-intelligence-grid">
+            <article><small>Interactions · 30 days</small><strong>{intelligence.interactions.interactions.toLocaleString('en-NG')}</strong></article>
+            <article><small>Helpful ratings</small><strong>{intelligence.feedback.positive.toLocaleString('en-NG')} / {intelligence.feedback.ratings.toLocaleString('en-NG')}</strong></article>
+            <article><small>Intent categories observed</small><strong>{intelligence.interactions.intents_observed}</strong></article>
+            <article><small>Reviewed learning examples</small><strong>{intelligence.trainingExamples.approved} approved · {intelligence.trainingExamples.pending} pending</strong></article>
+          </div>
+          <p>BIGMAZ AI records privacy-preserving interaction signals and applies supervised intent corrections. Model changes remain bounded and measurable.</p>
+        </section>
+      )}
       <div className="admin-help-layout">
         <aside className="admin-help-case-list">
           <div className="admin-help-list-title"><strong>Support requests</strong><span>{cases.filter((item) => item.status !== 'resolved').length} open</span></div>
