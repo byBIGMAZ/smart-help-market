@@ -62,8 +62,6 @@ function App() {
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
   const [saved, setSaved] = useState<string[]>([])
-  const [heroPromptIndex, setHeroPromptIndex] = useState(0)
-  const heroPrompts = ['Looking for a place to call home? Start here.', 'Need a product or a helping hand? We bring options closer.', 'Have something to offer? Your next customer could be here.', 'Whatever moves you forward, find it in one place.']
 
   const [platformName, setPlatformName] = useState(
     'SMART HELP MARKET BY BIGMAZ',
@@ -256,6 +254,8 @@ function App() {
             Discover properties, shop for everyday essentials, and find
             trusted services, all in one place.
           </p>
+
+          <div className="shm-hero-prompt" key={heroPromptIndex} aria-live="polite"><i /> {HERO_PROMPTS[heroPromptIndex]}</div>
 
           <div className="hero-stats">
             <div>
