@@ -711,7 +711,7 @@ router.post('/feedback', async (req: Request, res: Response) => {
 
 router.get('/admin/intelligence/summary', requirePermission('dashboard.view'), async (_req, res) => {
   try {
-    const [events, feedback, examples] = await Promise.all([
+    const [events, feedback, examples, adaptiveFeatures] = await Promise.all([
       getDatabasePool().query(
         `SELECT COUNT(*)::int AS interactions,
                 COUNT(*) FILTER (WHERE outcome = 'helpful')::int AS helpful,
@@ -731,6 +731,11 @@ router.get('/admin/intelligence/summary', requirePermission('dashboard.view'), a
                 COUNT(*) FILTER (WHERE approved = FALSE)::int AS pending
          FROM public.marketplace_ai_training_examples`,
       ),
+      getDatabasePool().query(
+        `SELECT COUNT(*)::int AS learned_features,
+                COALESCE(SUM(sample_count), 0)::int AS correction_samples
+         FROM public.marketplace_ai_intent_weights`,
+      ),
     ])
     res.json({
       engine: 'BIGMAZ Intelligence Engine',
@@ -739,6 +744,7 @@ router.get('/admin/intelligence/summary', requirePermission('dashboard.view'), a
       interactions: events.rows[0],
       feedback: feedback.rows[0],
       trainingExamples: examples.rows[0],
+      adaptiveFeatures: adaptiveFeatures.rows[0],
     })
   } catch {
     res.status(500).json({ error: 'BIGMAZ Intelligence metrics could not be loaded.' })
