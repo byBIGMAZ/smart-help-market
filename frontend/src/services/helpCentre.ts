@@ -72,7 +72,7 @@ export async function getHelpConversationMessages(id: string): Promise<HelpMessa
   return data.messages
 }
 
-export async function sendHelpMessage(message: string, conversationId?: string) {
+export async function sendHelpMessage(message: string, conversationId?: string, currentPath?: string) {
   return readApi<{
     conversationId: string
     reply: string
@@ -86,7 +86,7 @@ export async function sendHelpMessage(message: string, conversationId?: string) 
       method: 'POST',
       credentials: 'include',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, ...(conversationId ? { conversationId } : {}) }),
+      body: JSON.stringify({ message, ...(conversationId ? { conversationId } : {}), ...(currentPath ? { currentPath } : {}) }),
     }),
   )
 }
