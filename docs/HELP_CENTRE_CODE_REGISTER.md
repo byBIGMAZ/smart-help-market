@@ -22,11 +22,13 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 ## Backend files
 - `backend/src/setup-help-centre-tables.ts`: creates Help Centre and BIGMAZ Intelligence learning tables and inserts default private platform settings without overwriting existing values.
 - `backend/src/setup-geographic-intelligence.ts`: safely adds nullable listing coordinates, geocoding status metadata, a server-side geocode cache, geographic indexes and centrally managed private geographic settings. Uses one PostgreSQL client for the entire setup transaction.
+- `backend/src/geography/geocoding.ts`: server-side Nominatim adapter with persistent cache lookup, strict query validation, a serialized 1.1-second provider request interval, country restriction, result validation and OpenStreetMap attribution.
+- `backend/src/routes/geography.ts`: explicit, non-autocomplete public geocoding endpoint with a per-IP request window and generic provider error handling.
 - `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
 - `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
 - `backend/src/intelligence/geocoding.ts`: server-side Nominatim lookup with backend-only User-Agent configuration, Nigerian country restriction, provider request pacing, timeout, input validation, coordinate validation and PostgreSQL cache.
 - `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
-- `backend/src/server.ts`: mounts the Help Centre API at `/api/help-centre`.
+- `backend/src/server.ts`: mounts the Help Centre API at `/api/help-centre` and geographic lookup at `/api/geography`.
 - `backend/package.json`: adds `npm run setup:help-centre`.
 
 ## Database tables
@@ -45,6 +47,9 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `location_geocode_status`: `pending`, `verified`, `manual` or `failed`.
 - `location_geocode_provider` and `location_geocoded_at`: provenance and timestamp for a resolved location.
 - A partial index supports geographic queries over published listings with coordinates.
+
+## Geographic API route
+- `GET /api/geography/geocode?q=Auchi%2C%20Edo%20State`: explicit location lookup. Returns up to the configured candidate limit, marks cache hits, and includes OpenStreetMap attribution. The route is disabled unless `geo.enabled` is true and a valid server environment variable is configured. It is not an autocomplete endpoint.
 
 ## Main API routes
 - `GET /api/help-centre/public-config`: guest-safe assistant availability preview.
@@ -73,6 +78,8 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `geo.cache_ttl_hours`: successful lookup cache lifetime, default 720 hours.
 - `geo.max_results`: candidate limit, default 5.
 - `geo.store_listing_coordinates`: controls whether approved listing workflows may store verified coordinates.
+
+The public OpenStreetMap Nominatim endpoint is only a low-volume pilot option. It must be explicitly enabled, requires `BIGMAZ_GEO_USER_AGENT` with a genuine application identifier and contact, is limited to at most one provider request per second across the application, requires visible `© OpenStreetMap contributors` attribution, prohibits autocomplete and bulk geocoding, and may be withdrawn. The current in-process pacing is suitable only for a single backend instance. Before scaling horizontally or relying on it commercially, switch to a contracted provider or a self-hosted geocoder and use shared rate limiting.
 
 ## Geocoding provider configuration
 - The current provider adapter supports Nominatim only.
