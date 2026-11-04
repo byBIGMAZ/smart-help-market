@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
 
 const LOCATION_KEY = 'smart-help-market:experience-location:v1'
 
@@ -24,7 +24,7 @@ export default function AmbientExperience() {
     return () => window.clearInterval(timer)
   }, [])
 
-  function saveLocation(event: React.FormEvent<HTMLFormElement>) {
+  function saveLocation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const next = draft.trim()
     setLocation(next)
@@ -37,7 +37,7 @@ export default function AmbientExperience() {
     <div className={`shm-ambient shm-ambient-${night ? 'night' : 'day'}`} aria-label="Marketplace atmosphere">
       <div className="shm-ambient-sky" aria-hidden="true">
         {night && Array.from({ length: 28 }, (_, index) => (
-          <i key={index} className="shm-star" style={{ '--star-index': index } as React.CSSProperties} />
+          <i key={index} className="shm-star" style={{ '--star-index': index } as CSSProperties} />
         ))}
         <span className="shm-ambient-moon" />
         <span className="shm-ambient-cloud shm-cloud-one" />
