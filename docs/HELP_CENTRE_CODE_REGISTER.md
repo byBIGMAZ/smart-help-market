@@ -21,6 +21,8 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 
 ## Backend files
 - `backend/src/setup-help-centre-tables.ts`: creates Help Centre and BIGMAZ Intelligence learning tables and inserts default private platform settings without overwriting existing values.
+- `backend/src/setup-geographic-intelligence.ts`: safely adds nullable listing coordinates, geocoding status metadata, a server-side geocode cache, geographic indexes and centrally managed private geographic settings. Uses one PostgreSQL client for the entire setup transaction.
+- `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
 - `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
 - `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
 - `backend/src/server.ts`: mounts the Help Centre API at `/api/help-centre`.
@@ -35,6 +37,13 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `marketplace_ai_feedback`: stores user ratings and optional corrected intent labels.
 - `marketplace_ai_training_examples`: stores curated examples, which only influence the classifier after approval.
 - `marketplace_ai_intent_weights`: bounded online feature weights updated only when a user explicitly corrects the understood intent.
+- `marketplace_geocode_cache`: server-side cache for normalized location lookups, coordinates, provider metadata and expiry. It does not expose coordinates through the public listing API.
+
+## Geographic listing fields
+- `marketplace_listings.location_latitude` and `location_longitude`: nullable coordinates, allowing existing listings to remain valid until a trusted location is resolved.
+- `location_geocode_status`: `pending`, `verified`, `manual` or `failed`.
+- `location_geocode_provider` and `location_geocoded_at`: provenance and timestamp for a resolved location.
+- A partial index supports geographic queries over published listings with coordinates.
 
 ## Main API routes
 - `GET /api/help-centre/public-config`: guest-safe assistant availability preview.
@@ -56,11 +65,18 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `help.messages.paid_enabled`: reserved and seeded false. Paid usage is not active until payment integration is connected.
 - `help.messages.pack_size`: proposed paid message package quantity.
 - `help.messages.pack_price_ngn`: proposed package price in NGN.
+- `geo.enabled`: geographic lookup is disabled by default until a provider is configured and tested.
+- `geo.provider`: provider identifier, default `nominatim`.
+- `geo.country_code`: default country restriction, `ng`.
+- `geo.cache_ttl_hours`: successful lookup cache lifetime, default 720 hours.
+- `geo.max_results`: candidate limit, default 5.
+- `geo.store_listing_coordinates`: controls whether approved listing workflows may store verified coordinates.
 
 ## Setup and verification
 Run from the backend folder:
 ```bash
 npm run setup:help-centre
+npm run setup:geography
 npm run build
 ```
 Then run the frontend production build from the frontend folder:
@@ -71,6 +87,6 @@ npm run build
 ## Current BIGMAZ Intelligence capability boundary
 The first proprietary engine version is a hybrid lexical/statistical intent classifier. It uses token and n-gram similarity, semantic cue scoring, curated examples and bounded online feature-weight updates from explicit user intent corrections. It does not call an external generative AI API and is not yet a general-purpose language model. It does not yet train neural language-model weights or perform open-ended reasoning at the level of a large foundation model.
 
-The Help Centre still uses the existing contextual workflow for published property/product/service listing search. Dedicated geocoding, road-distance routing, live neighbourhood-discussion retrieval, full roommate-profile matching, interactive escrow animations and model-training evaluation/rollback remain later implementation phases. The escrow answer is explicitly educational and does not claim that live escrow is operational. Guest scenarios are labelled as previews and do not pretend to run live searches. User corrections are stored as hashed feature signals and bounded weights; they do not store raw message text in the learning-event table. A negative rating alone does not retrain the classifier.
+The Help Centre still uses the existing contextual workflow for published property/product/service listing search. The geographic database foundation is now in place, but live geocoding provider integration, road-distance routing, live neighbourhood-discussion retrieval, full roommate-profile matching, interactive escrow animations and model-training evaluation/rollback remain later implementation phases. Geographic lookup is disabled by default. Provider credentials must be held in backend environment secrets, never in public platform settings or frontend code. The escrow answer is explicitly educational and does not claim that live escrow is operational. Guest scenarios are labelled as previews and do not pretend to run live searches. User corrections are stored as hashed feature signals and bounded weights; they do not store raw message text in the learning-event table. A negative rating alone does not retrain the classifier.
 
 Paid message package values are configuration only; no payment is collected or simulated. Database setup and production builds must be run in Codespaces and their output checked before treating this implementation as verified.
