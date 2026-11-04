@@ -259,7 +259,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
               <textarea value={input} onChange={(event) => setInput(event.target.value)} disabled={!assistantEnabled} placeholder="Ask me anything about the marketplace..." rows={1} maxLength={1200} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }}/>
               <button type="submit" disabled={!assistantEnabled || !input.trim() || sending} aria-label="Send message">↑</button>
             </form>
-            <div className="help-chat-footer"><span>Responses use marketplace information available to the assistant.</span><button type="button" onClick={() => setShowSupport((current) => !current)}>Need a person?</button></div>
+            <div className="help-chat-footer"><span>Responses use marketplace information available to the assistant.</span><button type="button" onClick={() => { if (!conversationId) void submitMessage(undefined, 'Speak to an administrator'); else setShowSupport((current) => !current) }}>Need a person?</button></div>
           </div>
         </div>
       </div>
