@@ -253,7 +253,7 @@ export default function MarketplaceBrowsePage({
                   className={`category-card category-${item.key}`}
                 >
                   <span className="category-icon">
-                    {getCategoryIcon(item.key)}
+                    <span className={`category-icon-art category-art-${item.key.toLowerCase().replace(/[^a-z0-9-]/g, '')}`} aria-hidden="true">{getCategoryIcon(item.key)}</span>
                   </span>
 
                   <span className="category-card-copy">
