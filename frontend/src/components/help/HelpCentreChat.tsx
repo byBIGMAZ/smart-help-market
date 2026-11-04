@@ -154,6 +154,8 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
   const [supportNotice, setSupportNotice] = useState('')
   const [supportSending, setSupportSending] = useState(false)
   const [feedbackSent, setFeedbackSent] = useState<Record<string, boolean>>({})
+  const [correctionFor, setCorrectionFor] = useState('')
+  const [correctionIntent, setCorrectionIntent] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -241,11 +243,13 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
     }
   }
 
-  async function rateResponse(messageId: string, helpful: boolean) {
+  async function rateResponse(messageId: string, helpful: boolean, correctedIntent?: string) {
     if (feedbackSent[messageId]) return
     try {
-      await submitHelpFeedback(messageId, helpful)
+      await submitHelpFeedback(messageId, helpful, correctedIntent)
       setFeedbackSent((current) => ({ ...current, [messageId]: helpful }))
+      setCorrectionFor('')
+      setCorrectionIntent('')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Your feedback could not be saved.')
     }
@@ -339,15 +343,38 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
                     <div className="help-chat-suggestions">{message.metadata.suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void submitMessage(undefined, suggestion)}>{suggestion}</button>)}</div>
                   )}
                   {message.sender === 'assistant' && /^\d+$/.test(message.id) && (
-                    <div className="help-message-feedback" aria-label="Rate this response">
-                      {feedbackSent[message.id] !== undefined
-                        ? <small>Thanks for helping BIGMAZ AI improve.</small>
-                        : <>
-                            <span>Was this helpful?</span>
-                            <button type="button" onClick={() => void rateResponse(message.id, true)} aria-label="Helpful answer">👍</button>
-                            <button type="button" onClick={() => void rateResponse(message.id, false)} aria-label="Not helpful">👎</button>
-                          </>}
-                    </div>
+                    <>
+                      <div className="help-message-feedback" aria-label="Rate this response">
+                        {feedbackSent[message.id] !== undefined
+                          ? <small>Thanks for helping BIGMAZ AI improve.</small>
+                          : <>
+                              <span>Was this helpful?</span>
+                              <button type="button" onClick={() => void rateResponse(message.id, true)} aria-label="Helpful answer">👍</button>
+                              <button type="button" onClick={() => { setCorrectionFor(message.id); setCorrectionIntent('') }} aria-label="Not helpful">👎</button>
+                            </>}
+                      </div>
+                      {correctionFor === message.id && feedbackSent[message.id] === undefined && (
+                        <div className="help-feedback-correction">
+                          <small>What was your question mainly about?</small>
+                          <select value={correctionIntent} onChange={(event) => setCorrectionIntent(event.target.value)}>
+                            <option value="">Choose the correct topic</option>
+                            <option value="property_search">Finding a property</option>
+                            <option value="roommate_search">Finding a roommate</option>
+                            <option value="product_search">Finding a product</option>
+                            <option value="service_search">Finding a service</option>
+                            <option value="neighbourhood_question">Neighbourhood information</option>
+                            <option value="escrow_explanation">Understanding escrow</option>
+                            <option value="navigation">Using a website feature</option>
+                            <option value="support">Customer support</option>
+                            <option value="general">Something else</option>
+                          </select>
+                          <div>
+                            <button type="button" onClick={() => void rateResponse(message.id, false, correctionIntent)} disabled={!correctionIntent}>Send correction</button>
+                            <button type="button" onClick={() => void rateResponse(message.id, false)}>Just rate it</button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                   <time>{new Date(message.createdAt).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</time>
                 </div>
