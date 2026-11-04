@@ -555,7 +555,7 @@ useEffect(() => {
       return
     }
     if (section !== 'overview') {
-      navigateAdminSection('overview')
+      setSection('overview')
       return
     }
     if (window.history.length > 1) window.history.back()
