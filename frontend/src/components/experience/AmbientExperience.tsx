@@ -18,7 +18,7 @@ export default function AmbientExperience() {
     let active = true
     getPublicPlatformSettings().then((settings) => {
       if (!active) return
-      const words = settings['platform.name'].trim().split(/\\s+/)
+      const words = settings['platform.name'].trim().split(/\s+/)
       setVehicleBrand(words[words.length - 1] || '')
     })
     return () => { active = false }
