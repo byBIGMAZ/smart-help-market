@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
+import EscrowExplainer from '../../components/experience/EscrowExplainer'
 import { getPublicPlatformSettings } from '../../services/platformSettings'
 import {
   getPublicCategories,
@@ -245,7 +246,7 @@ function App() {
       </header>
 
       <section className="hero" id="home">
-        <div className="hero-content">
+        <div className="hero-content shm-animate-rise">
           <span className="eyebrow">
             <span className="status-dot" />
             YOUR NEEDS, ONE MARKETPLACE
@@ -280,7 +281,7 @@ function App() {
           </div>
         </div>
 
-        <div className="hero-art" aria-hidden="true">
+        <div className="hero-art shm-animate-scale" aria-hidden="true">
           <div className="art-orbit orbit-one" />
           <div className="art-orbit orbit-two" />
 
@@ -375,7 +376,7 @@ function App() {
           </p>
         )}
 
-        <div className="category-grid">
+        <div className="category-grid shm-stagger">
           {marketplaceCategories.map((item) => (
             <button
               key={item.key}
@@ -451,7 +452,7 @@ function App() {
 
         {!listingsLoading && !listingsError && (
           <>
-            <div className="listing-grid">
+            <div className="listing-grid shm-stagger">
               {filteredListings.map((listing) => (
                 <article
                   className="listing-card"
@@ -612,7 +613,9 @@ function App() {
           className="button button-light"
           to="/register?type=service_provider"
         >
-          Become a provider <span aria-hidden="true">→</span>
+          Become a pro      <EscrowExplainer />
+
+vider <span aria-hidden="true">→</span>
         </Link>
       </section>
 
