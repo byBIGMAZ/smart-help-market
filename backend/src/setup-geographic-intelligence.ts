@@ -81,10 +81,16 @@ async function setupGeographicIntelligence() {
         provider_place_id TEXT,
         confidence NUMERIC(5, 4)
           CHECK (confidence IS NULL OR confidence BETWEEN 0 AND 1),
+        results JSONB NOT NULL DEFAULT '[]'::jsonb,
         expires_at TIMESTAMPTZ NOT NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
+    `)
+
+    await client.query(`
+      ALTER TABLE public.marketplace_geocode_cache
+        ADD COLUMN IF NOT EXISTS results JSONB NOT NULL DEFAULT '[]'::jsonb
     `)
 
     await client.query(`
@@ -102,16 +108,14 @@ async function setupGeographicIntelligence() {
       )
     }
 
-    await client.query('COMMIT')
-
-    const verification = await db.query<{ table_name: string | null }>(
+    const verification = await client.query<{ table_name: string | null }>(
       `SELECT to_regclass('public.marketplace_geocode_cache')::text AS table_name`,
     )
     if (!verification.rows[0]?.table_name) {
       throw new Error('Geocode cache table verification failed.')
     }
 
-    const columns = await db.query<{ column_name: string }>(
+    const columns = await client.query<{ column_name: string }>(
       `SELECT column_name
        FROM information_schema.columns
        WHERE table_schema = 'public'
