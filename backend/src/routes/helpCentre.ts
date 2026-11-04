@@ -100,11 +100,11 @@ function amountFrom(value: string, unit = ''): number {
 }
 
 function parseBudget(text: string): { min: number | null; max: number | null } {
-  const range = text.match(/(?:between|from)?\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?\\s*(?:to|and|-)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  const range = text.match(/(?:between|from)?\\s*₦?([\d,.]+)\\s*(k|m|million|thousand)?\\s*(?:to|and|-)\\s*₦?([\d,.]+)\\s*(k|m|million|thousand)?/i)
   if (range) return { min: amountFrom(range[1], range[2] || ''), max: amountFrom(range[3], range[4] || range[2] || '') }
-  const maximum = text.match(/(?:under|below|less than|up to|maximum|max|within)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  const maximum = text.match(/(?:under|below|less than|up to|maximum|max|within)\\s*₦?([\d,.]+)\\s*(k|m|million|thousand)?/i)
   if (maximum) return { min: null, max: amountFrom(maximum[1], maximum[2] || '') }
-  const minimum = text.match(/(?:above|over|more than|at least)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  const minimum = text.match(/(?:above|over|more than|at least)\\s*₦?([\d,.]+)\\s*(k|m|million|thousand)?/i)
   if (minimum) return { min: amountFrom(minimum[1], minimum[2] || ''), max: null }
   return { min: null, max: null }
 }
@@ -227,7 +227,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     const matchedLocation = knownLocations.rows.find((row) => normalize(searchText).includes(normalize(row.location)) || normalize(searchText).includes(normalize(row.location.split(',')[0])))
     if (matchedLocation) nextContext.selectedLocation = matchedLocation.location
   }
-  const hasBudget = /(?:₦|\\b(?:under|below|less than|up to|maximum|max|budget|between|above|over|at least)\\b|\\d\\s*[km]\\b)/i.test(searchText)
+  const hasBudget = /(?:₦|\\b(?:under|below|less than|up to|maximum|max|budget|between|above|over|at least)\\b|\d\\s*[km]\\b)/i.test(searchText)
 
   if (category === 'properties' && !hasLocation && awaiting !== 'budget') {
     const locations = await getDatabasePool().query<{ location: string }>(
@@ -619,7 +619,7 @@ router.patch('/admin/cases/:caseId', requirePermission('dashboard.view'), async 
 
 router.get('/admin/cases/:caseId/messages', requirePermission('dashboard.view'), async (req, res) => {
   const caseId = req.params.caseId
-  if (typeof caseId !== 'string' || !/^[1-9]\\d*$/.test(caseId)) {
+  if (typeof caseId !== 'string' || !/^[1-9]\d*$/.test(caseId)) {
     res.status(400).json({ error: 'Invalid support case.' })
     return
   }
@@ -643,7 +643,7 @@ router.get('/admin/cases/:caseId/messages', requirePermission('dashboard.view'),
 router.post('/admin/cases/:caseId/reply', requirePermission('dashboard.view'), async (req, res) => {
   const caseId = req.params.caseId
   const message = typeof req.body?.message === 'string' ? req.body.message.trim().slice(0, 2000) : ''
-  if (typeof caseId !== 'string' || !/^[1-9]\\d*$/.test(caseId) || !message) {
+  if (typeof caseId !== 'string' || !/^[1-9]\d*$/.test(caseId) || !message) {
     res.status(400).json({ error: 'A valid case and reply message are required.' })
     return
   }
