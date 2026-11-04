@@ -1295,7 +1295,7 @@ type ProfilePreviewState = {
 
 
 
-function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
+function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Role }) {
   const defaults: Record<string, string> = {
     fullName: user?.displayName || '',
     displayName: user?.displayName || '',
@@ -1340,6 +1340,9 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
     }
   })
   const [photo, setPhoto] = useState(user?.avatarUrl || '')
+  const existingTenantSubmission = readTenantSubmissions()[user?.email.trim().toLowerCase() || '']
+  const [shareTenantProfile, setShareTenantProfile] = useState(Boolean(existingTenantSubmission))
+  const [tenantDocuments, setTenantDocuments] = useState<TenantUploadedDocument[]>(existingTenantSubmission?.documents || [])
   const [notice, setNotice] = useState('')
   const [formVersion, setFormVersion] = useState(0)
   const [now, setNow] = useState(Date.now())
@@ -1351,6 +1354,34 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
       setNotice('Browser storage is unavailable. Changes may not survive a refresh.')
     }
   }, [saved, storageKey])
+
+  useEffect(() => {
+    const email = user?.email.trim().toLowerCase()
+    if (!email) return
+    const directory = readTenantSubmissions()
+    if (role === 'buyer' && shareTenantProfile) {
+      directory[email] = {
+        email,
+        fullName: saved.profile.fullName || saved.profile.displayName || user?.displayName || '',
+        phone: saved.profile.phone || '',
+        occupation: saved.profile.occupation || '',
+        country: saved.profile.country || '',
+        state: saved.profile.state || '',
+        city: saved.profile.city || '',
+        neighbourhood: saved.profile.neighbourhood || '',
+        bio: saved.profile.bio || '',
+        documents: tenantDocuments,
+        updatedAt: new Date().toISOString(),
+      }
+    } else {
+      delete directory[email]
+    }
+    try {
+      window.localStorage.setItem(TENANT_SUBMISSIONS_KEY, JSON.stringify(directory))
+    } catch {
+      setNotice('Tenant information could not be shared because browser storage is full.')
+    }
+  }, [role, shareTenantProfile, tenantDocuments, saved.profile, user?.email, user?.displayName])
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000)
@@ -1607,6 +1638,47 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
               <label>Public profile visibility<select name="visibility" defaultValue={saved.profile.visibility}><option value="members">Marketplace members</option><option value="community">Community participants</option><option value="private">Private</option></select></label>
             </div>
           </section>
+          {role === 'buyer' && (
+            <section className="smart-profile-section">
+              <div className="smart-profile-section-heading">
+                <span>04</span><div><h4>Tenant information and documents</h4><p>Optionally share the details and supporting documents a landlord needs when you apply for a property.</p></div>
+              </div>
+              <label className="shm-tenant-share-toggle">
+                <input type="checkbox" checked={shareTenantProfile} onChange={(event) => setShareTenantProfile(event.target.checked)} />
+                Allow my landlord to view the tenant information and documents I submit using this email address.
+              </label>
+              <div className="shm-tenant-upload-box">
+                <label>Upload supporting document
+                  <input type="file" accept="image/*,.pdf" onChange={(event) => {
+                    const file = event.target.files?.[0]
+                    event.target.value = ''
+                    if (!file) return
+                    if (file.size > 1024 * 1024) {
+                      setNotice('Each tenant document must be 1 MB or smaller in this browser preview.')
+                      return
+                    }
+                    const reader = new FileReader()
+                    reader.onload = () => {
+                      if (typeof reader.result !== 'string') return
+                      setTenantDocuments((current) => [...current, { name: file.name, type: file.type || 'application/octet-stream', dataUrl: reader.result as string }].slice(0, 4))
+                      setShareTenantProfile(true)
+                      setNotice('Tenant document added to your local profile preview.')
+                    }
+                    reader.onerror = () => setNotice('Unable to read this document. Please try again.')
+                    reader.readAsDataURL(file)
+                  }} />
+                </label>
+                <small>Up to four files, maximum 1 MB each. Images and PDF files are supported in this preview.</small>
+                {tenantDocuments.map((document, index) => (
+                  <div className="shm-tenant-uploaded-file" key={`${document.name}-${index}`}>
+                    <span>▤ {document.name}</span>
+                    <button type="button" onClick={() => setTenantDocuments((current) => current.filter((_, itemIndex) => itemIndex !== index))}>Remove</button>
+                  </div>
+                ))}
+              </div>
+              <p className="smart-profile-empty">Only share information you are comfortable providing. This browser preview shares data only within the same browser and is not a secure cross-device document service.</p>
+            </section>
+          )}
         </fieldset>
 
         <div className="smart-profile-submit">
@@ -2145,7 +2217,7 @@ export default function RoleWorkspacePage() {
               {notice && <p className="extended-success" role="status">{notice}</p>}
             </div>
           ) : isProfile ? (
-            <ProfileEditor user={marketplaceUser} />
+            <ProfileEditor user={marketplaceUser} role={role} />
           ) : (
             <>
               <div className="workspace-record-toolbar">
