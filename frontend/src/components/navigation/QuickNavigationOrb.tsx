@@ -85,12 +85,12 @@ export default function QuickNavigationOrb() {
   const arc = links.length > 1 ? links.map((_, index) => -Math.PI / 2 + (Math.PI * index) / (links.length - 1)) : [0]
 
   function startDrag(event: PointerEvent<HTMLButtonElement>) {
-    const rect = orbRef.current?.getBoundingClientRect()
-    if (!rect) return
     dragRef.current = {
       pointerId: event.pointerId,
-      offsetX: event.clientX - (rect.left + rect.width / 2),
-      offsetY: event.clientY - (rect.top + rect.height / 2),
+      pointerX: event.clientX,
+      pointerY: event.clientY,
+      startX: center.x,
+      startY: center.y,
       moved: false,
     }
     event.currentTarget.setPointerCapture(event.pointerId)
@@ -99,14 +99,14 @@ export default function QuickNavigationOrb() {
   function moveDrag(event: PointerEvent<HTMLButtonElement>) {
     const drag = dragRef.current
     if (!drag || drag.pointerId !== event.pointerId) return
-    const dx = event.clientX - (center.x + drag.offsetX)
-    const dy = event.clientY - (center.y + drag.offsetY)
+    const dx = event.clientX - drag.pointerX
+    const dy = event.clientY - drag.pointerY
     if (Math.abs(dx) + Math.abs(dy) > 4) drag.moved = true
     if (!drag.moved) return
     setOpen(false)
     setPosition({
-      x: Math.min(viewport.width - 30, Math.max(30, event.clientX - drag.offsetX)),
-      y: Math.min(viewport.height - 38, Math.max(38, event.clientY - drag.offsetY)),
+      x: Math.min(viewport.width - 30, Math.max(30, drag.startX + dx)),
+      y: Math.min(viewport.height - 38, Math.max(38, drag.startY + dy)),
     })
   }
 
