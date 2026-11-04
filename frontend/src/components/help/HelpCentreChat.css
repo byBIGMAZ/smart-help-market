@@ -111,3 +111,31 @@
 @media(max-width:760px){.help-chat-mode-page{height:auto;min-height:720px}.help-chat-history{flex-basis:145px;padding:8px}.help-chat-history>button{padding:8px}.help-chat-history>button strong{font-size:9px}.help-chat-history>button small{font-size:8px}.help-chat-header{padding:12px}.help-chat-messages{padding:12px 9px}.help-message-content>p{font-size:11px}.help-chat-composer-wrap{padding:8px}.help-chat-footer{font-size:7px}.help-chat-usage{font-size:8px}}
 @media(max-width:480px){.help-chat-mode-page{min-height:760px}.help-chat-history{flex-basis:112px}.help-history-heading{font-size:9px}.help-chat-history>button em{font-size:7px}.help-chat-brand strong{font-size:9px}.help-chat-brand small{font-size:9px}}
 @media(prefers-reduced-motion:reduce){.help-chat-shell *, .help-chat-shell *::before,.help-chat-shell *::after{animation:none!important;transition:none!important}}
+
+/* BIGMAZ AI intelligence experience */
+.help-preview-heading{display:flex;align-items:center;gap:10px;padding:4px 2px 12px;border-bottom:1px solid var(--border)}
+.help-preview-heading>div:nth-child(2){display:grid;gap:3px;min-width:0;flex:1}
+.help-preview-heading>div:nth-child(2) strong{font-size:12px;letter-spacing:.02em}
+.help-preview-heading>div:nth-child(2) small{font-size:9px;color:var(--text-secondary)}
+.help-preview-live{display:flex;align-items:center;gap:5px;font-size:8px;font-weight:850;letter-spacing:.06em;color:var(--brand-primary)}
+.help-preview-live i{width:6px;height:6px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgb(22 163 74 / .12)}
+.help-preview-stage{display:flex;flex-direction:column;gap:10px;min-height:220px;padding:12px 0;animation:help-preview-scene-in .45s ease both}
+.help-preview-message{transform-origin:top center;animation:help-preview-drop .46s cubic-bezier(.2,.8,.2,1) both}
+.help-preview-message:nth-child(2){animation-delay:.08s}
+.help-preview-message:nth-child(3){animation-delay:.14s}
+.help-preview-typing{display:flex;align-items:center;gap:5px;padding:8px 10px;color:var(--text-muted)}
+.help-preview-typing i{width:5px;height:5px;border-radius:50%;background:var(--brand-primary);animation:help-typing .9s ease-in-out infinite}
+.help-preview-typing i:nth-child(2){animation-delay:.14s}
+.help-preview-typing i:nth-child(3){animation-delay:.28s}
+.help-preview-typing span{margin-left:5px;font-size:9px}
+.help-preview-result-enter{animation:help-preview-result-in .45s cubic-bezier(.2,.8,.2,1) both}
+.help-preview-disclaimer{font-size:9px;line-height:1.5;color:var(--text-muted);padding:0 2px}
+.help-message-feedback{display:flex;align-items:center;gap:7px;margin-top:9px;padding-top:7px;border-top:1px solid var(--border);color:var(--text-muted)}
+.help-message-feedback span,.help-message-feedback small{font-size:9px}
+.help-message-feedback button{display:grid;place-items:center;width:25px;height:24px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:pointer;font-size:11px}
+.help-message-feedback button:hover{border-color:var(--brand-primary);background:var(--brand-primary-soft)}
+@keyframes help-preview-drop{from{opacity:0;transform:translateY(-13px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes help-preview-scene-in{from{opacity:.35}to{opacity:1}}
+@keyframes help-preview-result-in{from{opacity:0;transform:translateY(9px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:480px){.help-preview-heading{gap:7px}.help-preview-live{font-size:7px}.help-preview-stage{min-height:235px}}
+@media(prefers-reduced-motion:reduce){.help-preview-stage,.help-preview-message,.help-preview-result-enter{animation:none!important}}
