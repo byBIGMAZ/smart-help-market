@@ -59,7 +59,7 @@
 .profile-cooldown-control { display: grid; gap: 6px; }
 .profile-rule-toggle input { accent-color: #83cf56; }
 .profile-rule-footnote { margin: 0; padding: 16px 19px; }
-@media (prefers-color-scheme: light) {
+:root[data-theme="light"] {
   .admin-profile-approvals { color: #17231b; }
   .profile-approval-stats article,.profile-rules-panel,.profile-approval-list,.profile-approval-detail { background: #fff; border-color: #dce5dc; }
   .profile-approval-stats article span,.profile-approval-stats article small,.profile-list-toolbar small,.profile-detail-top p,.profile-panel-title p,.profile-request-copy small,.profile-value-comparison div span,.profile-request-meta span,.profile-decision-record span,.profile-decision-record p,.profile-empty-state,.profile-rule-row small,.profile-rule-footnote { color: #647267; }
