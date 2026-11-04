@@ -611,3 +611,69 @@
     line-height: 1;
   }
 }
+
+
+/* Dashboard navigation controls are available on every dashboard route. */
+.workspace-route-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 10px clamp(14px, 2.2vw, 28px);
+  position: relative;
+  z-index: 5;
+}
+
+.workspace-route-back,
+.workspace-route-dashboard {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, color .18s ease;
+}
+
+.workspace-route-back:hover,
+.workspace-route-back:focus-visible,
+.workspace-route-dashboard:hover,
+.workspace-route-dashboard:focus-visible {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.workspace-route-back:focus-visible,
+.workspace-route-dashboard:focus-visible {
+  outline: 3px solid var(--brand-primary-soft);
+  outline-offset: 2px;
+}
+
+.workspace-route-back > span:first-child,
+.workspace-route-dashboard > span:first-child {
+  font-size: 18px;
+  line-height: 1;
+}
+
+@media (max-width: 600px) {
+  .workspace-route-controls {
+    padding: 8px 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-route-back,
+  .workspace-route-dashboard {
+    transition: none !important;
+  }
+}
