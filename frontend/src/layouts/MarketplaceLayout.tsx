@@ -12,6 +12,7 @@ import MobileBottomNav from '../components/navigation/MobileBottomNav'
 import AmbientExperience from '../components/experience/AmbientExperience'
 import QuickNavigationOrb from '../components/navigation/QuickNavigationOrb'
 import WorkspaceFloatingSidebar from '../components/navigation/WorkspaceFloatingSidebar'
+import HelpCentreWidget from '../components/help/HelpCentreWidget'
 import { workspaces, type Role } from '../pages/workspaces/workspaceNavigation'
 
 import { getPublicPlatformSettings } from '../services/platformSettings'
@@ -109,6 +110,7 @@ export default function MarketplaceLayout({
       </div>
 
       <MobileBottomNav />
+      <HelpCentreWidget />
       {!isWorkspaceRoute && !isOwnerWorkspaceRoute && <QuickNavigationOrb />}
     </div>
   )
