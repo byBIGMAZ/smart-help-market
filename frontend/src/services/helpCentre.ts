@@ -75,6 +75,7 @@ export async function getHelpConversationMessages(id: string): Promise<HelpMessa
 export async function sendHelpMessage(message: string, conversationId?: string, currentPath?: string) {
   return readApi<{
     conversationId: string
+    assistantMessageId: string
     reply: string
     suggestions: string[]
     actions: Array<{ label: string; path: string }>
@@ -87,6 +88,17 @@ export async function sendHelpMessage(message: string, conversationId?: string, 
       credentials: 'include',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, ...(conversationId ? { conversationId } : {}), ...(currentPath ? { currentPath } : {}) }),
+    }),
+  )
+}
+
+export async function submitHelpFeedback(assistantMessageId: string, helpful: boolean) {
+  return readApi<{ status: string; message: string }>(
+    await fetch('/api/help-centre/feedback', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assistantMessageId, helpful }),
     }),
   )
 }
