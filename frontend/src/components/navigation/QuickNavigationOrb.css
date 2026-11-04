@@ -1,0 +1,123 @@
+/* Floating, draggable radial quick navigation */
+.shm-quick-orb {
+  position: fixed;
+  z-index: 180;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  touch-action: none;
+  transform: translate(-50%, -50%);
+  --quick-orb-bg: var(--surface, #fff);
+  --quick-orb-fg: var(--text-primary, #172033);
+  --quick-orb-border: var(--border, #d9dee8);
+  --quick-orb-accent: var(--brand-primary, #e87524);
+}
+.shm-quick-orb-trigger,
+.shm-quick-orb-link,
+.shm-quick-orb-customise {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--quick-orb-border);
+  border-radius: 50%;
+  background: var(--quick-orb-bg);
+  color: var(--quick-orb-fg);
+  box-shadow: 0 8px 26px rgb(0 0 0 / 16%);
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+.shm-quick-orb-trigger {
+  z-index: 4;
+  left: 0;
+  top: 0;
+  width: 54px;
+  height: 54px;
+  padding: 0;
+  opacity: .48;
+  cursor: grab;
+  touch-action: none;
+  transition: opacity .22s ease, transform .3s cubic-bezier(.2,.8,.2,1), background .2s ease;
+}
+.shm-quick-orb-trigger:active { cursor: grabbing; }
+.shm-quick-orb:hover .shm-quick-orb-trigger,
+.shm-quick-orb.is-open .shm-quick-orb-trigger,
+.shm-quick-orb-trigger:focus-visible { opacity: 1; }
+.shm-quick-orb.is-open .shm-quick-orb-trigger { background: var(--quick-orb-accent); color: #fff; transform: rotate(90deg); border-color: transparent; }
+.shm-quick-orb-trigger-symbol { position: relative; z-index: 2; font-size: 27px; line-height: 1; font-weight: 500; }
+.shm-quick-orb-pulse { position: absolute; inset: -5px; border: 1px solid var(--quick-orb-accent); border-radius: 50%; opacity: .32; animation: shm-orb-pulse 2.8s ease-out infinite; }
+.shm-quick-orb-items { position: absolute; inset: 0; }
+.shm-quick-orb-link {
+  left: 0;
+  top: 0;
+  width: 46px;
+  height: 46px;
+  color: var(--quick-orb-accent);
+  text-decoration: none;
+  font-size: 22px;
+  font-weight: 750;
+  opacity: 0;
+  transform: translate(0,0) scale(.2);
+  transition: transform .48s cubic-bezier(.16,1,.3,1), opacity .25s ease, background .2s ease, color .2s ease;
+  transition-delay: var(--orb-delay);
+}
+.shm-quick-orb.is-open .shm-quick-orb-link {
+  opacity: 1;
+  transform: translate(var(--orb-x), var(--orb-y)) scale(1);
+}
+.shm-quick-orb-link:hover,
+.shm-quick-orb-link.is-active { background: var(--quick-orb-accent); color: #fff; border-color: transparent; }
+.shm-quick-orb-link:focus-visible,
+.shm-quick-orb-customise:focus-visible,
+.shm-quick-orb-trigger:focus-visible { outline: 3px solid var(--quick-orb-accent); outline-offset: 3px; }
+.shm-quick-orb-customise {
+  z-index: 5;
+  left: 0;
+  top: 0;
+  width: 34px;
+  height: 34px;
+  font-size: 17px;
+  cursor: pointer;
+  opacity: 0;
+  transform: translate(0,0) scale(.3);
+  transition: transform .35s ease, opacity .2s ease;
+}
+.shm-quick-orb.is-open .shm-quick-orb-customise {
+  opacity: 1;
+  transform: translate(0, 66px) scale(1);
+}
+.shm-quick-orb-settings {
+  position: absolute;
+  z-index: 8;
+  top: 0;
+  width: 230px;
+  max-height: min(420px, 65vh);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--quick-orb-border);
+  border-radius: 16px;
+  background: var(--quick-orb-bg);
+  color: var(--quick-orb-fg);
+  box-shadow: 0 16px 45px rgb(0 0 0 / 22%);
+  pointer-events: auto;
+  transform: translateY(-50%);
+  touch-action: pan-y;
+}
+.shm-quick-orb-settings.settings-left { left: 48px; }
+.shm-quick-orb-settings.settings-right { right: 48px; }
+.shm-quick-orb-settings-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.shm-quick-orb-settings-head strong { font-size: 13px; }
+.shm-quick-orb-settings-head button { border: 0; background: transparent; color: inherit; font-size: 22px; cursor: pointer; }
+.shm-quick-orb-settings p { margin: 5px 0 10px; color: var(--text-muted, #777); font-size: 11px; line-height: 1.45; }
+.shm-quick-orb-settings label { display: flex; align-items: center; gap: 8px; padding: 7px 2px; font-size: 12px; cursor: pointer; }
+.shm-quick-orb-settings label input { accent-color: var(--quick-orb-accent); }
+.shm-quick-orb-settings label span { width: 20px; text-align: center; color: var(--quick-orb-accent); font-size: 16px; }
+@keyframes shm-orb-pulse { 0% { transform: scale(.88); opacity: .38; } 75%,100% { transform: scale(1.3); opacity: 0; } }
+@media (max-width: 720px) {
+  .shm-quick-orb-trigger { width: 49px; height: 49px; }
+  .shm-quick-orb-link { width: 42px; height: 42px; font-size: 20px; }
+  .shm-quick-orb-settings { width: min(220px, calc(100vw - 76px)); max-height: 56vh; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shm-quick-orb *,
+  .shm-quick-orb *::before { animation: none !important; transition: none !important; }
+}
