@@ -119,7 +119,7 @@ function AdminApp() {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [notificationUnreadCount, setNotificationUnreadCount] =
   useState(0)
-  const [overview, setOverview] = useState<AdminOverview | null>(null)
+  const [overview, setOverview] = useState<AdminOverview | null>(null)\n  const [dashboardTime, setDashboardTime] = useState(() => new Date())\n\n  useEffect(() => {\n    const timer = window.setInterval(() => setDashboardTime(new Date()), 60000)\n    return () => window.clearInterval(timer)\n  }, [])
 
   // Authentication
   const [email, setEmail] = useState('')
@@ -1348,17 +1348,17 @@ function openAutomationMonitoring() {
         {/* OVERVIEW */}
         {section === 'overview' && (
           <>
-            <div className="admin-welcome-panel">
+            <div className={`admin-welcome-panel admin-time-scene admin-time-${dashboardTime.getHours() >= 5 && dashboardTime.getHours() < 12 ? 'morning' : dashboardTime.getHours() >= 12 && dashboardTime.getHours() < 17 ? 'afternoon' : dashboardTime.getHours() >= 17 && dashboardTime.getHours() < 20 ? 'evening' : 'night'}`}>
               <div>
-                <span className="admin-panel-label">YOUR PLATFORM</span>
+                <span className="admin-panel-label">{dashboardTime.getHours() >= 5 && dashboardTime.getHours() < 12 ? 'GOOD MORNING' : dashboardTime.getHours() >= 12 && dashboardTime.getHours() < 17 ? 'GOOD AFTERNOON' : dashboardTime.getHours() >= 17 && dashboardTime.getHours() < 20 ? 'GOOD EVENING' : 'GOOD NIGHT'}</span>
                 <h2>SMART HELP MARKET BY BIGMAZ</h2>
-                <p>
-                  Properties, products and services in one marketplace.
-                </p>
+                <p>Properties, products and services in one marketplace.</p>
               </div>
-
-              <div className="admin-welcome-symbol" aria-hidden="true">
-                SH
+              <div className="admin-time-illustration" aria-hidden="true">
+                <span className="admin-time-orb" />
+                <span className="admin-time-cloud admin-time-cloud-one" />
+                <span className="admin-time-cloud admin-time-cloud-two" />
+                <span className="admin-time-stars">✦　·　✧　·　✦</span>
               </div>
             </div>
 
