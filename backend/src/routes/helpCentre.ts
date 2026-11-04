@@ -88,7 +88,7 @@ function amountFrom(value: string, unit = ''): number {
 }
 
 function parseBudget(text: string): { min: number | null; max: number | null } {
-  const range = text.match(/(?:between|from)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?\\s*(?:to|and|-)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
+  const range = text.match(/(?:between|from)?\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?\\s*(?:to|and|-)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
   if (range) return { min: amountFrom(range[1], range[2] || ''), max: amountFrom(range[3], range[4] || range[2] || '') }
   const maximum = text.match(/(?:under|below|less than|up to|maximum|max|within)\\s*₦?([\\d,.]+)\\s*(k|m|million|thousand)?/i)
   if (maximum) return { min: null, max: amountFrom(maximum[1], maximum[2] || '') }
@@ -132,8 +132,11 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   const lastSearch = typeof context.lastSearchText === 'string' ? context.lastSearchText : ''
+  let resultOffset = readNumber(context.searchOffset, 0)
   if (!awaiting && lastSearch && ['show me more', 'show all available options', 'try another location', 'change my location'].some((term) => message.includes(term))) {
     searchText = lastSearch
+    if (message.includes('show me more')) resultOffset = readNumber(context.searchOffset, 0)
+    else resultOffset = 0
     if (message.includes('another location') || message.includes('change my location')) {
       nextContext.pendingSearchText = lastSearch
       nextContext.awaiting = 'location'
@@ -257,7 +260,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       text: `I checked the published ${category} listings and found ${result.rows.length} possible match${result.rows.length === 1 ? '' : 'es'}. Open a result to review its details and availability.`,
       matches: result.rows,
       suggestions: ['Show me more options', 'Change my location', 'Speak to an administrator'],
-      context: { ...nextContext, lastSearchText: searchText },
+      context: { ...nextContext, lastSearchText: searchText, searchOffset: resultOffset + result.rows.length },
     }
   }
 
