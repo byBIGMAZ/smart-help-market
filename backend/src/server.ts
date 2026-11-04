@@ -15,6 +15,7 @@ import automationMonitoringRouter from './routes/automationMonitoring'
 import automationRulesRouter from './routes/automationRules'
 import notificationsRouter from './routes/notifications'
 import messagesRouter from './routes/messages'
+import helpCentreRouter from './routes/helpCentre'
 import adminNotificationsRouter from './routes/adminNotifications'
 
 import authRouter from './routes/auth'
@@ -57,6 +58,7 @@ app.use('/api/auth', authSessionRouter)
 // Personal notification routes.
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/messages', messagesRouter)
+app.use('/api/help-centre', helpCentreRouter)
 
 // Protected administration routes.
 app.use('/api/admin', adminRouter)
