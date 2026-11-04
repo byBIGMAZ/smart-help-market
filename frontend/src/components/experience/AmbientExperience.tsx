@@ -33,6 +33,5 @@ export default function AmbientExperience() {
       <span className="shm-road-vehicle shm-van"><i /><b /><em /></span>
       <span className="shm-road-bus"><i /><b /></span>
     </div>
-    {hasLocation && <div className="shm-location-billboard" aria-live="polite"><div className="shm-billboard-face"><span>WELCOME TO</span><strong>{location.toUpperCase()}</strong><small>Great opportunities begin here ✨</small></div><i className="shm-billboard-pole pole-left" /><i className="shm-billboard-pole pole-right" /></div>}
   </div>
 }
