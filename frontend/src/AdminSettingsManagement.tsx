@@ -14,22 +14,8 @@ type EditableSettingKey =
   | 'communication.contact_policy'
   | 'help.assistant.enabled'
   | 'help.messages.free_limit'
-  | 'help.messages.paid_enabled'
   | 'help.messages.pack_size'
   | 'help.messages.pack_price_ngn'
-
-const EDITABLE_KEYS: EditableSettingKey[] = [
-  'platform.name',
-  'platform.currency',
-  'platform.locale',
-  'platform.timezone',
-  'communication.contact_policy',
-  'help.assistant.enabled',
-  'help.messages.free_limit',
-  'help.messages.paid_enabled',
-  'help.messages.pack_size',
-  'help.messages.pack_price_ngn',
-]
 
 const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'platform.name': 'Marketplace Name',
@@ -39,7 +25,6 @@ const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'communication.contact_policy': 'In-App Contact Restrictions',
   'help.assistant.enabled': 'Help Assistant Enabled',
   'help.messages.free_limit': 'Included Monthly Messages',
-  'help.messages.paid_enabled': 'Paid Message Packages Enabled',
   'help.messages.pack_size': 'Paid Package Message Quantity',
   'help.messages.pack_price_ngn': 'Paid Package Price (NGN)',
 }
@@ -52,7 +37,6 @@ const SETTING_HELP: Record<EditableSettingKey, string> = {
   'communication.contact_policy': 'Configure phone, email, external link, social handle and off-platform contact restrictions using the JSON policy.',
   'help.assistant.enabled': 'Turn the SMART HELP assistant on or off for signed-in users.',
   'help.messages.free_limit': 'Number of assistant messages each user receives per calendar month before the usage limit is reached.',
-  'help.messages.paid_enabled': 'Keep disabled until a real payment gateway and payment verification workflow are connected.',
   'help.messages.pack_size': 'Number of additional assistant messages in a future paid package.',
   'help.messages.pack_price_ngn': 'Proposed package price in Nigerian Naira. This is configuration only until payment processing is integrated.',
 }
@@ -163,7 +147,7 @@ useEffect(() => {
 
     try {
       let settingValue: unknown = value
-      if (key === 'help.assistant.enabled' || key === 'help.messages.paid_enabled') {
+      if (key === 'help.assistant.enabled') {
         if (value !== 'true' && value !== 'false') {
           setError('Choose true or false for this setting.')
           setNotice('')
@@ -429,7 +413,6 @@ useEffect(() => {
         {([
           'help.assistant.enabled',
           'help.messages.free_limit',
-          'help.messages.paid_enabled',
           'help.messages.pack_size',
           'help.messages.pack_price_ngn',
         ] as EditableSettingKey[]).map((key) => {
