@@ -133,6 +133,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
         createdAt: new Date().toISOString(),
       }])
       setUsage({ ...result.usage, period: 'monthly' })
+      if (result.needsAdmin) setShowSupport(true)
       const history = await getHelpConversations()
       setConversations(history)
     } catch (err) {
