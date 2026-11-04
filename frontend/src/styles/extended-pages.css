@@ -2404,3 +2404,73 @@
     transition: none !important;
   }
 }
+
+
+/* Dashboard pages use the draggable floating navigation launcher. */
+.workspace-layout {
+  display: block !important;
+  min-width: 0;
+}
+
+.workspace-main {
+  width: 100%;
+}
+
+.workspace-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.workspace-dashboard-shortcut {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: border-color .18s ease, background .18s ease, color .18s ease;
+}
+
+.workspace-dashboard-shortcut > span {
+  font-size: 18px;
+}
+
+.workspace-dashboard-shortcut:hover,
+.workspace-dashboard-shortcut:focus-visible {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.workspace-dashboard-shortcut:focus-visible {
+  outline: 3px solid var(--brand-primary-soft);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .workspace-heading-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .workspace-heading-actions > a,
+  .workspace-heading-actions > button {
+    flex: 0 0 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-dashboard-shortcut {
+    transition: none !important;
+  }
+}
