@@ -17,6 +17,9 @@ interface ProfileRequest {
   reason?: string
   reviewedAt?: string
   reviewer?: string
+  sourceStorageKey?: string
+  sourceRecordId?: string
+  fieldKey?: string
 }
 
 const STORAGE_KEY = 'smart-help-market:admin-profile-approvals:v1'
@@ -39,16 +42,47 @@ const defaultRules: Record<ProfileField, { approval: boolean; cooldown: number }
 }
 
 function readRequests(): ProfileRequest[] {
+  const linkedRequests: ProfileRequest[] = []
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed: unknown = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as ProfileRequest[]
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index)
+      if (!key?.startsWith('smart-help-market:profile-protection:v1:')) continue
+      const raw = window.localStorage.getItem(key)
+      if (!raw) continue
+      const parsed = JSON.parse(raw) as {
+        profile?: Record<string, string>
+        pending?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string }>
+      }
+      for (const item of parsed.pending || []) {
+        const fieldLabels: Record<string, string> = {
+          fullName: 'Full legal name',
+          phone: 'Phone number',
+          dateOfBirth: 'Date of birth',
+          email: 'Email address',
+          identityDetails: 'Identity details',
+          businessOwnership: 'Business ownership',
+          payoutDetails: 'Payout details',
+        }
+        linkedRequests.push({
+          id: item.id,
+          user: parsed.profile?.fullName || parsed.profile?.displayName || 'Marketplace member',
+          email: 'Account email protected',
+          role: 'Marketplace member',
+          field: (fieldLabels[item.field] || item.field) as ProfileField,
+          fieldKey: item.field,
+          currentValue: item.previousValue || 'Not provided',
+          proposedValue: item.proposedValue || 'Not provided',
+          submittedAt: item.submittedAt,
+          status: 'pending',
+          sourceStorageKey: key,
+          sourceRecordId: item.id,
+        })
+      }
     }
   } catch {
-    // Keep the approval preview available if browser storage is unavailable.
+    // Ignore malformed local preview records and retain the sample queue.
   }
-  return initialRequests
+  return [...linkedRequests, ...initialRequests]
 }
 
 function formatDate(value: string) {
@@ -88,6 +122,33 @@ export default function AdminProfileApprovals() {
       return
     }
     const now = new Date().toISOString()
+    if (selected.sourceStorageKey && selected.sourceRecordId) {
+      try {
+        const raw = window.localStorage.getItem(selected.sourceStorageKey)
+        if (raw) {
+          const stored = JSON.parse(raw) as {
+            profile?: Record<string, string>
+            cooldownUntil?: string | null
+            pending?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string }>
+            history?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string; reviewedAt?: string; reviewerNote?: string }>
+          }
+          const matching = (stored.pending || []).find((item) => item.id === selected.sourceRecordId)
+          if (matching) {
+            if (status === 'approved' && stored.profile && selected.fieldKey) {
+              stored.profile[selected.fieldKey] = matching.proposedValue
+            }
+            stored.pending = (stored.pending || []).filter((item) => item.id !== selected.sourceRecordId)
+            stored.history = (stored.history || []).map((item) => item.id === `${selected.sourceRecordId}-history` || item.id === selected.sourceRecordId
+              ? { ...item, status: status === 'approved' ? 'Approved' : 'Rejected', reviewedAt: now, reviewerNote: reason.trim() }
+              : item)
+            window.localStorage.setItem(selected.sourceStorageKey, JSON.stringify(stored))
+          }
+        }
+      } catch {
+        setNotice('The linked profile record could not be updated in browser storage.')
+        return
+      }
+    }
     const next = requests.map((item) => item.id === selected.id
       ? { ...item, status, reason: reason.trim(), reviewer: 'Current Super Admin', reviewedAt: now }
       : item)
