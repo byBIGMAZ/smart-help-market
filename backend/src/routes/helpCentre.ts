@@ -3,7 +3,7 @@ import { getDatabasePool } from '../database'
 import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession'
 import { requirePermission } from '../auth/requirePermission'
 import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, hashIntentFeatures, type BigmazIntent, type IntentWeight } from '../intelligence/bigmazEngine'
-import { resolveGeographicLocation } from '../intelligence/geocoding'
+import { resolveGeographicLocation } from '../geography/geocoding'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
