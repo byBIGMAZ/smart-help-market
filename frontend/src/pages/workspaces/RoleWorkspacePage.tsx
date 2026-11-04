@@ -1,4 +1,3 @@
-import { createPortal } from 'react-dom'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
@@ -1819,8 +1818,6 @@ export default function RoleWorkspacePage() {
   const [created, setCreated] = useState<string[]>([])
   const [isDemoAccount, setIsDemoAccount] = useState(false)
   const [marketplaceUser, setMarketplaceUser] = useState<MarketplaceUser | null>(null)
-  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
-  const [workspaceMenuPosition, setWorkspaceMenuPosition] = useState({ top: 16, left: 16 })
   const [selectedWorkspaceRecord, setSelectedWorkspaceRecord] = useState<WorkspaceRecord | null>(null)
   const [dashboardNow, setDashboardNow] = useState(() => new Date())
 
@@ -1830,7 +1827,6 @@ export default function RoleWorkspacePage() {
   }, [])
 
   useEffect(() => {
-    setWorkspaceMenuOpen(false)
     setSelectedWorkspaceRecord(null)
   }, [pathname])
 
@@ -1893,23 +1889,13 @@ export default function RoleWorkspacePage() {
         <div className="workspace-heading-actions">
           <button
             type="button"
-            className="workspace-navigation-trigger"
-            aria-expanded={workspaceMenuOpen}
-            aria-controls="workspace-navigation"
-            onClick={(event) => {
-              const rect = event.currentTarget.getBoundingClientRect()
-              const panelWidth = Math.min(340, window.innerWidth - 24)
-              const panelHeight = Math.min(520, window.innerHeight - 24)
-              const top = rect.bottom + 10 + panelHeight <= window.innerHeight
-                ? rect.bottom + 10
-                : Math.max(12, rect.top - panelHeight - 10)
-              const left = Math.max(12, Math.min(window.innerWidth - panelWidth - 12, rect.left))
-              setWorkspaceMenuPosition({ top, left })
-              setWorkspaceMenuOpen((open) => !open)
-            }}
+            className="workspace-back-button"
+            onClick={() => navigate(-1)}
+            aria-label="Go back to the previous page"
+            title="Go back"
           >
-            <span aria-hidden="true">☰</span>
-            Navigation
+            <span aria-hidden="true">←</span>
+            Back
           </button>
           <Link className="extended-secondary" to="/explore">
             Browse marketplace
@@ -1952,46 +1938,20 @@ export default function RoleWorkspacePage() {
       )}
 
 
-      {createPortal((
-        <>
-          {workspaceMenuOpen && (
-            <button
-              type="button"
-              className="workspace-menu-backdrop"
-              aria-label="Close workspace menu"
-              onClick={() => setWorkspaceMenuOpen(false)}
-            />
-          )}
-          <aside
-            id="workspace-navigation"
-            className={`workspace-nav workspace-nav-viewport ${workspaceMenuOpen ? 'workspace-nav-open' : ''}`}
-            style={{
-              top: workspaceMenuPosition.top,
-              left: workspaceMenuPosition.left,
-            }}
-          >
-            <button
-              type="button"
-              className="workspace-nav-close"
-              aria-label="Close workspace menu"
-              onClick={() => setWorkspaceMenuOpen(false)}
-            >×</button>
-            <strong>WORKSPACE MENU</strong>
-            {workspace.links.map((item) => (
-              <Link
-                className={item.path === pathname ? 'workspace-nav-active' : ''}
-                to={item.path}
-                key={item.path}
-                onClick={() => setWorkspaceMenuOpen(false)}
-              >
-                {item.label}<span>›</span>
-              </Link>
-            ))}
-          </aside>
-        </>
-      ), document.body)}
-
       <div className="workspace-layout">
+        <aside className="workspace-nav" aria-label="Workspace navigation">
+          <strong>WORKSPACE MENU</strong>
+          {workspace.links.map((item) => (
+            <Link
+              className={item.path === pathname ? 'workspace-nav-active' : ''}
+              to={item.path}
+              key={item.path}
+              aria-current={item.path === pathname ? 'page' : undefined}
+            >
+              {item.label}<span>›</span>
+            </Link>
+          ))}
+        </aside>
         <section className="workspace-main">
           <div className="workspace-section-heading">
             <div>
