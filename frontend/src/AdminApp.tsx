@@ -66,6 +66,7 @@ const AdminReports = lazy(() => import('./AdminReports'))
 const AdminAutomation = lazy(() => import('./AdminAutomation'))
 const AdminAutomationRules = lazy(() => import('./AdminAutomationRules'))
 const AdminAutomationMonitoring = lazy(() => import('./AdminAutomationMonitoring'))
+const AdminHelpCentre = lazy(() => import('./AdminHelpCentre'))
 
 const AdminModuleFallback = () => (
   <div className="admin-loading" role="status" aria-live="polite">
@@ -88,6 +89,7 @@ type AdminSection =
   | 'automation-monitoring'
   | 'notifications'
   | 'profile-approvals'
+  | 'help-support'
 
 type UserStatusFilter = 'all' | AccountStatus
 
@@ -696,6 +698,17 @@ function openAutomationMonitoring() {
     void loadAuditLogs('', '', '', '', 0)
   }
 
+  function openHelpSupport() {
+    navigateAdminSection('help-support')
+    setSelectedRoleId(null)
+    setSelectedRoleUserId(null)
+    setError('')
+    setNotice('')
+    setUsersError('')
+    setRolesError('')
+    setAuditError('')
+  }
+
   function openNotifications() {
   navigateAdminSection('notifications')
   setSelectedRoleId(null)
@@ -723,6 +736,7 @@ function openAutomationMonitoring() {
       case 'automation-monitoring': openAutomationMonitoring(); break
       case 'notifications': openNotifications(); break
       case 'profile-approvals': openProfileApprovals(); break
+      case 'help-support': openHelpSupport(); break
     }
   }
 
@@ -1158,6 +1172,16 @@ function openAutomationMonitoring() {
             <span /> Administrator
           </span>
 
+          <button
+            type="button"
+            className={`admin-nav-button ${section === 'help-support' ? 'is-active' : ''}`}
+            aria-current={section === 'help-support' ? 'page' : undefined}
+            onClick={openHelpSupport}
+          >
+            <span aria-hidden="true">✦</span>
+            Help Support Inbox
+          </button>
+
           {user?.permissions.includes('notifications.view') && (
   <button
     type="button"
@@ -1208,6 +1232,7 @@ function openAutomationMonitoring() {
           ...(user?.permissions.includes('notifications.view') ? [{ label: 'Notifications', path: 'notifications' }] : []),
           ...(user?.roles.includes('super_admin') ? [{ label: 'Profile Approvals', path: 'profile-approvals' }] : []),
           { label: 'Audit Logs', path: 'audit' },
+          { label: 'Help Support Inbox', path: 'help-support' },
         ]}
         onNavigate={handleAdminSidebarNavigation}
         activePath={section}
@@ -2141,6 +2166,11 @@ function openAutomationMonitoring() {
 {/* AUTOMATION MONITORING */}
 {section === 'automation-monitoring' && (
   <Suspense fallback={<AdminModuleFallback />}><AdminAutomationMonitoring /></Suspense>
+)}
+
+{/* HELP CENTRE SUPPORT INBOX */}
+{section === 'help-support' && (
+  <Suspense fallback={<AdminModuleFallback />}><AdminHelpCentre /></Suspense>
 )}
 
 {/* ADMINISTRATOR NOTIFICATION CENTRE */}
