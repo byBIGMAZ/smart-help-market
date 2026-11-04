@@ -104,6 +104,7 @@ async function setupHelpCentreTables() {
         CHECK (length(trim(phrase)) BETWEEN 3 AND 500)
       )
     `)
+    await db.query('ALTER TABLE public.marketplace_ai_learning_events ADD COLUMN IF NOT EXISTS assistant_message_id BIGINT REFERENCES public.marketplace_help_messages(message_id) ON DELETE SET NULL')
     await db.query('CREATE INDEX IF NOT EXISTS idx_ai_learning_events_created ON public.marketplace_ai_learning_events(created_at DESC)')
     await db.query('CREATE INDEX IF NOT EXISTS idx_ai_training_examples_approved ON public.marketplace_ai_training_examples(approved, intent_key)')
     for (const [key, value, group, description, isPublic] of initialSettings) {
