@@ -9,6 +9,7 @@ import DesktopSidebar from '../components/navigation/DesktopSidebar'
 import TopHeader from '../components/navigation/TopHeader'
 import MobileBottomNav from '../components/navigation/MobileBottomNav'
 import AmbientExperience from '../components/experience/AmbientExperience'
+import QuickNavigationOrb from '../components/navigation/QuickNavigationOrb'
 
 import { getPublicPlatformSettings } from '../services/platformSettings'
 
@@ -63,6 +64,7 @@ export default function MarketplaceLayout({
       </div>
 
       <MobileBottomNav />
+      <QuickNavigationOrb />
     </div>
   )
 }
