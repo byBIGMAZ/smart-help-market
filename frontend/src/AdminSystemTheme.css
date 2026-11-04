@@ -389,3 +389,11 @@
     box-sizing: border-box;
   }
 }
+
+/* Keep the time-of-day greeting legible while respecting the selected theme. */
+.admin-shell .admin-welcome-panel.admin-time-morning{background:radial-gradient(ellipse at 82% 5%,#ffd77855,transparent 52%),linear-gradient(120deg,#263923,#17241b)!important;color:#f4f8ed}
+.admin-shell .admin-welcome-panel.admin-time-afternoon{background:radial-gradient(ellipse at 82% 5%,#a9e6ff44,transparent 54%),linear-gradient(120deg,#25423f,#172a29)!important;color:#f4fbff}
+.admin-shell .admin-welcome-panel.admin-time-evening{background:radial-gradient(ellipse at 82% 5%,#f4a06b55,transparent 52%),linear-gradient(120deg,#39251f,#17241b)!important;color:#fff4e8}
+.admin-shell .admin-welcome-panel.admin-time-night{background:radial-gradient(ellipse at 82% 5%,#536ba055,transparent 52%),linear-gradient(120deg,#10172b,#080d18)!important;color:#f3f5ff}
+.admin-shell .admin-welcome-panel.admin-time-morning h2,.admin-shell .admin-welcome-panel.admin-time-afternoon h2,.admin-shell .admin-welcome-panel.admin-time-evening h2,.admin-shell .admin-welcome-panel.admin-time-night h2{color:inherit!important}
+.admin-shell .admin-welcome-panel.admin-time-morning p,.admin-shell .admin-welcome-panel.admin-time-afternoon p,.admin-shell .admin-welcome-panel.admin-time-evening p,.admin-shell .admin-welcome-panel.admin-time-night p{color:inherit!important;opacity:.78}
