@@ -1,5 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useLocation } from 'react-router-dom'
+import { getPublicPlatformSettings } from '../../services/platformSettings'
 
 function getTimeScene() {
   const hour = new Date().getHours()
@@ -12,6 +13,16 @@ function getTimeScene() {
 export default function AmbientExperience() {
   const route = useLocation()
   const [scene, setScene] = useState(getTimeScene)
+  const [vehicleBrand, setVehicleBrand] = useState('')
+  useEffect(() => {
+    let active = true
+    getPublicPlatformSettings().then((settings) => {
+      if (!active) return
+      const words = settings['platform.name'].trim().split(/\\s+/)
+      setVehicleBrand(words[words.length - 1] || '')
+    })
+    return () => { active = false }
+  }, [])
   useEffect(() => {
     const timer = window.setInterval(() => setScene(getTimeScene()), 60000)
     return () => window.clearInterval(timer)
@@ -25,9 +36,9 @@ export default function AmbientExperience() {
       {scene === 'morning' && <span className="shm-sun-rays" />}
     </div>
     <div className="shm-ambient-road" aria-hidden="true"><span className="shm-road-line" />
-      <span className="shm-road-vehicle shm-car"><i /><b /><em /></span>
-      <span className="shm-road-vehicle shm-van"><i /><b /><em /></span>
-      <span className="shm-road-bus"><i /><b /></span>
+      <span className="shm-road-vehicle shm-car"><i /><b /><em /><strong className="shm-vehicle-brand">{vehicleBrand}</strong></span>
+      <span className="shm-road-vehicle shm-van"><i /><b /><em /><strong className="shm-vehicle-brand">{vehicleBrand}</strong></span>
+      <span className="shm-road-bus" data-brand={vehicleBrand}><i /><b /></span>
     </div>
   </div>
 }
