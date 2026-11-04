@@ -17,6 +17,7 @@ interface IntelligenceSummary {
   interactions: { interactions: number; helpful: number; not_helpful: number; intents_observed: number }
   feedback: { ratings: number; positive: number }
   trainingExamples: { approved: number; pending: number }
+  adaptiveFeatures: { learned_features: number; correction_samples: number }
 }
 interface SupportMessage {
   id: string
@@ -129,6 +130,8 @@ export default function AdminHelpCentre() {
             <article><small>Interactions · 30 days</small><strong>{intelligence.interactions.interactions.toLocaleString('en-NG')}</strong></article>
             <article><small>Helpful ratings</small><strong>{intelligence.feedback.positive.toLocaleString('en-NG')} / {intelligence.feedback.ratings.toLocaleString('en-NG')}</strong></article>
             <article><small>Intent categories observed</small><strong>{intelligence.interactions.intents_observed}</strong></article>
+            <article><small>Adaptive features learned</small><strong>{intelligence.adaptiveFeatures.learned_features.toLocaleString('en-NG')}</strong></article>
+            <article><small>Intent correction samples</small><strong>{intelligence.adaptiveFeatures.correction_samples.toLocaleString('en-NG')}</strong></article>
             <article><small>Reviewed learning examples</small><strong>{intelligence.trainingExamples.approved} approved · {intelligence.trainingExamples.pending} pending</strong></article>
           </div>
           <p>BIGMAZ AI records privacy-preserving interaction signals and applies supervised intent corrections. Model changes remain bounded and measurable.</p>
