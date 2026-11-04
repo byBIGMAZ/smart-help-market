@@ -46,11 +46,12 @@ export default function WorkspaceFloatingSidebar({ links }: { links: WorkspaceLi
   }
   const buttonOnLeft = center.x < viewport.width / 2
   const panelWidth = Math.min(330, viewport.width - 28)
-  const panelTop = Math.max(12, Math.min(viewport.height - Math.min(480, viewport.height - 24) - 12, center.y - 210))
+  const panelMaxHeight = Math.min(480, viewport.height - 24)
+  const panelTop = Math.max(12, Math.min(viewport.height - panelMaxHeight - 12, center.y - panelMaxHeight / 2))
   const panelStyle: CSSProperties = {
     top: panelTop,
     width: panelWidth,
-    maxHeight: Math.max(180, viewport.height - 24),
+    maxHeight: panelMaxHeight,
     ...(buttonOnLeft
       ? { left: Math.min(viewport.width - panelWidth - 12, center.x + 40) }
       : { right: Math.min(viewport.width - panelWidth - 12, viewport.width - center.x + 40) }),
