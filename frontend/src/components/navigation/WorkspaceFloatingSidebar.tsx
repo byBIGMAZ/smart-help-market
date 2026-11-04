@@ -19,7 +19,7 @@ function readPosition(): Position | null {
   return null
 }
 
-export default function WorkspaceFloatingSidebar({ links }: { links: WorkspaceLink[] }) {
+export default function WorkspaceFloatingSidebar({ links, onNavigate, activePath }: { links: WorkspaceLink[]; onNavigate?: (path: string) => void; activePath?: string }) {
   const { pathname } = useLocation()
   const dragRef = useRef<{ pointerId: number; pointerX: number; pointerY: number; startX: number; startY: number; moved: boolean } | null>(null)
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight })
@@ -116,9 +116,15 @@ export default function WorkspaceFloatingSidebar({ links }: { links: WorkspaceLi
               <Link
                 key={item.path}
                 to={item.path}
-                className={item.path === pathname ? 'is-active' : ''}
-                aria-current={item.path === pathname ? 'page' : undefined}
-                onClick={() => setOpen(false)}
+                className={item.path === (activePath ?? pathname) ? 'is-active' : ''}
+                aria-current={item.path === (activePath ?? pathname) ? 'page' : undefined}
+                onClick={(event) => {
+                  if (onNavigate) {
+                    event.preventDefault()
+                    onNavigate(item.path)
+                  }
+                  setOpen(false)
+                }}
               >
                 <span className="shm-workspace-float-link-index">{String(index + 1).padStart(2, '0')}</span>
                 <span>{item.label}</span>
