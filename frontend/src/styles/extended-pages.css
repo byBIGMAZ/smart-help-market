@@ -1998,3 +1998,37 @@
   .smart-profile-protection,.smart-profile-approval-panel{padding:15px}
   .smart-profile-change-row{align-items:flex-start;flex-direction:column}
 }
+
+/* Automatic local-time scenes across every role dashboard. */
+.shm-time-welcome{position:relative;isolation:isolate;min-height:154px;overflow:hidden;transition:background 700ms ease,color 500ms ease}
+.shm-time-copy{position:relative;z-index:3;max-width:min(70%,650px)}
+.shm-time-welcome h3,.shm-time-welcome p{position:relative;z-index:3}
+.shm-time-art{position:absolute;z-index:1;inset:0 0 0 auto;width:44%;overflow:hidden;pointer-events:none}
+.shm-time-horizon{position:absolute;right:0;bottom:-40px;left:0;height:95px;border-radius:50% 50% 0 0;background:linear-gradient(180deg,#80b98a66,#376a5155);filter:blur(2px)}
+.shm-time-sun{position:absolute;top:22px;right:23%;width:74px;height:74px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fffbd9,#ffd166 72%);box-shadow:0 0 28px #ffd16688,0 0 70px #ffd16655;animation:shm-time-glow 5s ease-in-out infinite}
+.shm-time-rays{position:absolute;top:10px;right:calc(23% - 14px);width:102px;height:102px;border:2px dashed #ffdc7c99;border-radius:50%;animation:shm-time-spin 36s linear infinite}
+.shm-time-cloud{position:absolute;right:2%;top:75px;width:86px;height:20px;border-radius:50%;background:#fff;opacity:.3;filter:blur(5px);animation:shm-time-drift 13s ease-in-out infinite alternate}
+.shm-time-cloud-two{top:112px;right:48%;transform:scale(.72);animation-delay:-6s}
+.shm-time-moon{position:absolute;top:25px;right:24%;width:68px;height:68px;border-radius:50%;background:#f3f0d7;box-shadow:0 0 38px #e9e6c777;opacity:0}
+.shm-time-moon:after{position:absolute;top:-5px;left:19px;width:63px;height:63px;border-radius:50%;background:#1a2944;content:""}
+.shm-time-stars{position:absolute;top:18px;right:3%;color:#fff2c2;font-size:17px;letter-spacing:.3em;opacity:0;animation:shm-time-twinkle 3s ease-in-out infinite}
+.shm-time-afternoon{background:linear-gradient(110deg,#e9f6ff,#c9e8fa 65%,#a8d8f2)!important;color:#17364a}
+.shm-time-afternoon .shm-time-sun{width:88px;height:88px;top:18px;background:radial-gradient(circle at 35% 30%,#fff,#ffe28b 70%);box-shadow:0 0 50px #ffe28b99}
+.shm-time-afternoon .shm-time-rays{border-color:#ffe28b77}
+.shm-time-afternoon .shm-time-cloud{opacity:.55;background:#fff}
+.shm-time-evening{background:linear-gradient(110deg,#f6c4a0,#e98c70 60%,#654d69)!important;color:#382a37}
+.shm-time-evening .shm-time-sun{top:68px;width:66px;height:66px;background:radial-gradient(circle,#fff0c4,#f18b55 72%);box-shadow:0 0 42px #f18b5588}
+.shm-time-evening .shm-time-rays{opacity:.18}
+.shm-time-evening .shm-time-horizon{background:linear-gradient(180deg,#f9d28b88,#a34d6277)}
+.shm-time-night{background:radial-gradient(ellipse at 80% 10%,#293f70,#111a30 75%)!important;color:#f4f6ff}
+.shm-time-night .extended-kicker{color:#c4d5ff}
+.shm-time-night .shm-time-copy p{color:#d1d9ee}
+.shm-time-night .shm-time-sun,.shm-time-night .shm-time-rays,.shm-time-night .shm-time-cloud{opacity:0}
+.shm-time-night .shm-time-moon,.shm-time-night .shm-time-stars{opacity:1}
+.shm-time-night .shm-time-horizon{background:linear-gradient(180deg,#425d8b66,#17274488)}
+@keyframes shm-time-spin{to{transform:rotate(360deg)}}
+@keyframes shm-time-glow{50%{filter:brightness(1.14);box-shadow:0 0 48px #ffd166aa,0 0 88px #ffd16666}}
+@keyframes shm-time-drift{to{translate:20px 0}}
+@keyframes shm-time-twinkle{50%{opacity:.48}}
+@media(max-width:640px){.shm-time-welcome{min-height:148px;padding:18px!important}.shm-time-copy{max-width:78%}.shm-time-art{width:48%;opacity:.85}.shm-time-sun{right:17%;width:57px;height:57px}.shm-time-rays{right:calc(17% - 12px);width:82px;height:82px}.shm-time-moon{right:17%;width:53px;height:53px}.shm-time-moon:after{left:15px;width:50px;height:50px}.shm-time-stars{font-size:12px;right:0}.shm-time-welcome .workspace-welcome-icon{width:44px;height:44px;flex-basis:44px;font-size:25px;border-radius:14px}}
+@media(prefers-reduced-motion:reduce){.shm-time-welcome *{animation:none!important;transition:none!important}}
