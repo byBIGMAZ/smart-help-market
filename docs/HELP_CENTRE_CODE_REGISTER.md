@@ -45,8 +45,6 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `location_geocode_provider` and `location_geocoded_at`: provenance and timestamp for a resolved location.
 - A partial index supports geographic queries over published listings with coordinates.
 
-## Geographic API route
-
 ## Main API routes
 - `GET /api/help-centre/public-config`: guest-safe assistant availability preview.
 - `GET /api/help-centre/status`: signed-in user's monthly quota.
