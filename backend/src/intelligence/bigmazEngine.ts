@@ -142,7 +142,7 @@ export function classifyBigmazIntent(
   const cueGroups: Array<{ intent: BigmazIntent; phrases: string[]; score: number }> = [
     { intent: 'escrow_explanation', phrases: ['escrow', 'money held until', 'payment held until', 'release of funds'], score: 0.88 },
     { intent: 'roommate_search', phrases: ['roommate', 'room mate', 'flatmate', 'housemate', 'share rent', 'share accommodation'], score: 0.86 },
-    { intent: 'neighbourhood_question', phrases: ['neighbourhood', 'neighborhood', 'electricity supply', 'water supply', 'road condition', 'is the area safe', 'peaceful area'], score: 0.84 },
+    { intent: 'neighbourhood_question', phrases: ['how is the neighbourhood', 'how is the neighborhood', 'what is the neighbourhood like', 'what is the neighborhood like', 'tell me about the neighbourhood', 'tell me about the neighborhood', 'electricity supply', 'water supply', 'road condition', 'is the area safe', 'peaceful area', 'flooding in the area'], score: 0.87 },
     { intent: 'service_search', phrases: ['electrician', 'plumber', 'plumbing', 'mechanic', 'carpenter', 'cleaning service', 'repair service'], score: 0.86 },
     { intent: 'product_search', phrases: ['laptop', 'mobile phone', 'smartphone', 'television', 'generator', 'furniture', 'electronics'], score: 0.84 },
     { intent: 'property_search', phrases: ['accommodation', 'apartment', 'bedsitter', 'self contained', 'self-contained', 'hostel', 'property to rent', 'room to rent', 'house for rent', 'house for sale'], score: 0.84 },
