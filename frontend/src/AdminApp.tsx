@@ -119,7 +119,13 @@ function AdminApp() {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [notificationUnreadCount, setNotificationUnreadCount] =
   useState(0)
-  const [overview, setOverview] = useState<AdminOverview | null>(null)\n  const [dashboardTime, setDashboardTime] = useState(() => new Date())\n\n  useEffect(() => {\n    const timer = window.setInterval(() => setDashboardTime(new Date()), 60000)\n    return () => window.clearInterval(timer)\n  }, [])
+  const [overview, setOverview] = useState<AdminOverview | null>(null)
+  const [dashboardTime, setDashboardTime] = useState(() => new Date())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setDashboardTime(new Date()), 60000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   // Authentication
   const [email, setEmail] = useState('')
@@ -1233,7 +1239,7 @@ function openAutomationMonitoring() {
             aria-current={section === 'settings' ? 'page' : undefined}
             onClick={openSettings}
           >
-            <span aria-hidden="true">⚙</span>
+            <span className="admin-animated-gear" aria-hidden="true">⚙</span>
             Platform Settings
           </button>
 
