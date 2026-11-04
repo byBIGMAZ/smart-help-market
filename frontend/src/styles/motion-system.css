@@ -91,3 +91,40 @@
 .shm-escrow-stage-actions button:last-child { border-color:var(--brand-primary); background:var(--brand-primary); color:#fff; }.shm-escrow-stage-actions button:disabled { opacity:.4; cursor:not-allowed; }
 @media(max-width:760px) { .shm-escrow-section { grid-template-columns:1fr; margin:38px 0; }.shm-location-control { right:12px; bottom:78px; }.shm-location-billboard { right:12px; bottom:132px; }.shm-ambient-road { opacity:.1; } }
 @media(prefers-reduced-motion:reduce) { .shm-route-progress { animation:none!important; opacity:0; }.admin-content > *,.admin-login-layout > *,.admin-content [class*='card'],.admin-content [class*='panel'],.admin-content [class*='stat'],.shm-ambient *, .shm-escrow-section *, .shm-location-billboard,.shm-stagger>* { animation:none!important; transition:none!important; scroll-behavior:auto!important; } }
+
+
+/* Reusable discovery search experience. */
+@keyframes shm-suggestion-enter { from { opacity:0; transform:translateY(9px) scale(.985); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes shm-live-pulse { 0%,100% { box-shadow:0 0 0 0 color-mix(in srgb,var(--brand-primary) 30%,transparent); } 50% { box-shadow:0 0 0 5px transparent; } }
+.shm-search-discovery { position:relative; z-index:6; margin-top:22px; }
+.shm-search-form { display:grid; grid-template-columns:minmax(0,1fr) minmax(145px,.34fr) auto; gap:10px; }
+.shm-search-query,.shm-search-place { display:flex; align-items:center; gap:12px; min-width:0; min-height:58px; padding:0 17px; border:1px solid var(--border); border-radius:13px; background:var(--surface); color:var(--brand-primary); box-shadow:0 5px 20px #0000000a; transition:border-color 220ms,box-shadow 220ms,transform 220ms; }
+.shm-search-query:focus-within,.shm-search-place:focus-within { border-color:var(--brand-primary); box-shadow:0 0 0 4px color-mix(in srgb,var(--brand-primary) 13%,transparent),0 10px 28px #00000012; transform:translateY(-1px); }
+.shm-search-query>span:first-child,.shm-search-place>span:first-child { font-size:23px; }
+.shm-search-query input,.shm-search-place input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--text-primary); font:inherit; font-size:13px; }
+.shm-search-query input::placeholder,.shm-search-place input::placeholder { color:var(--text-muted); }
+.shm-search-clear { display:grid; flex:none; width:26px; height:26px; place-items:center; border:0; border-radius:50%; background:var(--surface-secondary); color:var(--text-secondary); font-size:19px; }
+.shm-search-submit { display:flex; align-items:center; justify-content:center; gap:16px; min-width:154px; min-height:58px; padding:0 20px; border:1px solid var(--brand-primary); border-radius:13px; background:var(--brand-primary); color:#fff; font-size:12px; font-weight:800; box-shadow:0 8px 22px color-mix(in srgb,var(--brand-primary) 22%,transparent); transition:transform 220ms var(--shm-motion-spring),box-shadow 220ms; }
+.shm-search-submit:hover { transform:translateY(-2px); box-shadow:0 13px 28px color-mix(in srgb,var(--brand-primary) 30%,transparent); }
+.shm-search-submit>span:last-child { font-size:18px; transition:transform 220ms; }.shm-search-submit:hover>span:last-child { transform:translateX(4px); }
+.shm-search-suggestions { position:absolute; z-index:12; top:calc(100% - 1px); left:0; width:min(620px,calc(100% - 170px)); padding:12px; border:1px solid var(--border); border-radius:14px; background:var(--surface); box-shadow:0 20px 55px #0002; animation:shm-suggestion-enter 220ms var(--shm-motion-ease) both; }
+.shm-search-suggestion-label { display:block; padding:5px 9px 9px; color:var(--text-muted); font-size:9px; font-weight:850; letter-spacing:.15em; }
+.shm-search-suggestions button { display:flex; align-items:center; gap:11px; width:100%; min-height:39px; padding:0 10px; border:0; border-radius:8px; background:transparent; color:var(--text-primary); text-align:left; font-size:12px; transition:background 160ms,transform 160ms; }
+.shm-search-suggestions button>span:first-child { color:var(--brand-primary); font-size:17px; }.shm-search-suggestions button>span:last-child { margin-left:auto; color:var(--text-muted); }
+.shm-search-suggestions button:hover,.shm-search-suggestions button[aria-selected=true] { background:var(--surface-secondary); transform:translateX(3px); }
+.shm-search-discovery-footer { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:13px; color:var(--text-muted); font-size:10px; }
+.shm-search-discovery-footer>button { padding:6px 10px; border:1px solid var(--border); border-radius:999px; background:var(--surface); color:var(--text-secondary); font-size:10px; transition:transform 180ms,border-color 180ms,color 180ms; }
+.shm-search-discovery-footer>button:hover { transform:translateY(-2px); border-color:var(--brand-primary); color:var(--brand-primary); }
+.shm-search-live { display:flex; align-items:center; gap:7px; margin-left:auto; font-size:9px; }
+.shm-search-live i { width:6px; height:6px; border-radius:50%; background:#64c77b; animation:shm-live-pulse 2s ease-in-out infinite; }
+.shm-search-discovery.is-compact .shm-search-form { grid-template-columns:minmax(0,1fr) minmax(120px,.3fr) auto; }
+.marketplace-page-content .listing-card .listing-image img { transition:transform 650ms var(--shm-motion-ease); }
+@media(hover:hover) and (pointer:fine) { .marketplace-page-content .listing-card:hover .listing-image img { transform:scale(1.055); } }
+.marketplace-page-content .category-card .category-icon { transition:transform 300ms var(--shm-motion-spring),box-shadow 250ms; }
+@media(hover:hover) and (pointer:fine) { .marketplace-page-content .category-card:hover .category-icon { transform:rotate(-7deg) scale(1.1); box-shadow:0 8px 20px color-mix(in srgb,var(--brand-primary) 18%,transparent); } }
+@media(max-width:760px) {
+ .shm-search-form,.shm-search-discovery.is-compact .shm-search-form { grid-template-columns:1fr 1fr; }
+ .shm-search-query { grid-column:1/-1; }.shm-search-submit { grid-column:1/-1; min-width:0; min-height:50px; }
+ .shm-search-suggestions { width:100%; }.shm-search-live { margin-left:0; }
+}
+@media(prefers-reduced-motion:reduce) { .shm-search-discovery *, .shm-search-live i { animation:none!important; transition:none!important; } }
