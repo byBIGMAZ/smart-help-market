@@ -569,13 +569,19 @@ router.patch('/admin/cases/:caseId', requirePermission('dashboard.view'), async 
       `UPDATE public.marketplace_help_support_cases
        SET status = $2, updated_at = NOW()
        WHERE case_id = $1
-       RETURNING case_id::text AS id, status`,
+       RETURNING case_id::text AS id, status, conversation_id::text AS conversation_id`,
       [caseId, status],
     )
     if (!result.rowCount) {
       res.status(404).json({ error: 'Support case not found.' })
       return
     }
+    await getDatabasePool().query(
+      `UPDATE public.marketplace_help_conversations
+       SET status = $2, updated_at = NOW()
+       WHERE conversation_id = $1`,
+      [result.rows[0].conversation_id, status === 'resolved' ? 'resolved' : 'needs_admin'],
+    )
     res.json({ status: 'ok', supportCase: result.rows[0] })
   } catch {
     res.status(500).json({ error: 'Support case could not be updated.' })
@@ -594,8 +600,9 @@ router.get('/admin/cases/:caseId/messages', requirePermission('dashboard.view'),
       `SELECT m.message_id::text AS id, m.sender_type AS sender,
               m.message_text AS text, m.created_at AS "createdAt"
        FROM public.marketplace_help_messages m
-       JOIN public.marketplace_help_support_cases c ON c.conversation_id = m.conversation_id
-       WHERE c.case_id = $1
+       WHERE m.conversation_id = (
+         SELECT conversation_id FROM public.marketplace_help_support_cases WHERE case_id = $1
+       )
        ORDER BY m.message_id ASC`,
       [caseId],
     )
