@@ -24,6 +24,7 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `backend/src/setup-geographic-intelligence.ts`: safely adds nullable listing coordinates, geocoding status metadata, a server-side geocode cache, geographic indexes and centrally managed private geographic settings. Uses one PostgreSQL client for the entire setup transaction.
 - `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
 - `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
+- `backend/src/intelligence/geocoding.ts`: server-side Nominatim lookup with backend-only User-Agent configuration, Nigerian country restriction, provider request pacing, timeout, input validation, coordinate validation and PostgreSQL cache.
 - `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
 - `backend/src/server.ts`: mounts the Help Centre API at `/api/help-centre`.
 - `backend/package.json`: adds `npm run setup:help-centre`.
@@ -51,6 +52,7 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `GET /api/help-centre/conversations`: conversation history.
 - `GET /api/help-centre/conversations/:conversationId/messages`: owned conversation thread.
 - `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified answer, route actions or published listing matches.
+- `POST /api/help-centre/location/resolve`: authenticated geographic lookup. Requires `geo.enabled=true` and a backend `GEOCODING_USER_AGENT` environment variable. Returns a verified provider result or an explicit disabled, not-configured, not-found or unavailable response.
 - `POST /api/help-centre/feedback`: rate a response and optionally correct the assistant's understood intent.
 - `GET /api/help-centre/admin/intelligence/summary`: administrator metrics for interactions, feedback and reviewed learning examples.
 - `POST /api/help-centre/support-cases`: escalate a conversation to administrators.
@@ -71,6 +73,13 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `geo.cache_ttl_hours`: successful lookup cache lifetime, default 720 hours.
 - `geo.max_results`: candidate limit, default 5.
 - `geo.store_listing_coordinates`: controls whether approved listing workflows may store verified coordinates.
+
+## Geocoding provider configuration
+- The current provider adapter supports Nominatim only.
+- Set `GEOCODING_USER_AGENT` as a backend Codespaces/production environment secret. Use an identifiable application name and a valid contact URL or email in accordance with the provider usage policy.
+- Keep `geo.enabled=false` until the User-Agent is configured and the service has been tested. Enable it only through the private administrator platform settings.
+- Provider calls are paced to at least 1.1 seconds apart within one backend process. The provider's usage policy must be reviewed before production or multi-instance deployment; this in-process pacing is not a distributed rate limiter.
+- Successful lookups are cached server-side. No provider credential or API key is exposed to the browser.
 
 ## Setup and verification
 Run from the backend folder:
