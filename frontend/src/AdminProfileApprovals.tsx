@@ -20,9 +20,11 @@ interface ProfileRequest {
   sourceStorageKey?: string
   sourceRecordId?: string
   fieldKey?: string
+  sourceUserId?: string
 }
 
 const STORAGE_KEY = 'smart-help-market:admin-profile-approvals:v1'
+const RULES_STORAGE_KEY = 'smart-help-market:admin-profile-approval-rules:v1'
 const initialRequests: ProfileRequest[] = [
   { id: 'PR-2048', user: 'Ada Okafor', email: 'ada.okafor@example.com', role: 'Landlord', field: 'Full legal name', currentValue: 'Ada O. Okafor', proposedValue: 'Adaeze Okafor', submittedAt: '2026-11-04T07:10:00.000Z', status: 'pending' },
   { id: 'PR-2047', user: 'Emmanuel Eze', email: 'emmanuel.eze@example.com', role: 'Seller', field: 'Phone number', currentValue: '+234 803 000 0012', proposedValue: '+234 806 000 0044', submittedAt: '2026-11-03T18:25:00.000Z', status: 'pending' },
@@ -43,6 +45,16 @@ const defaultRules: Record<ProfileField, { approval: boolean; cooldown: number }
 
 function readRequests(): ProfileRequest[] {
   const linkedRequests: ProfileRequest[] = []
+  const fieldLabels: Record<string, ProfileField> = {
+    fullName: 'Full legal name',
+    phone: 'Phone number',
+    dateOfBirth: 'Date of birth',
+    email: 'Email address',
+    identityDetails: 'Identity details',
+    businessOwnership: 'Business ownership',
+    payoutDetails: 'Payout details',
+  }
+
   try {
     for (let index = 0; index < window.localStorage.length; index += 1) {
       const key = window.localStorage.key(index)
@@ -51,50 +63,68 @@ function readRequests(): ProfileRequest[] {
       if (!raw) continue
       const parsed = JSON.parse(raw) as {
         profile?: Record<string, string>
-        pending?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string }>
+        pending?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string }>
+        history?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string; reviewedAt?: string; reviewerNote?: string }>
       }
+      const sourceUserId = key.slice('smart-help-market:profile-protection:v1:'.length)
+      const common = (item: { id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string }) => ({
+        id: item.id.replace(/-history$/, ''),
+        user: parsed.profile?.fullName || parsed.profile?.displayName || 'Marketplace member',
+        email: 'Account email protected',
+        role: 'Marketplace member',
+        field: fieldLabels[item.field] || item.field as ProfileField,
+        fieldKey: item.field,
+        currentValue: item.previousValue || 'Not provided',
+        proposedValue: item.proposedValue || 'Not provided',
+        submittedAt: item.submittedAt,
+        sourceStorageKey: key,
+        sourceUserId,
+        sourceRecordId: item.id.replace(/-history$/, ''),
+      })
+      const history = Array.isArray(parsed.history) ? parsed.history : []
+      const historicalIds = new Set(history.map((item) => item.id.replace(/-history$/, '')))
       for (const item of parsed.pending || []) {
-        const fieldLabels: Record<string, string> = {
-          fullName: 'Full legal name',
-          phone: 'Phone number',
-          dateOfBirth: 'Date of birth',
-          email: 'Email address',
-          identityDetails: 'Identity details',
-          businessOwnership: 'Business ownership',
-          payoutDetails: 'Payout details',
-        }
+        if (historicalIds.has(item.id)) continue
+        linkedRequests.push({ ...common(item), status: 'pending' })
+      }
+      for (const item of history) {
+        if (item.status === 'Pending approval') continue
+        const status: ReviewStatus = item.status === 'Approved' ? 'approved' : item.status === 'Rejected' ? 'rejected' : 'pending'
+        if (status === 'pending') continue
         linkedRequests.push({
-          id: item.id,
-          user: parsed.profile?.fullName || parsed.profile?.displayName || 'Marketplace member',
-          email: 'Account email protected',
-          role: 'Marketplace member',
-          field: (fieldLabels[item.field] || item.field) as ProfileField,
-          fieldKey: item.field,
-          currentValue: item.previousValue || 'Not provided',
-          proposedValue: item.proposedValue || 'Not provided',
-          submittedAt: item.submittedAt,
-          status: 'pending',
-          sourceStorageKey: key,
-          sourceRecordId: item.id,
+          ...common(item),
+          status,
+          reason: item.reviewerNote,
+          reviewedAt: item.reviewedAt,
+          reviewer: 'Super Admin reviewer',
         })
       }
     }
   } catch {
-    // Ignore malformed local preview records and retain the sample queue.
+    // Ignore malformed local preview records and keep the rest of the queue available.
   }
+
   let savedSamples = initialRequests
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed: unknown = JSON.parse(raw)
-      if (Array.isArray(parsed)) {
-        savedSamples = (parsed as ProfileRequest[]).filter((item) => !item.sourceStorageKey)
-      }
+      if (Array.isArray(parsed)) savedSamples = (parsed as ProfileRequest[]).filter((item) => !item.sourceStorageKey)
     }
   } catch {
-    // Use the built-in sample history when saved preview data is unavailable.
+    // Use sample records if preview storage is unavailable.
   }
-  return [...linkedRequests, ...savedSamples]
+  return [...linkedRequests, ...savedSamples].sort((a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt))
+}
+
+function readRules(): Record<ProfileField, { approval: boolean; cooldown: number }> {
+  try {
+    const raw = window.localStorage.getItem(RULES_STORAGE_KEY)
+    if (raw) return { ...defaultRules, ...(JSON.parse(raw) as Partial<typeof defaultRules>) }
+  } catch {
+    // Fall back to default preview policy.
+  }
+  return defaultRules
 }
 
 function formatDate(value: string) {
@@ -104,14 +134,14 @@ function formatDate(value: string) {
 export default function AdminProfileApprovals() {
   const [requests, setRequests] = useState<ProfileRequest[]>(readRequests)
   const [view, setView] = useState<'queue' | 'history' | 'rules'>('queue')
-  const [selectedId, setSelectedId] = useState('PR-2048')
+  const [selectedId, setSelectedId] = useState('')
   const [query, setQuery] = useState('')
   const [reason, setReason] = useState('')
   const [notice, setNotice] = useState('')
-  const [rules, setRules] = useState(defaultRules)
+  const [rules, setRules] = useState(readRules)
 
   const pending = requests.filter((item) => item.status === 'pending')
-  const selected = requests.find((item) => item.id === selectedId)
+  const selected = requests.find((item) => item.id === selectedId) || requests.find((item) => item.status === 'pending') || requests[0]
   const visible = useMemo(() => requests.filter((item) => {
     const matchesView = view === 'history' ? item.status !== 'pending' : view === 'queue' ? item.status === 'pending' : true
     const term = query.trim().toLowerCase()
@@ -162,7 +192,7 @@ export default function AdminProfileApprovals() {
       }
     }
     const next = requests.map((item) => item.id === selected.id
-      ? { ...item, status, reason: reason.trim(), reviewer: 'Current Super Admin', reviewedAt: now }
+      ? { ...item, status, reason: reason.trim(), reviewer: 'Super Admin reviewer', reviewedAt: now }
       : item)
     persist(next)
     setReason('')
@@ -171,7 +201,11 @@ export default function AdminProfileApprovals() {
   }
 
   function updateRule(field: ProfileField, patch: Partial<{ approval: boolean; cooldown: number }>) {
-    setRules((current) => ({ ...current, [field]: { ...current[field], ...patch } }))
+    setRules((current) => {
+      const next = { ...current, [field]: { ...current[field], ...patch } }
+      try { window.localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(next)) } catch { /* Session-only preview. */ }
+      return next
+    })
     setNotice('Rule updated in this browser preview. Server-enforced policy is not connected yet.')
   }
 
@@ -183,7 +217,7 @@ export default function AdminProfileApprovals() {
           <h2>Profile Approval Centre</h2>
           <p>Review sensitive account changes before they replace a user's approved profile information.</p>
         </div>
-        <button type="button" className="admin-secondary-button" onClick={() => { setRequests(readRequests()); setNotice('Preview records refreshed.') }}>↻ Refresh</button>
+        <button type="button" className="admin-secondary-button" onClick={() => { setRequests(readRequests()); setSelectedId(''); setNotice('Preview records refreshed.') }}>↻ Refresh</button>
       </div>
 
       <div className="profile-approval-notice" role="note">
