@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import './QuickNavigationOrb.css'
 
