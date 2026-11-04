@@ -9,6 +9,7 @@ export type GeocodeResult = {
   provider: 'nominatim'
   placeId: string | null
   confidence: number | null
+  attribution: '© OpenStreetMap contributors'
 }
 
 type NominatimResult = {
@@ -81,6 +82,7 @@ function validResult(item: NominatimResult, countryCode: string): GeocodeResult 
     confidence: typeof item.importance === 'number'
       ? Math.max(0, Math.min(1, item.importance))
       : null,
+    attribution: '© OpenStreetMap contributors',
   }
 }
 
@@ -105,7 +107,13 @@ export async function resolveGeographicLocation(rawQuery: string): Promise<{
   if (providerValue !== 'nominatim') return { status: 'not_configured' }
 
   const userAgent = process.env.GEOCODING_USER_AGENT?.trim()
-  if (!userAgent || userAgent.length < 8 || userAgent.length > 200) {
+  if (
+    !userAgent ||
+    userAgent.length < 20 ||
+    userAgent.length > 200 ||
+    !/SMART HELP MARKET/i.test(userAgent) ||
+    !/(https?:\\/\\/|mailto:|[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})/i.test(userAgent)
+  ) {
     return { status: 'not_configured' }
   }
 
@@ -145,6 +153,7 @@ export async function resolveGeographicLocation(rawQuery: string): Promise<{
         provider: 'nominatim',
         placeId: row.provider_place_id,
         confidence: row.confidence === null ? null : Number(row.confidence),
+        attribution: '© OpenStreetMap contributors',
       },
     }
   }
