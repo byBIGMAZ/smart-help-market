@@ -1043,6 +1043,11 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
               <div className="landlord-record-content">
                 <strong>{record.title}</strong>
                 <p>{record.detail}</p>
+                {section === 'tenants' && record.tenantProfile && tenantSubmissions[record.tenantProfile.email.trim().toLowerCase()] && (
+                  <small className="shm-tenant-submitted-indicator">
+                    ✓ Tenant profile shared · {tenantSubmissions[record.tenantProfile.email.trim().toLowerCase()].documents?.length || 0} supporting document(s)
+                  </small>
+                )}
                 {section === 'tenants' && record.tenantProfile && (
                   <div className="landlord-tenant-profile">
                     <div><span>Property</span><strong>{record.tenantProfile.property}</strong></div>
@@ -1714,7 +1719,7 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
 
       <section className="smart-profile-approval-panel">
         <div className="smart-profile-section-heading">
-          <span>04</span>
+          <span>05</span>
           <div><h4>Approval requests</h4><p>Sensitive changes stay separate from your approved profile until reviewed.</p></div>
         </div>
         {saved.pending.length > 0 ? saved.pending.map((item) => (
@@ -1733,7 +1738,7 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
 
       <section className="smart-profile-approval-panel">
         <div className="smart-profile-section-heading">
-          <span>05</span>
+          <span>06</span>
           <div><h4>Profile change history</h4><p>A record of profile changes and their current review status.</p></div>
         </div>
         {saved.history.length > 0 ? saved.history.slice(0, 12).map((item) => (
