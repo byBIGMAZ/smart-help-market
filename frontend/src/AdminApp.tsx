@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 
 import {
@@ -37,16 +37,16 @@ import {
   getAdminNotificationUnreadCount,
 } from './services/adminNotifications'
 
-import AdminNotifications from './AdminNotifications'
-import AdminProfileApprovals from './AdminProfileApprovals'
 
-import AdminListingModeration from './AdminListingModeration'
-import AdminCategoryManagement from './AdminCategoryManagement'
-import AdminSettingsManagement from './AdminSettingsManagement'
-import AdminReports from './AdminReports'
-import AdminAutomation from './AdminAutomation'
-import AdminAutomationRules from './AdminAutomationRules'
-import AdminAutomationMonitoring from './AdminAutomationMonitoring'
+
+
+
+
+
+
+
+
+
 
 import './AdminApp.css'
 import './AdminAuditLogs.css'
@@ -54,6 +54,23 @@ import './AdminSystemTheme.css'
 import './AdminProfileApprovals.css'
 
 type Screen = 'checking' | 'login' | 'dashboard'
+
+const AdminNotifications = lazy(() => import('./AdminNotifications'))
+const AdminProfileApprovals = lazy(() => import('./AdminProfileApprovals'))
+const AdminListingModeration = lazy(() => import('./AdminListingModeration'))
+const AdminCategoryManagement = lazy(() => import('./AdminCategoryManagement'))
+const AdminSettingsManagement = lazy(() => import('./AdminSettingsManagement'))
+const AdminReports = lazy(() => import('./AdminReports'))
+const AdminAutomation = lazy(() => import('./AdminAutomation'))
+const AdminAutomationRules = lazy(() => import('./AdminAutomationRules'))
+const AdminAutomationMonitoring = lazy(() => import('./AdminAutomationMonitoring'))
+
+const AdminModuleFallback = () => (
+  <div className="admin-loading" role="status" aria-live="polite">
+    <span className="admin-brand-mark">SH</span>
+    <p>Loading administration module...</p>
+  </div>
+)
 
 type AdminSection =
   | 'overview'
@@ -2008,52 +2025,52 @@ function openAutomationMonitoring() {
 
         {/* LISTING MODERATION */}
         {section === 'moderation' && (
-          <AdminListingModeration onNotice={setNotice} />
+          <Suspense fallback={<AdminModuleFallback />}><AdminListingModeration onNotice={setNotice} /></Suspense>
         )}
 
         {/* CATEGORY MANAGEMENT */}
         {section === 'categories' && (
-          <AdminCategoryManagement onNotice={setNotice} />
+          <Suspense fallback={<AdminModuleFallback />}><AdminCategoryManagement onNotice={setNotice} /></Suspense>
         )}
 
         {/* PLATFORM SETTINGS */}
         {section === 'settings' && (
-          <AdminSettingsManagement />
+          <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement /></Suspense>
         )}
 
         {/* REPORTS AND ANALYTICS */}
         {section === 'reports' && (
-          <AdminReports />
+          <Suspense fallback={<AdminModuleFallback />}><AdminReports /></Suspense>
         )}
 
         {/* AUTOMATION CONTROL */}
 {section === 'automation' && (
-  <AdminAutomation onNotice={setNotice} />
+  <Suspense fallback={<AdminModuleFallback />}><AdminAutomation onNotice={setNotice} /></Suspense>
 )}
 
 {/* AUTOMATION RULES */}
 {section === 'automation-rules' && (
-  <AdminAutomationRules onNotice={setNotice} />
+  <Suspense fallback={<AdminModuleFallback />}><AdminAutomationRules onNotice={setNotice} /></Suspense>
 )}
 
 {/* AUTOMATION MONITORING */}
 {section === 'automation-monitoring' && (
-  <AdminAutomationMonitoring />
+  <Suspense fallback={<AdminModuleFallback />}><AdminAutomationMonitoring /></Suspense>
 )}
 
 {/* ADMINISTRATOR NOTIFICATION CENTRE */}
 {section === 'notifications' &&
   user?.permissions.includes('notifications.view') && (
-    <AdminNotifications
+    <Suspense fallback={<AdminModuleFallback />}><AdminNotifications
       canManage={user.permissions.includes('notifications.manage')}
       onNotice={setNotice}
       onUnreadCountChange={setNotificationUnreadCount}
-    />
+    /></Suspense>
   )}
 
         {/* PROFILE APPROVAL CENTRE */}
         {section === 'profile-approvals' && user?.roles.includes('super_admin') && (
-          <AdminProfileApprovals />
+          <Suspense fallback={<AdminModuleFallback />}><AdminProfileApprovals /></Suspense>
         )}
 
         {/* AUDIT LOGS */}
