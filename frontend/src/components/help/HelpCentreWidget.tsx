@@ -50,8 +50,8 @@ export default function HelpCentreWidget() {
   }, [viewport.width, viewport.height])
 
   const center = position || {
-    x: viewport.width - 34,
-    y: viewport.height - (viewport.width <= 720 ? 106 : 34),
+    x: viewport.width - 40,
+    y: viewport.height - (viewport.width <= 720 ? 106 : 50),
   }
   const panelWidth = Math.min(430, viewport.width - 24)
   const panelHeight = Math.min(650, viewport.height - (viewport.width <= 720 ? 104 : 28))
