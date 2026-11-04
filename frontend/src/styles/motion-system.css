@@ -40,7 +40,7 @@
 /* Shared ambient scene. Decorative layer never intercepts page interaction. */
 .marketplace-shell { position:relative; isolation:isolate; }
 .marketplace-workspace,.desktop-sidebar,.marketplace-top-header,.mobile-bottom-nav { position:relative; z-index:2; }
-.shm-ambient { position:fixed; z-index:30; inset:0; overflow:hidden; pointer-events:none; }
+.shm-ambient { position:fixed; z-index:0; inset:0; overflow:hidden; pointer-events:none; }
 .shm-route-progress { position:fixed; z-index:100; top:0; left:0; width:100%; height:3px; transform:scaleX(0); transform-origin:left; background:linear-gradient(90deg,var(--brand-primary),#a6ed69,#72c6ff); box-shadow:0 0 12px color-mix(in srgb,var(--brand-primary) 60%,transparent); animation:shm-route-load 680ms ease-out both; }
 .shm-ambient-sky { position:absolute; inset:0 0 auto; height:42vh; min-height:230px; opacity:.42; }
 .shm-ambient-night .shm-ambient-sky { background:radial-gradient(ellipse at 80% 0%,#273b66 0%,transparent 58%); }
