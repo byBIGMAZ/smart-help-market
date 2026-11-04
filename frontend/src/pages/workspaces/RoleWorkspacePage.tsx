@@ -1655,6 +1655,9 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
               <label>Public profile visibility<select name="visibility" defaultValue={saved.profile.visibility}><option value="members">Marketplace members</option><option value="community">Community participants</option><option value="private">Private</option></select></label>
             </div>
           </section>
+
+        </fieldset>
+
           {role === 'buyer' && (
             <section className="smart-profile-section">
               <div className="smart-profile-section-heading">
@@ -1696,7 +1699,6 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
               <p className="smart-profile-empty">Only share information you are comfortable providing. This browser preview shares data only within the same browser and is not a secure cross-device document service.</p>
             </section>
           )}
-        </fieldset>
 
         <div className="smart-profile-submit">
           <p>{cooldownActive
