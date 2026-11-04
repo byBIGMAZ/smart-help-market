@@ -15,6 +15,8 @@ export type IntentExample = {
   intent: BigmazIntent
 }
 
+export type IntentWeight = { feature_hash: string; intent_key: BigmazIntent; weight: number }
+
 export type IntentPrediction = {
   intent: BigmazIntent
   confidence: number
@@ -103,9 +105,15 @@ function similarity(input: string, phrase: string): number {
   return Math.min(1, cosineLike * 0.72 + coverage * 0.28)
 }
 
+export function hashIntentFeatures(message: string): string[] {
+  const terms = makeNgrams(tokens(message))
+  return [...terms].map((term) => createHash('sha256').update(term).digest('hex'))
+}
+
 export function classifyBigmazIntent(
   message: string,
   learnedExamples: IntentExample[] = [],
+  learnedWeights: IntentWeight[] = [],
 ): IntentPrediction {
   const cleanMessage = normalise(message)
   const examples = [...BASE_EXAMPLES, ...learnedExamples]
@@ -115,6 +123,18 @@ export function classifyBigmazIntent(
     const score = similarity(cleanMessage, example.phrase)
     const current = scores.get(example.intent) ?? 0
     if (score > current) scores.set(example.intent, score)
+  }
+
+  const featureHashes = new Set(hashIntentFeatures(message))
+  const adaptiveScores = new Map<BigmazIntent, number>()
+  for (const item of learnedWeights) {
+    if (featureHashes.has(item.feature_hash)) {
+      adaptiveScores.set(item.intent_key, (adaptiveScores.get(item.intent_key) ?? 0) + item.weight)
+    }
+  }
+  for (const [intent, adjustment] of adaptiveScores) {
+    const boundedAdjustment = Math.max(-0.18, Math.min(0.24, adjustment / Math.max(2, featureHashes.size) * 0.35))
+    scores.set(intent, Math.max(0, Math.min(1, (scores.get(intent) ?? 0) + boundedAdjustment)))
   }
 
   const ranked = [...scores.entries()]
