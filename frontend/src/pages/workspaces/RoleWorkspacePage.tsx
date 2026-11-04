@@ -4,7 +4,7 @@ import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../
 import '../../styles/extended-pages.css'
 import ProfilePhotoSlideshow from '../../components/profile/ProfilePhotoSlideshow'
 
-type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
+export type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
 
 interface WorkspaceLink {
   label: string
