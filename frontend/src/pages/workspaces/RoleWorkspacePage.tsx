@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
 import '../../styles/extended-pages.css'
@@ -1622,42 +1622,13 @@ export default function RoleWorkspacePage() {
   const [marketplaceUser, setMarketplaceUser] = useState<MarketplaceUser | null>(null)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [workspaceMenuPosition, setWorkspaceMenuPosition] = useState({ top: 16, left: 16 })
-  const [dockOffset, setDockOffset] = useState({ x: 0, y: 0 })
+  const [selectedWorkspaceRecord, setSelectedWorkspaceRecord] = useState<WorkspaceRecord | null>(null)
   const [dashboardNow, setDashboardNow] = useState(() => new Date())
 
   useEffect(() => {
     const clock = window.setInterval(() => setDashboardNow(new Date()), 60000)
     return () => window.clearInterval(clock)
   }, [])
-
-  useEffect(() => {
-    const keepDockVisible = () => {
-      setDockOffset((current) => {
-        const width = 58
-        const baseLeft = window.innerWidth - 22 - width
-        const baseTop = window.innerHeight - 100 - width
-        const left = Math.min(window.innerWidth - width - 8, Math.max(8, baseLeft + current.x))
-        const top = Math.min(window.innerHeight - width - 8, Math.max(8, baseTop + current.y))
-        return { x: left - baseLeft, y: top - baseTop }
-      })
-    }
-
-    window.addEventListener('resize', keepDockVisible)
-    return () => window.removeEventListener('resize', keepDockVisible)
-  }, [])
-
-  const [dockIdle, setDockIdle] = useState(false)
-  const dockDrag = useRef({ pointerId: -1, startX: 0, startY: 0, originX: 0, originY: 0, moved: false })
-  const dockTimer = useRef<number | undefined>(undefined)
-
-  useEffect(() => {
-    setDockIdle(false)
-    dockTimer.current = window.setTimeout(() => setDockIdle(true), 2200)
-    return () => {
-      if (dockTimer.current !== undefined) window.clearTimeout(dockTimer.current)
-    }
-  }, [workspaceMenuOpen, dockOffset])
-
 
   useEffect(() => {
     let active = true
@@ -1716,6 +1687,26 @@ export default function RoleWorkspacePage() {
           <p>{workspace.description}</p>
         </div>
         <div className="workspace-heading-actions">
+          <button
+            type="button"
+            className="workspace-navigation-trigger"
+            aria-expanded={workspaceMenuOpen}
+            aria-controls="workspace-navigation"
+            onClick={(event) => {
+              const rect = event.currentTarget.getBoundingClientRect()
+              const panelWidth = Math.min(340, window.innerWidth - 24)
+              const panelHeight = Math.min(520, window.innerHeight - 24)
+              const top = rect.bottom + 10 + panelHeight <= window.innerHeight
+                ? rect.bottom + 10
+                : Math.max(12, rect.top - panelHeight - 10)
+              const left = Math.max(12, Math.min(window.innerWidth - panelWidth - 12, rect.left))
+              setWorkspaceMenuPosition({ top, left })
+              setWorkspaceMenuOpen((open) => !open)
+            }}
+          >
+            <span aria-hidden="true">☰</span>
+            Navigation
+          </button>
           <Link className="extended-secondary" to="/explore">
             Browse marketplace
           </Link>
@@ -1756,78 +1747,7 @@ export default function RoleWorkspacePage() {
         </nav>
       )}
 
-      {createPortal((
-<button
-        type="button"
-        className={`workspace-floating-dock ${dockIdle && !workspaceMenuOpen ? 'workspace-floating-idle' : ''}`}
-        style={{ transform: `translate(${dockOffset.x}px, ${dockOffset.y}px)` }}
-        aria-label={workspaceMenuOpen ? 'Close workspace navigation' : 'Open workspace navigation'}
-        aria-expanded={workspaceMenuOpen}
-        aria-controls="workspace-navigation"
-        onPointerDown={(event) => {
-          dockDrag.current = {
-            pointerId: event.pointerId,
-            startX: event.clientX,
-            startY: event.clientY,
-            originX: dockOffset.x,
-            originY: dockOffset.y,
-            moved: false,
-          }
-          event.currentTarget.setPointerCapture(event.pointerId)
-          setDockIdle(false)
-        }}
-        onPointerMove={(event) => {
-          if (dockDrag.current.pointerId !== event.pointerId) return
-          const dx = event.clientX - dockDrag.current.startX
-          const dy = event.clientY - dockDrag.current.startY
-          if (Math.abs(dx) > 5 || Math.abs(dy) > 5) dockDrag.current.moved = true
-          if (!dockDrag.current.moved) return
-          const baseLeft = window.innerWidth - 82
-          const baseTop = window.innerHeight - 166
-          const left = Math.max(8, Math.min(window.innerWidth - 66, baseLeft + dockDrag.current.originX + dx))
-          const top = Math.max(8, Math.min(window.innerHeight - 66, baseTop + dockDrag.current.originY + dy))
-          setDockOffset({ x: left - baseLeft, y: top - baseTop })
-        }}
-        onPointerUp={(event) => {
-          if (dockDrag.current.pointerId === event.pointerId) dockDrag.current.pointerId = -1
-        }}
-        onPointerCancel={() => { dockDrag.current.pointerId = -1 }}
-        onClick={(event) => {
-          if (dockDrag.current.moved) {
-            dockDrag.current.moved = false
-            return
-          }
 
-          const opening = !workspaceMenuOpen
-
-          if (opening) {
-            const rect = event.currentTarget.getBoundingClientRect()
-            const panelWidth = Math.min(340, window.innerWidth - 24)
-            const panelHeight = Math.min(520, window.innerHeight - 24)
-
-            let top = rect.top - panelHeight - 12
-            if (top < 12) {
-              top = Math.min(window.innerHeight - panelHeight - 12, rect.bottom + 12)
-            }
-
-            const left = Math.max(
-              12,
-              Math.min(window.innerWidth - panelWidth - 12, rect.right - panelWidth),
-            )
-
-            setWorkspaceMenuPosition({
-              top: Math.max(12, top),
-              left,
-            })
-          }
-
-          setWorkspaceMenuOpen(opening)
-          setDockIdle(false)
-        }}
-      >
-        <span aria-hidden="true">{workspaceMenuOpen ? '×' : '☰'}</span>
-      </button>
-), document.body)}
       {createPortal((
         <>
           {workspaceMenuOpen && (
