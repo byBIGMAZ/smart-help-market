@@ -50,7 +50,9 @@ function routeForRequest(message: string, roles: string[], preferredRole?: strin
   const role = preferredRole && validRoles.includes(preferredRole) && roles.includes(preferredRole)
     ? preferredRole
     : validRoles.find((item) => roles.includes(item)) || 'buyer'
+  const roleListingPath = role === 'landlord' ? '/landlord/properties' : role === 'seller' ? '/seller/products' : role === 'provider' ? '/provider/services' : role === 'agent' ? '/agent/listings' : '/buyer/saved'
   const routes: Array<{ terms: string[]; label: string; path: string }> = [
+    { terms: ['create community post', 'publish a post', 'new community post'], label: 'Create a community post', path: `/${role}/community/new` },
     { terms: ['neighbourhood', 'neighborhood', 'neighboarhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${role}/community` },
     { terms: ['saved', 'favourite', 'favorite', 'wishlist'], label: 'Open saved items', path: '/buyer/saved' },
     { terms: ['my message', 'messages', 'inbox', 'chat'], label: 'Open messages', path: `/${role}/messages` },
@@ -62,7 +64,6 @@ function routeForRequest(message: string, roles: string[], preferredRole?: strin
     { terms: ['enquiry', 'enquiries', 'my enquiries'], label: 'Open enquiries', path: `/${role}/enquiries` },
     { terms: ['transaction', 'transactions', 'purchase history'], label: 'Open transactions', path: '/buyer/transactions' },
     { terms: ['roommate', 'room mate', 'shared accommodation'], label: 'Open roommate matching', path: '/buyer/roommates' },
-    { terms: ['create community post', 'publish a post', 'new community post'], label: 'Create a community post', path: `/${role}/community/new` },
     { terms: ['tenant', 'tenants'], label: 'Open tenant management', path: '/landlord/tenants' },
     { terms: ['complaint', 'complaints'], label: 'Open complaints', path: '/landlord/complaints' },
     { terms: ['notice', 'notices', 'warning'], label: 'Open notices and warnings', path: '/landlord/notices' },
@@ -77,7 +78,7 @@ function routeForRequest(message: string, roles: string[], preferredRole?: strin
     { terms: ['bookings', 'my services'], label: 'Open bookings and services', path: '/provider/bookings' },
     { terms: ['availability', 'working hours', 'schedule'], label: 'Manage service availability', path: '/provider/availability' },
     { terms: ['add service', 'list service'], label: 'Add a service', path: '/provider/services/new' },
-    { terms: ['my listings', 'manage listings'], label: 'Open listings', path: `/${role}/listings` },
+    { terms: ['my listings', 'manage listings'], label: 'Open my listings', path: roleListingPath },
     { terms: ['clients'], label: 'Open clients', path: '/agent/clients' },
     { terms: ['commission', 'commissions', 'earnings'], label: 'Open commissions and earnings', path: '/agent/commissions' },
     { terms: ['dashboard', 'overview'], label: 'Open dashboard', path: `/${role}/dashboard` },
