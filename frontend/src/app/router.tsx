@@ -1,122 +1,117 @@
+import { lazy, Suspense, type ReactNode } from 'react'
 import { createBrowserRouter } from 'react-router-dom'
 
-import App from '../App'
-import AdminApp from '../AdminApp'
-import MarketplaceLayout from '../layouts/MarketplaceLayout'
+const App = lazy(() => import('../App'))
+const AdminApp = lazy(() => import('../AdminApp'))
+const MarketplaceLayout = lazy(() => import('../layouts/MarketplaceLayout'))
+const ExplorePage = lazy(() => import('../pages/public/ExplorePage'))
+const CategoriesPage = lazy(() => import('../pages/public/CategoriesPage'))
+const ListingDetailsPage = lazy(() => import('../pages/public/ListingDetailsPage'))
+const NotFoundPage = lazy(() => import('../pages/public/NotFoundPage'))
+const OwnerListingsPage = lazy(() => import('../pages/owner/OwnerListingsPage'))
+const ListingEditorPage = lazy(() => import('../pages/owner/ListingEditorPage'))
+const LoginPage = lazy(() => import('../pages/public/LoginPage'))
+const RegisterPage = lazy(() => import('../pages/public/RegisterPage'))
+const InformationPage = lazy(() => import('../pages/public/InformationPage'))
+const PasswordRecoveryPage = lazy(() => import('../pages/public/PasswordRecoveryPage'))
+const RoleWorkspacePage = lazy(() => import('../pages/workspaces/RoleWorkspacePage'))
+const CommunicationPage = lazy(() => import('../pages/communication/CommunicationPage'))
 
-import ExplorePage from '../pages/public/ExplorePage'
-import CategoriesPage from '../pages/public/CategoriesPage'
-import ListingDetailsPage from '../pages/public/ListingDetailsPage'
-import NotFoundPage from '../pages/public/NotFoundPage'
-import OwnerListingsPage from '../pages/owner/OwnerListingsPage'
-import ListingEditorPage from '../pages/owner/ListingEditorPage'
-import LoginPage from '../pages/public/LoginPage'
-import RegisterPage from '../pages/public/RegisterPage'
-import InformationPage from '../pages/public/InformationPage'
-import PasswordRecoveryPage from '../pages/public/PasswordRecoveryPage'
-import RoleWorkspacePage from '../pages/workspaces/RoleWorkspacePage'
-import CommunicationPage from '../pages/communication/CommunicationPage'
+function RouteLoading() {
+  return (
+    <main className="route-loading" role="status" aria-live="polite">
+      <span className="route-loading-mark">SH</span>
+      <p>Loading SMART HELP MARKET...</p>
+    </main>
+  )
+}
+
+function routeElement(element: ReactNode) {
+  return <Suspense fallback={<RouteLoading />}>{element}</Suspense>
+}
+
+function marketplacePage(element: ReactNode) {
+  return routeElement(
+    <MarketplaceLayout>{element}</MarketplaceLayout>,
+  )
+}
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <App />,
+    element: routeElement(<App />),
   },
   {
     path: '/explore',
-    element: (
-      <MarketplaceLayout>
-        <ExplorePage />
-      </MarketplaceLayout>
-    ),
+    element: marketplacePage(<ExplorePage />),
   },
   {
     path: '/categories',
-    element: (
-      <MarketplaceLayout>
-        <CategoriesPage />
-      </MarketplaceLayout>
-    ),
+    element: marketplacePage(<CategoriesPage />),
   },
   {
     path: '/listing/:key',
-    element: (
-      <MarketplaceLayout>
-        <ListingDetailsPage />
-      </MarketplaceLayout>
-    ),
+    element: marketplacePage(<ListingDetailsPage />),
   },
   {
     path: '/login',
-    element: (
-      <MarketplaceLayout>
-        <LoginPage />
-      </MarketplaceLayout>
-    ),
+    element: marketplacePage(<LoginPage />),
   },
   {
     path: '/register',
-    element: (
-      <MarketplaceLayout>
-        <RegisterPage />
-      </MarketplaceLayout>
-    ),
+    element: marketplacePage(<RegisterPage />),
   },
-  { path: '/about', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/contact', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/how-it-works', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/help', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/faqs', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/terms', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/privacy', element: <MarketplaceLayout><InformationPage /></MarketplaceLayout> },
-  { path: '/forgot-password', element: <MarketplaceLayout><PasswordRecoveryPage /></MarketplaceLayout> },
-  { path: '/reset-password', element: <MarketplaceLayout><PasswordRecoveryPage /></MarketplaceLayout> },
+  { path: '/about', element: marketplacePage(<InformationPage />) },
+  { path: '/contact', element: marketplacePage(<InformationPage />) },
+  { path: '/how-it-works', element: marketplacePage(<InformationPage />) },
+  { path: '/help', element: marketplacePage(<InformationPage />) },
+  { path: '/faqs', element: marketplacePage(<InformationPage />) },
+  { path: '/terms', element: marketplacePage(<InformationPage />) },
+  { path: '/privacy', element: marketplacePage(<InformationPage />) },
+  { path: '/forgot-password', element: marketplacePage(<PasswordRecoveryPage />) },
+  { path: '/reset-password', element: marketplacePage(<PasswordRecoveryPage />) },
 
-  { path: '/buyer/messages', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/buyer/enquiries', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/buyer/notifications', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
+  { path: '/buyer/messages', element: marketplacePage(<CommunicationPage />) },
+  { path: '/buyer/enquiries', element: marketplacePage(<CommunicationPage />) },
+  { path: '/buyer/notifications', element: marketplacePage(<CommunicationPage />) },
 
-  { path: '/landlord/messages', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/landlord/enquiries', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/landlord/notifications', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
+  { path: '/landlord/messages', element: marketplacePage(<CommunicationPage />) },
+  { path: '/landlord/enquiries', element: marketplacePage(<CommunicationPage />) },
+  { path: '/landlord/notifications', element: marketplacePage(<CommunicationPage />) },
 
-  { path: '/seller/messages', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/seller/enquiries', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/seller/notifications', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
+  { path: '/seller/messages', element: marketplacePage(<CommunicationPage />) },
+  { path: '/seller/enquiries', element: marketplacePage(<CommunicationPage />) },
+  { path: '/seller/notifications', element: marketplacePage(<CommunicationPage />) },
 
-  { path: '/provider/messages', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/provider/enquiries', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/provider/notifications', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
+  { path: '/provider/messages', element: marketplacePage(<CommunicationPage />) },
+  { path: '/provider/enquiries', element: marketplacePage(<CommunicationPage />) },
+  { path: '/provider/notifications', element: marketplacePage(<CommunicationPage />) },
 
-  { path: '/agent/messages', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/agent/enquiries', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
-  { path: '/agent/notifications', element: <MarketplaceLayout><CommunicationPage /></MarketplaceLayout> },
+  { path: '/agent/messages', element: marketplacePage(<CommunicationPage />) },
+  { path: '/agent/enquiries', element: marketplacePage(<CommunicationPage />) },
+  { path: '/agent/notifications', element: marketplacePage(<CommunicationPage />) },
 
-  { path: '/landlord/properties/new', element: <MarketplaceLayout><ListingEditorPage /></MarketplaceLayout> },
-  { path: '/seller/products/new', element: <MarketplaceLayout><ListingEditorPage /></MarketplaceLayout> },
-  { path: '/provider/services/new', element: <MarketplaceLayout><ListingEditorPage /></MarketplaceLayout> },
-  { path: '/agent/listings/new', element: <MarketplaceLayout><ListingEditorPage /></MarketplaceLayout> },
+  { path: '/landlord/properties/new', element: marketplacePage(<ListingEditorPage />) },
+  { path: '/seller/products/new', element: marketplacePage(<ListingEditorPage />) },
+  { path: '/provider/services/new', element: marketplacePage(<ListingEditorPage />) },
+  { path: '/agent/listings/new', element: marketplacePage(<ListingEditorPage />) },
 
-  { path: '/buyer/*', element: <MarketplaceLayout><RoleWorkspacePage /></MarketplaceLayout> },
-  { path: '/landlord/*', element: <MarketplaceLayout><RoleWorkspacePage /></MarketplaceLayout> },
-  { path: '/seller/*', element: <MarketplaceLayout><RoleWorkspacePage /></MarketplaceLayout> },
-  { path: '/provider/*', element: <MarketplaceLayout><RoleWorkspacePage /></MarketplaceLayout> },
-  { path: '/agent/*', element: <MarketplaceLayout><RoleWorkspacePage /></MarketplaceLayout> },
+  { path: '/buyer/*', element: marketplacePage(<RoleWorkspacePage />) },
+  { path: '/landlord/*', element: marketplacePage(<RoleWorkspacePage />) },
+  { path: '/seller/*', element: marketplacePage(<RoleWorkspacePage />) },
+  { path: '/provider/*', element: marketplacePage(<RoleWorkspacePage />) },
+  { path: '/agent/*', element: marketplacePage(<RoleWorkspacePage />) },
 
   {
     path: '/owner/listings',
-    element: (
-      <MarketplaceLayout>
-        <OwnerListingsPage />
-      </MarketplaceLayout>
-    ),
+    element: marketplacePage(<OwnerListingsPage />),
   },
   {
     path: '/admin/*',
-    element: <AdminApp />,
+    element: routeElement(<AdminApp />),
   },
   {
     path: '*',
-    element: <NotFoundPage />,
+    element: marketplacePage(<NotFoundPage />),
   },
 ])
