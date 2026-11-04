@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
+import { useLocation } from 'react-router-dom'
 import HelpCentreChat from './HelpCentreChat'
 import './HelpCentreWidget.css'
 
@@ -20,6 +21,7 @@ export default function HelpCentreWidget() {
   const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight })
   const [position, setPosition] = useState<Position | null>(() => loadPosition())
   const [open, setOpen] = useState(false)
+  const { pathname } = useLocation()
   const drag = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number; moved: boolean } | null>(null)
 
   useEffect(() => {
@@ -31,6 +33,18 @@ export default function HelpCentreWidget() {
   useEffect(() => {
     if (position) window.localStorage.setItem(POSITION_KEY, JSON.stringify(position))
   }, [position])
+
+  useEffect(() => {
+    setOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!position) return
+    setPosition({
+      x: Math.max(28, Math.min(viewport.width - 28, position.x)),
+      y: Math.max(32, Math.min(viewport.height - 32, position.y)),
+    })
+  }, [viewport.width, viewport.height])
 
   const center = position || {
     x: viewport.width - 34,
