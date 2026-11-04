@@ -736,6 +736,7 @@ type TenantSharedSubmission = {
   neighbourhood: string
   bio: string
   documents: TenantUploadedDocument[]
+  profilePhotos?: string[]
   updatedAt: string
 }
 const TENANT_SUBMISSIONS_KEY = 'smart-help-market:tenant-submissions:v1'
@@ -1138,6 +1139,12 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
                     <div><span>Occupation</span><strong>{selectedTenantSubmission.occupation || 'Not provided'}</strong></div>
                     <div><span>Location</span><strong>{[selectedTenantSubmission.neighbourhood, selectedTenantSubmission.city, selectedTenantSubmission.state, selectedTenantSubmission.country].filter(Boolean).join(', ') || 'Not provided'}</strong></div>
                     <div className="shm-tenant-submission-bio"><span>About the tenant</span><p>{selectedTenantSubmission.bio || 'No biography supplied.'}</p></div>
+                    {selectedTenantSubmission.profilePhotos?.length ? (
+                      <div className="shm-tenant-passports">
+                        <strong>Tenant profile photos</strong>
+                        <div>{selectedTenantSubmission.profilePhotos.map((photo, index) => <a key={index} href={photo} target="_blank" rel="noreferrer" aria-label={`Open tenant profile photo ${index + 1}`}><img src={photo} alt={`Tenant profile photo ${index + 1}`} /></a>)}</div>
+                      </div>
+                    ) : null}
                     <div className="shm-tenant-documents"><strong>Uploaded documents</strong>
                       {(selectedTenantSubmission.documents || []).length ? (selectedTenantSubmission.documents || []).map((doc, index) => <a key={index} href={doc.dataUrl} download={doc.name} target="_blank" rel="noreferrer">{doc.name} ↗</a>) : <small>No supporting documents uploaded.</small>}
                     </div>
@@ -1391,6 +1398,16 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
     if (role !== 'buyer' || !email) return
     const directory = readTenantSubmissions()
     if (shareTenantProfile) {
+      let profilePhotos: string[] = []
+      try {
+        const savedPhotos = window.localStorage.getItem(`shm.dashboard.photos.buyer.${user?.email || 'account'}`)
+        const parsedPhotos: unknown = savedPhotos ? JSON.parse(savedPhotos) : []
+        if (Array.isArray(parsedPhotos)) {
+          profilePhotos = parsedPhotos.filter((photo): photo is string => typeof photo === 'string' && photo.startsWith('data:image/')).slice(0, 2)
+        }
+      } catch {
+        profilePhotos = []
+      }
       directory[email] = {
         email,
         fullName: saved.profile.fullName || saved.profile.displayName || user?.displayName || '',
@@ -1402,6 +1419,7 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
         neighbourhood: saved.profile.neighbourhood || '',
         bio: saved.profile.bio || '',
         documents: tenantDocuments,
+        profilePhotos,
         updatedAt: new Date().toISOString(),
       }
     } else {
