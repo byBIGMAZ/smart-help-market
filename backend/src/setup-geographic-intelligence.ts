@@ -11,11 +11,12 @@ const geographicSettings = [
 
 async function setupGeographicIntelligence() {
   const db = getDatabasePool()
+  const client = await db.connect()
 
   try {
-    await db.query('BEGIN')
+    await client.query('BEGIN')
 
-    await db.query(`
+    await client.query(`
       ALTER TABLE public.marketplace_listings
         ADD COLUMN IF NOT EXISTS location_latitude NUMERIC(10, 7),
         ADD COLUMN IF NOT EXISTS location_longitude NUMERIC(10, 7),
@@ -24,7 +25,7 @@ async function setupGeographicIntelligence() {
         ADD COLUMN IF NOT EXISTS location_geocoded_at TIMESTAMPTZ
     `)
 
-    await db.query(`
+    await client.query(`
       DO $$
       BEGIN
         IF NOT EXISTS (
@@ -56,7 +57,7 @@ async function setupGeographicIntelligence() {
       $$;
     `)
 
-    await db.query(`
+    await client.query(`
       CREATE INDEX IF NOT EXISTS idx_marketplace_listings_geo_coordinates
       ON public.marketplace_listings (location_latitude, location_longitude)
       WHERE status = 'published'
@@ -64,7 +65,7 @@ async function setupGeographicIntelligence() {
         AND location_longitude IS NOT NULL
     `)
 
-    await db.query(`
+    await client.query(`
       CREATE TABLE IF NOT EXISTS public.marketplace_geocode_cache (
         query_hash TEXT PRIMARY KEY,
         normalized_query TEXT NOT NULL,
@@ -84,13 +85,13 @@ async function setupGeographicIntelligence() {
       )
     `)
 
-    await db.query(`
+    await client.query(`
       CREATE INDEX IF NOT EXISTS idx_marketplace_geocode_cache_expiry
       ON public.marketplace_geocode_cache (expires_at)
     `)
 
     for (const [key, value, group, description, isPublic] of geographicSettings) {
-      await db.query(
+      await client.query(
         `INSERT INTO public.platform_settings
           (setting_key, setting_value, setting_group, description, is_public)
          VALUES ($1, $2::jsonb, $3, $4, $5)
@@ -99,7 +100,7 @@ async function setupGeographicIntelligence() {
       )
     }
 
-    await db.query('COMMIT')
+    await client.query('COMMIT')
 
     const verification = await db.query<{ table_name: string | null }>(
       `SELECT to_regclass('public.marketplace_geocode_cache')::text AS table_name`,
@@ -133,9 +134,10 @@ async function setupGeographicIntelligence() {
     console.log(`Verified ${geographicSettings.length} geographic settings.`)
     console.log('Geographic lookup remains disabled until an administrator enables it.')
   } catch (error) {
-    await db.query('ROLLBACK').catch(() => undefined)
+    await client.query('ROLLBACK').catch(() => undefined)
     throw error
   } finally {
+    client.release()
     await db.end()
   }
 }
