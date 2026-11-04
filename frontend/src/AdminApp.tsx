@@ -1139,11 +1139,16 @@ function openAutomationMonitoring() {
 )}
 
           <button
-            className="admin-secondary-button"
+            type="button"
+            className="admin-secondary-button admin-signout-icon"
             onClick={handleLogout}
             disabled={busy}
+            aria-label={busy ? 'Signing out' : 'Sign out'}
+            title={busy ? 'Signing out...' : 'Sign out'}
           >
-            Sign out
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M10 17l5-5-5-5M15 12H3m9-7h6a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-6" />
+            </svg>
           </button>
         </div>
       </header>
