@@ -2,3 +2,47 @@
 @media(max-width:850px){.escrow-pro-hero{grid-template-columns:1fr}.escrow-pro-hero-art{min-height:260px}.escrow-pro-demo{grid-template-columns:1fr}.escrow-pro-active-step{grid-column:auto}.escrow-pro-step-list{grid-template-columns:repeat(5,minmax(0,1fr))}.escrow-pro-step-list button{justify-content:center;flex-direction:column;gap:5px;padding:8px 3px;font-size:10px}.escrow-pro-usecase-grid{grid-template-columns:1fr}.escrow-pro-rules,.escrow-pro-admin{grid-template-columns:1fr}.escrow-pro-scene{min-height:260px}}
 @media(max-width:560px){.escrow-pro-page{padding:14px}.escrow-pro-hero{padding:23px 18px}.escrow-pro-hero h1{font-size:38px}.escrow-pro-hero-art{min-height:230px}.escrow-pro-hero-vault{width:145px;height:145px}.escrow-pro-orbit{width:220px}.escrow-pro-scene{min-height:225px}.escrow-pro-actor{min-width:57px;padding:7px 5px}.escrow-pro-payment,.escrow-pro-safe,.escrow-pro-delivery{min-width:57px;padding:7px 5px}.escrow-pro-actor>span,.escrow-pro-payment>span,.escrow-pro-safe>span,.escrow-pro-delivery>span{font-size:25px}.escrow-pro-step-list button{font-size:9px}.escrow-pro-active-step{min-height:170px}.shm-guest-welcome{padding:25px 21px}}
 @media(prefers-reduced-motion:reduce){.escrow-pro-page *,.shm-guest-welcome-backdrop *{animation:none!important;transition:none!important}}
+
+
+/* Escrow Pro story animation: deposit, secure, key, delivery, inspection, release. */
+.escrow-pro-story{min-height:350px;background:radial-gradient(ellipse at 50% 75%,#d4ad4a24,transparent 52%),linear-gradient(145deg,color-mix(in srgb,var(--surface-secondary) 85%,#142c42),var(--surface-secondary))}
+.escrow-pro-story .escrow-pro-actor{top:35%;min-width:92px;animation:escrow-pro-float 3.2s ease-in-out infinite}
+.escrow-pro-story .escrow-pro-actor.buyer{left:4%}
+.escrow-pro-story .escrow-pro-actor.seller{right:4%}
+.escrow-pro-story .escrow-pro-actor small{font-size:8px}
+.escrow-pro-hold-label{padding:4px 6px;border-radius:5px;background:#8b3b32;color:#fff;font-size:7px;font-style:normal;font-weight:900;letter-spacing:.05em}
+.escrow-pro-story .escrow-pro-payment{top:12%;left:23%;border-color:#d6ad4d;background:linear-gradient(145deg,#fff4c8,#d9a83c);color:#573b08}
+.escrow-pro-story .escrow-pro-safe{top:42%;left:43%;min-width:94px;border-color:#8edb72;background:linear-gradient(145deg,#e8f8dd,#a9d78e);color:#173d20}
+.escrow-pro-story .escrow-pro-safe small,.escrow-pro-story .escrow-pro-safe b{color:#173d20}
+.escrow-pro-story .escrow-pro-safe b{font-size:8px;letter-spacing:.08em}
+.escrow-pro-coin-stream{position:absolute;z-index:4;top:31%;left:29%;width:28%;height:80px;pointer-events:none}
+.escrow-pro-coin-stream i{position:absolute;display:grid;width:23px;height:23px;place-items:center;border:2px solid #f8df8b;border-radius:50%;background:linear-gradient(145deg,#ffeaa0,#c88b22);color:#573b08;font-size:12px;font-style:normal;font-weight:1000;opacity:0;box-shadow:0 3px 7px #0003}
+.escrow-pro-coin-stream i:nth-child(1){animation:escrow-pro-coin-drop 4.3s 0s infinite}
+.escrow-pro-coin-stream i:nth-child(2){animation:escrow-pro-coin-drop 4.3s .18s infinite}
+.escrow-pro-coin-stream i:nth-child(3){animation:escrow-pro-coin-drop 4.3s .36s infinite}
+.escrow-pro-coin-stream i:nth-child(4){animation:escrow-pro-coin-drop 4.3s .54s infinite}
+.escrow-pro-key,.escrow-pro-inspection,.escrow-pro-release{position:absolute;z-index:5;display:grid;place-items:center;gap:3px;min-width:74px;padding:9px 7px;border:1px solid var(--border);border-radius:12px;background:var(--surface);box-shadow:0 9px 24px #0003;opacity:0}
+.escrow-pro-key{top:12%;left:44%;border-color:#e0c16c;background:linear-gradient(145deg,#fff3c2,#e5c46d);color:#513b0b}
+.escrow-pro-key span,.escrow-pro-inspection span,.escrow-pro-release span{font-size:27px}
+.escrow-pro-key small,.escrow-pro-inspection small,.escrow-pro-release small{font-size:7px;font-weight:950;letter-spacing:.07em}
+.escrow-pro-delivery{right:26%;bottom:13%;opacity:0}
+.escrow-pro-inspection{right:25%;top:12%;border-color:#8edb72}
+.escrow-pro-release{right:5%;top:12%;border-color:#8edb72;background:linear-gradient(145deg,#e8f8dd,#a9d78e);color:#173d20}
+.escrow-pro-flow-line{top:53%;left:18%;width:64%;border-color:#d2ad4c}
+.escrow-pro-story[data-stage="0"] .escrow-pro-actor{filter:none}
+.escrow-pro-story[data-stage="1"] .escrow-pro-coin-stream i{animation-play-state:running}
+.escrow-pro-story[data-stage="1"] .escrow-pro-payment{animation:escrow-pro-deposit-pulse 1.1s ease-in-out infinite}
+.escrow-pro-story[data-stage="2"] .escrow-pro-safe{box-shadow:0 0 0 7px #a6ed6925,0 0 34px #a6ed6970}
+.escrow-pro-story[data-stage="2"] .escrow-pro-key{animation:escrow-pro-key-pop 1s ease-out both}
+.escrow-pro-story[data-stage="3"] .escrow-pro-delivery{opacity:1;animation:escrow-pro-deliver-in 1.2s ease-in-out both}
+.escrow-pro-story[data-stage="3"] .escrow-pro-hold-label{animation:escrow-pro-hold-pulse 1.5s ease-in-out infinite}
+.escrow-pro-story[data-stage="4"] .escrow-pro-inspection{animation:escrow-pro-key-pop 1s ease-out both}
+.escrow-pro-story[data-stage="4"] .escrow-pro-safe{box-shadow:0 0 0 7px #a6ed6925,0 0 34px #a6ed6970}
+.escrow-pro-story[data-stage="5"] .escrow-pro-release{animation:escrow-pro-key-pop 1s ease-out both}
+.escrow-pro-story[data-stage="5"] .escrow-pro-safe{opacity:.55}
+@keyframes escrow-pro-coin-drop{0%{left:0;top:0;opacity:0;transform:scale(.65) rotate(-30deg)}12%{opacity:1}75%{left:65%;top:48%;opacity:1;transform:scale(1) rotate(300deg)}90%,100%{left:68%;top:55%;opacity:0;transform:scale(.45) rotate(420deg)}}
+@keyframes escrow-pro-deposit-pulse{50%{transform:translateY(-5px) scale(1.07);box-shadow:0 0 22px #e4b94b88}}
+@keyframes escrow-pro-key-pop{0%{opacity:0;transform:translateY(15px) scale(.6) rotate(-12deg)}70%{opacity:1;transform:translateY(-5px) scale(1.08) rotate(5deg)}100%{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+@keyframes escrow-pro-deliver-in{0%{opacity:0;transform:translateX(42px) scale(.7)}100%{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes escrow-pro-hold-pulse{50%{background:#b45a35;box-shadow:0 0 12px #e18b5366}}
+@media(max-width:560px){.escrow-pro-story{min-height:270px}.escrow-pro-story .escrow-pro-actor{min-width:62px;padding:6px 4px}.escrow-pro-story .escrow-pro-actor>span{font-size:25px}.escrow-pro-story .escrow-pro-safe{left:40%;min-width:76px}.escrow-pro-story .escrow-pro-payment{left:21%}.escrow-pro-key{left:42%;min-width:61px}.escrow-pro-inspection{right:23%;min-width:61px}.escrow-pro-release{right:3%;min-width:61px}.escrow-pro-delivery{right:22%;min-width:64px}.escrow-pro-coin-stream{left:27%;width:30%}}
