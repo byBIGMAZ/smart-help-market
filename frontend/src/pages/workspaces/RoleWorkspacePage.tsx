@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
-import '../../styles/extended-pages.css'
+import '../../styles/extended-pages.css'\nimport ProfilePhotoSlideshow from '../../components/profile/ProfilePhotoSlideshow'
 
 type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
 
@@ -1899,6 +1899,11 @@ export default function RoleWorkspacePage() {
                     <h3>{greeting}{firstName ? `, ${firstName}` : ''}!</h3>
                     <p>{dashboard.introduction}</p>
                   </div>
+                  <ProfilePhotoSlideshow
+                    storageKey={`shm.dashboard.photos.${role}.${marketplaceUser?.email || 'account'}`}
+                    initialImage={marketplaceUser?.avatarUrl}
+                    displayName={marketplaceUser?.displayName}
+                  />
                   <div className="shm-time-art" aria-hidden="true">
                     <span className="shm-time-sun" />
                     <span className="shm-time-rays" />
