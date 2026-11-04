@@ -2104,7 +2104,8 @@
 
 
 /* Dashboard profile photo placeholder and two-image carousel */
-.shm-time-welcome .shm-profile-photo-card{position:relative;z-index:4;margin-left:auto;flex-shrink:0}\n.shm-time-welcome .workspace-welcome-icon{display:none}
+.shm-time-welcome .shm-profile-photo-card{position:relative;z-index:4;margin-left:auto;flex-shrink:0}
+.shm-time-welcome .workspace-welcome-icon{display:none}
 .shm-time-welcome .shm-time-copy{position:relative;z-index:3;min-width:0}
 @media(max-width:640px){
   .shm-time-welcome{gap:9px!important}
