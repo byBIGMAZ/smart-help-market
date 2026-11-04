@@ -1669,14 +1669,14 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
                     const file = event.target.files?.[0]
                     event.target.value = ''
                     if (!file) return
-                    if (file.size > 1024 * 1024) {
-                      setNotice('Each tenant document must be 1 MB or smaller in this browser preview.')
+                    if (file.size > 512 * 1024) {
+                      setNotice('Each tenant document must be 512 KB or smaller in this browser preview.')
                       return
                     }
                     const reader = new FileReader()
                     reader.onload = () => {
                       if (typeof reader.result !== 'string') return
-                      setTenantDocuments((current) => [...current, { name: file.name, type: file.type || 'application/octet-stream', dataUrl: reader.result as string }].slice(0, 4))
+                      setTenantDocuments((current) => [...current, { name: file.name, type: file.type || 'application/octet-stream', dataUrl: reader.result as string }].slice(0, 3))
                       setShareTenantProfile(true)
                       setNotice('Tenant document added to your local profile preview.')
                     }
@@ -1684,7 +1684,7 @@ function ProfileEditor({ user, role }: { user: MarketplaceUser | null; role: Rol
                     reader.readAsDataURL(file)
                   }} />
                 </label>
-                <small>Up to four files, maximum 1 MB each. Images and PDF files are supported in this preview.</small>
+                <small>Up to three files, maximum 512 KB each. Images and PDF files are supported in this preview.</small>
                 {tenantDocuments.map((document, index) => (
                   <div className="shm-tenant-uploaded-file" key={`${document.name}-${index}`}>
                     <span>▤ {document.name}</span>
@@ -1793,6 +1793,10 @@ export default function RoleWorkspacePage() {
     const clock = window.setInterval(() => setDashboardNow(new Date()), 60000)
     return () => window.clearInterval(clock)
   }, [])
+
+  useEffect(() => {
+    setWorkspaceMenuOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     let active = true
@@ -2259,6 +2263,7 @@ export default function RoleWorkspacePage() {
                     className="workspace-record-card"
                     role="button"
                     tabIndex={0}
+                    aria-label={`View details for ${record.title}`}
                     onClick={() => setSelectedWorkspaceRecord(record)}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter' || event.key === ' ') {
@@ -2278,15 +2283,6 @@ export default function RoleWorkspacePage() {
                       <small>{record.description}</small>
                     </div>
                     <span className="workspace-record-status">{record.status}</span>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setSelectedWorkspaceRecord(record)
-                      }}
-                    >
-                      View details
-                    </button>
                   </article>
                 ))}
 
