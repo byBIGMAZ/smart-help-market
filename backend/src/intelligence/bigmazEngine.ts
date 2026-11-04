@@ -139,6 +139,23 @@ export function classifyBigmazIntent(
     scores.set(intent, Math.max(0, Math.min(1, (scores.get(intent) ?? 0) + boundedAdjustment)))
   }
 
+  const cueGroups: Array<{ intent: BigmazIntent; phrases: string[]; score: number }> = [
+    { intent: 'escrow_explanation', phrases: ['escrow', 'money held until', 'payment held until', 'release of funds'], score: 0.88 },
+    { intent: 'roommate_search', phrases: ['roommate', 'room mate', 'flatmate', 'housemate', 'share rent', 'share accommodation'], score: 0.86 },
+    { intent: 'neighbourhood_question', phrases: ['neighbourhood', 'neighborhood', 'electricity supply', 'water supply', 'road condition', 'is the area safe', 'peaceful area'], score: 0.84 },
+    { intent: 'service_search', phrases: ['electrician', 'plumber', 'plumbing', 'mechanic', 'carpenter', 'cleaning service', 'repair service'], score: 0.86 },
+    { intent: 'product_search', phrases: ['laptop', 'mobile phone', 'smartphone', 'television', 'generator', 'furniture', 'electronics'], score: 0.84 },
+    { intent: 'property_search', phrases: ['accommodation', 'apartment', 'bedsitter', 'self contained', 'self-contained', 'hostel', 'property to rent', 'room to rent', 'house for rent', 'house for sale'], score: 0.84 },
+    { intent: 'support', phrases: ['contact support', 'customer care', 'speak to an administrator', 'submit a complaint', 'report a problem'], score: 0.9 },
+    { intent: 'navigation', phrases: ['open my dashboard', 'where do i find', 'how do i open', 'open neighbourhood space', 'open neighborhood space'], score: 0.82 },
+    { intent: 'greeting', phrases: ['hello', 'good morning', 'good afternoon', 'good evening'], score: 0.8 },
+  ]
+  for (const group of cueGroups) {
+    if (group.phrases.some((phrase) => cleanMessage.includes(phrase))) {
+      scores.set(group.intent, Math.max(scores.get(group.intent) ?? 0, group.score))
+    }
+  }
+
   const ranked = [...scores.entries()]
     .map(([intent, score]) => ({ intent, score }))
     .sort((left, right) => right.score - left.score)
