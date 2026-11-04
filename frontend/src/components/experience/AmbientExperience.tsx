@@ -1,8 +1,6 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { useLocation } from 'react-router-dom'
 
-const LOCATION_KEY = 'smart-help-market:experience-location:v1'
-function readLocation() { try { return window.localStorage.getItem(LOCATION_KEY) || window.localStorage.getItem('smart-help-market:profile-location:v1') || '' } catch { return '' } }
 function getTimeScene() {
   const hour = new Date().getHours()
   if (hour >= 5 && hour < 12) return 'morning'
@@ -13,13 +11,11 @@ function getTimeScene() {
 
 export default function AmbientExperience() {
   const route = useLocation()
-  const [location, setLocation] = useState(readLocation)
   const [scene, setScene] = useState(getTimeScene)
   useEffect(() => {
     const timer = window.setInterval(() => setScene(getTimeScene()), 60000)
     return () => window.clearInterval(timer)
   }, [])
-  const hasLocation = Boolean(location.trim())
   return <div className={`shm-ambient shm-ambient-${scene}`} aria-label={`Marketplace atmosphere: ${scene}`}>
     <span key={route.pathname} className="shm-route-progress" aria-hidden="true" />
     <div className="shm-ambient-sky" aria-hidden="true">
