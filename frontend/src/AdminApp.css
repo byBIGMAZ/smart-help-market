@@ -1118,3 +1118,26 @@
 .admin-stat-card-action:hover{transform:translateY(-3px);border-color:var(--admin-accent,#a6ed69);box-shadow:0 12px 28px #0003}
 .admin-stat-card-action:focus-visible{outline:3px solid var(--admin-accent,#a6ed69);outline-offset:3px}
 @media(prefers-reduced-motion:reduce){.admin-stat-card-action{transition:none}.admin-stat-card-action:hover{transform:none}}
+
+
+.admin-route-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin: 0 0 18px;
+}
+
+.admin-route-controls .admin-secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+}
+
+@media (max-width: 600px) {
+  .admin-route-controls {
+    margin-bottom: 14px;
+  }
+}
