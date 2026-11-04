@@ -1103,3 +1103,12 @@
   outline: 3px solid #a6ed6955;
   outline-offset: 3px;
 }
+
+
+/* Super Admin dashboard profile photo placement */
+.admin-welcome-panel{position:relative;display:flex;align-items:center;gap:18px;padding-right:190px}
+.admin-welcome-panel>.shm-profile-photo-card{position:absolute;z-index:4;top:50%;right:20px;transform:translateY(-50%)}
+@media(max-width:640px){
+  .admin-welcome-panel{padding-right:16px;padding-bottom:150px}
+  .admin-welcome-panel>.shm-profile-photo-card{top:auto;right:16px;bottom:12px;transform:none}
+}
