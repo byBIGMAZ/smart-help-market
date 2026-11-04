@@ -702,6 +702,35 @@ function RoommateDiscovery() {
 
 
 
+type TenantUploadedDocument = { name: string; type: string; dataUrl: string }
+type TenantSharedSubmission = {
+  email: string
+  fullName: string
+  phone: string
+  occupation: string
+  country: string
+  state: string
+  city: string
+  neighbourhood: string
+  bio: string
+  documents: TenantUploadedDocument[]
+  updatedAt: string
+}
+const TENANT_SUBMISSIONS_KEY = 'smart-help-market:tenant-submissions:v1'
+
+function readTenantSubmissions(): Record<string, TenantSharedSubmission> {
+  try {
+    const raw = window.localStorage.getItem(TENANT_SUBMISSIONS_KEY)
+    if (!raw) return {}
+    const parsed: unknown = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, TenantSharedSubmission>
+      : {}
+  } catch {
+    return {}
+  }
+}
+
 type LandlordDemoRecord = {
   id: number
   title: string
@@ -812,6 +841,8 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
   })
 
   const records = recordsBySection[section] ?? config.records
+  const [selectedRecord, setSelectedRecord] = useState<LandlordDemoRecord | null>(null)
+  const [tenantSubmissions] = useState<Record<string, TenantSharedSubmission>>(readTenantSubmissions)
 
   const setRecords = (
     update:
@@ -1019,6 +1050,7 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
                 )}
               </div>
               <span className="landlord-record-status">{record.status}</span>
+              <button type="button" className="landlord-record-view" onClick={() => setSelectedRecord(record)}>View details</button>
               {record.status !== nextStatus[section] && (section !== 'tenants' || Boolean(record.tenantProfile)) && (
                 <button
                   type="button"
@@ -1046,6 +1078,50 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
           )}
         </div>
       </section>
+
+      {selectedRecord && (
+        <div className="shm-record-modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setSelectedRecord(null) }}>
+          <section className="shm-record-modal" role="dialog" aria-modal="true" aria-labelledby="landlord-record-modal-title">
+            <button type="button" className="shm-record-modal-close" onClick={() => setSelectedRecord(null)} aria-label="Close record details">×</button>
+            <span className="extended-kicker">{section.toUpperCase()} DETAILS</span>
+            <h3 id="landlord-record-modal-title">{selectedRecord.title}</h3>
+            <p>{selectedRecord.detail}</p>
+            <div className="shm-record-detail-grid">
+              <div><span>Current status</span><strong>{selectedRecord.status}</strong></div>
+              {selectedRecord.amount !== undefined && <div><span>Amount</span><strong>₦{selectedRecord.amount.toLocaleString('en-NG')}</strong></div>}
+              {selectedRecord.tenantProfile && <>
+                <div><span>Tenant email</span><strong>{selectedRecord.tenantProfile.email || 'Not provided'}</strong></div>
+                <div><span>Phone</span><strong>{selectedRecord.tenantProfile.phone || 'Not provided'}</strong></div>
+                <div><span>Property</span><strong>{selectedRecord.tenantProfile.property}</strong></div>
+                <div><span>Unit</span><strong>{selectedRecord.tenantProfile.unit}</strong></div>
+                <div><span>Tenancy start</span><strong>{selectedRecord.tenantProfile.tenancyStart || 'Not set'}</strong></div>
+                <div><span>Tenancy end</span><strong>{selectedRecord.tenantProfile.tenancyEnd || 'Not set'}</strong></div>
+                <div><span>Rent frequency</span><strong>{selectedRecord.tenantProfile.rentFrequency}</strong></div>
+                <div><span>Security deposit</span><strong>₦{selectedRecord.tenantProfile.deposit.toLocaleString('en-NG')}</strong></div>
+                <div><span>Agreement status</span><strong>{selectedRecord.tenantProfile.agreementStatus}</strong></div>
+                <div><span>Renewal date</span><strong>{selectedRecord.tenantProfile.renewalDate || 'Not scheduled'}</strong></div>
+                {(() => {
+                  const submission = tenantSubmissions[selectedRecord.tenantProfile.email.trim().toLowerCase()]
+                  if (!submission) return <p className="shm-record-modal-note">No tenant-submitted profile is linked to this email in this browser preview. Ask the tenant to complete their profile and share their tenant information using the same email address.</p>
+                  return <div className="shm-tenant-submission">
+                    <h4>Information submitted by tenant</h4>
+                    <div><span>Full name</span><strong>{submission.fullName || 'Not provided'}</strong></div>
+                    <div><span>Occupation</span><strong>{submission.occupation || 'Not provided'}</strong></div>
+                    <div><span>Location</span><strong>{[submission.neighbourhood, submission.city, submission.state, submission.country].filter(Boolean).join(', ') || 'Not provided'}</strong></div>
+                    <div className="shm-tenant-submission-bio"><span>About the tenant</span><p>{submission.bio || 'No biography supplied.'}</p></div>
+                    <div className="shm-tenant-documents"><strong>Uploaded documents</strong>
+                      {submission.documents.length ? submission.documents.map((doc, index) => <a key={index} href={doc.dataUrl} download={doc.name} target="_blank" rel="noreferrer">{doc.name} ↗</a>) : <small>No supporting documents uploaded.</small>}
+                    </div>
+                    <small>Tenant submission updated {new Date(submission.updatedAt).toLocaleString('en-NG')}</small>
+                  </div>
+                })()}
+                <div className="shm-record-history"><span>Occupancy history</span>{selectedRecord.tenantProfile.occupancyHistory.map((entry,index)=><small key={index}>{entry}</small>)}</div>
+              </>}
+            </div>
+            <button type="button" className="extended-secondary" onClick={() => setSelectedRecord(null)}>Close details</button>
+          </section>
+        </div>
+      )}
 
       {section === 'tenants' && moveOutTenantId !== null && (
         <section className="landlord-management-panel landlord-moveout-panel">
