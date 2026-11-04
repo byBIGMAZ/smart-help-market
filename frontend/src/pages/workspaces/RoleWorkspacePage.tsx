@@ -777,7 +777,7 @@ type LandlordDemoRecord = {
 function LandlordManagementCenter({ section, title }: { section: string; title: string }) {
   const modules: Record<string, { intro: string; action: string; records: LandlordDemoRecord[] }> = {
     tenants: {
-      intro: 'Keep tenant profiles, occupied units and tenancy relationships organised. Starting a move-out closes the tenancy relationship, not the tenant marketplace account.',
+      intro: 'Keep tenant profiles, occupied units and tenancy relationships organised. To view tenant-submitted details and documents, use the same email as the tenant marketplace account and ask them to enable sharing in My Profile. Starting a move-out closes the tenancy relationship, not the tenant marketplace account.',
       action: 'Add tenant record',
       records: [
         { id: 1, title: 'Sample tenant: Ada O.', detail: 'Two-bedroom apartment · Unit A · Tenancy started January 2026', status: 'Active', tenantProfile: { email: 'ada.sample@example.com', phone: '0800 000 0001', property: 'Two-bedroom apartment', unit: 'Unit A', tenancyStart: '2026-01-15', tenancyEnd: '2027-01-14', rentFrequency: 'Annual', deposit: 100000, agreementStatus: 'Signed', renewalDate: '2026-12-15', occupancyHistory: ['15 January 2026: Tenancy commenced', '15 January 2026: Move-in condition report recorded'] } },
