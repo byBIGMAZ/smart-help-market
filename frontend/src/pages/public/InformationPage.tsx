@@ -194,6 +194,8 @@ export default function InformationPage() {
   const [sent, setSent] = useState(false)
   const page = pages[pageKey]
 
+  if (pageKey === 'how-it-works') return <HowItWorksExperience />
+
   return (
     <main className="extended-page">
       <section className="extended-hero">
