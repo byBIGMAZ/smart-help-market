@@ -12,6 +12,7 @@ import {
   type MarketplaceListing,
 } from '../../services/marketplaceListings'
 import ListingImageGallery from '../../components/listings/ListingImageGallery'
+import SearchDiscovery from '../../components/experience/SearchDiscovery'
 
 import { getPublicPlatformSettings } from '../../services/platformSettings'
 
@@ -274,54 +275,20 @@ export default function MarketplaceBrowsePage({
       {mode === 'explore' && (
         <>
           <section className="browse-search-section">
-            <form
-              className="search-bar"
-              onSubmit={(event) => {
-                event.preventDefault()
-                updateFilters(selectedCategory)
-              }}
-            >
-              <label className="search-field">
-                <span aria-hidden="true">⌕</span>
-                <span className="sr-only">
-                  Search marketplace
-                </span>
-
-                <input
-                  value={search}
-                  onChange={(event) =>
-                    updateFilters(selectedCategory, event.target.value)
-                  }
-                  placeholder="Search properties, products or services..."
-                />
-              </label>
-
-              <label className="location-field">
-                <span aria-hidden="true">⌖</span>
-                <span className="sr-only">
-                  Filter by location
-                </span>
-
-                <input
-                  value={location}
-                  onChange={(event) =>
-                    updateFilters(
-                      selectedCategory,
-                      search,
-                      event.target.value,
-                    )
-                  }
-                  placeholder="City or state"
-                />
-              </label>
-
-              <button
-                className="button button-primary search-button"
-                type="submit"
-              >
-                Search <span aria-hidden="true">→</span>
-              </button>
-            </form>
+            <SearchDiscovery
+              search={search}
+              location={location}
+              onSearchChange={(value) => updateFilters(selectedCategory, value)}
+              onLocationChange={(value) => updateFilters(selectedCategory, search, value)}
+              onSubmit={() => updateFilters(selectedCategory)}
+              suggestions={[
+                ...categories.map((item) => item.name),
+                'Self-contained apartment',
+                'Laptops and electronics',
+                'Plumbing services',
+                'Land for sale',
+              ]}
+            />
           </section>
 
           <section className="browse-results-section">
