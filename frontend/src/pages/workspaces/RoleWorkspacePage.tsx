@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
 import '../../styles/extended-pages.css'
 import ProfilePhotoSlideshow from '../../components/profile/ProfilePhotoSlideshow'
-import WorkspaceFloatingSidebar from '../../components/navigation/WorkspaceFloatingSidebar'
 
 type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
 
@@ -34,7 +33,7 @@ interface DashboardConfig {
   actions: WorkspaceLink[]
 }
 
-const workspaces: Record<Role, {
+export const workspaces: Record<Role, {
   title: string
   description: string
   links: WorkspaceLink[]
@@ -1888,33 +1887,6 @@ export default function RoleWorkspacePage() {
           <p>{workspace.description}</p>
         </div>
         <div className="workspace-heading-actions">
-          <button
-            type="button"
-            className="workspace-back-button"
-            onClick={() => {
-              if (window.history.length > 1) {
-                navigate(-1)
-              } else {
-                navigate(`/${role}/dashboard`)
-              }
-            }}
-            aria-label="Go back to the previous page"
-            title="Go back"
-          >
-            <span aria-hidden="true">←</span>
-            Back
-          </button>
-          {!isDashboard && (
-            <Link
-              className="workspace-dashboard-shortcut"
-              to={`/${role}/dashboard`}
-              aria-label="Go to dashboard"
-              title="Go to dashboard"
-            >
-              <span aria-hidden="true">⌂</span>
-              Dashboard
-            </Link>
-          )}
           <Link className="extended-secondary" to="/explore">
             Browse marketplace
           </Link>
@@ -1955,8 +1927,6 @@ export default function RoleWorkspacePage() {
         </nav>
       )}
 
-
-      <WorkspaceFloatingSidebar links={workspace.links} />
 
       <div className="workspace-layout">
         <section className="workspace-main">
