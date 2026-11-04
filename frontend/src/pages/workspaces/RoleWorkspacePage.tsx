@@ -1388,8 +1388,8 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
       previousValue: saved.profile[field] ?? '',
       proposedValue: submitted[field],
       submittedAt: timestamp,
-      status: approvalFields.has(field) ? 'Pending approval' : 'Approved',
-      ...(approvalFields.has(field) ? {} : {
+      status: approvalChanges.includes(field) ? 'Pending approval' : 'Approved',
+      ...(approvalChanges.includes(field) ? {} : {
         reviewedAt: timestamp,
         reviewerNote: 'Routine profile update applied in local preview.',
       }),
