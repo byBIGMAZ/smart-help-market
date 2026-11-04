@@ -25,7 +25,7 @@ const DEFAULT_PLATFORM_NAME = 'SMART HELP MARKET BY BIGMAZ'
 export default function MarketplaceLayout({
   children,
 }: MarketplaceLayoutProps) {
-  const [platformName, setPlatformName] = useState(
+  const { pathname } = useLocation()\n  const [platformName, setPlatformName] = useState(
     DEFAULT_PLATFORM_NAME,
   )
 
@@ -64,7 +64,7 @@ export default function MarketplaceLayout({
       </div>
 
       <MobileBottomNav />
-      <QuickNavigationOrb />
+      {!['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(pathname.split('/').filter(Boolean)[0] || '') && <QuickNavigationOrb />
     </div>
   )
 }
