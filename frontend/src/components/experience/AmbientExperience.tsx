@@ -1,4 +1,5 @@
 import { useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import { useLocation } from 'react-router-dom'
 
 const LOCATION_KEY = 'smart-help-market:experience-location:v1'
 
@@ -7,6 +8,7 @@ function readLocation() {
 }
 
 export default function AmbientExperience() {
+  const route = useLocation()
   const [location, setLocation] = useState(readLocation)
   const [draft, setDraft] = useState(readLocation)
   const [editing, setEditing] = useState(false)
@@ -34,10 +36,10 @@ export default function AmbientExperience() {
 
   const edo = /edo/i.test(location)
   return (
-    <div className={`shm-ambient shm-ambient-${night ? 'night' : 'day'}`} aria-label="Marketplace atmosphere">
+    <div className={`shm-ambient shm-ambient-${night ? 'night' : 'day'}`} aria-label="Marketplace atmosphere">\n      <span key={route.pathname} className="shm-route-progress" aria-hidden="true" />
       <div className="shm-ambient-sky" aria-hidden="true">
         {night && Array.from({ length: 28 }, (_, index) => (
-          <i key={index} className="shm-star" style={{ '--star-index': index } as CSSProperties} />
+          <i key={index} className="shm-star" style={{ '--star-index': index, left: `${(index * 37 + 9) % 97}%`, top: `${(index * 61 + 4) % 90}%` } as CSSProperties} />
         ))}
         <span className="shm-ambient-moon" />
         <span className="shm-ambient-cloud shm-cloud-one" />
