@@ -2228,3 +2228,179 @@
 .shm-tenant-passports>div{display:flex;flex-wrap:wrap;gap:9px}
 .shm-tenant-passports a{display:block;width:78px;height:78px;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--surface-secondary)}
 .shm-tenant-passports img{display:block;width:100%;height:100%;object-fit:cover}
+
+
+/* Restore the original hover-reveal workspace sidebar.
+   The navigation rail stays tucked away until hovered or keyboard-focused,
+   and its contents fade in with it. */
+@media (min-width: 761px) {
+  .workspace-layout {
+    display: grid;
+    grid-template-columns: 245px minmax(0, 1fr);
+    gap: 22px;
+    align-items: start;
+  }
+
+  .workspace-nav {
+    position: fixed !important;
+    z-index: 1495 !important;
+    top: 88px !important;
+    left: -232px !important;
+    right: auto !important;
+    bottom: 20px !important;
+    width: 260px !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    padding: 20px 16px !important;
+    border-radius: 0 18px 18px 0 !important;
+    background: color-mix(in srgb, var(--surface) 88%, transparent) !important;
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+    box-shadow: 0 18px 55px rgb(0 0 0 / .16) !important;
+    opacity: .94 !important;
+    visibility: visible !important;
+    transform: none !important;
+    transition: left .3s cubic-bezier(.2,.75,.25,1), opacity .25s ease !important;
+    box-sizing: border-box !important;
+  }
+
+  .workspace-nav:hover,
+  .workspace-nav:focus-within {
+    left: 0 !important;
+    opacity: 1 !important;
+  }
+
+  .workspace-nav > strong,
+  .workspace-nav > a {
+    opacity: 0;
+    transition: opacity .22s ease;
+  }
+
+  .workspace-nav:hover > strong,
+  .workspace-nav:hover > a,
+  .workspace-nav:focus-within > strong,
+  .workspace-nav:focus-within > a {
+    opacity: 1;
+  }
+
+  .workspace-nav::after {
+    content: "☰";
+    position: fixed;
+    left: 0;
+    top: 112px;
+    display: grid;
+    width: 28px;
+    height: 54px;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-left: 0;
+    border-radius: 0 10px 10px 0;
+    background: var(--brand-primary);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    box-shadow: 4px 4px 15px rgb(0 0 0 / .15);
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity .2s ease;
+  }
+
+  .workspace-nav:hover::after,
+  .workspace-nav:focus-within::after {
+    opacity: 0;
+  }
+
+  .workspace-nav .workspace-nav-close {
+    display: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .workspace-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .workspace-nav {
+    position: static !important;
+    display: flex !important;
+    width: 100% !important;
+    max-height: none !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    padding: 10px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-lg) !important;
+    background: var(--surface) !important;
+    box-shadow: var(--shadow-sm) !important;
+    transform: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  .workspace-nav > strong,
+  .workspace-nav::after {
+    display: none !important;
+  }
+
+  .workspace-nav > a {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    opacity: 1 !important;
+  }
+
+  .workspace-main {
+    width: 100%;
+  }
+}
+
+.workspace-back-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
+}
+
+.workspace-back-button > span {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.workspace-back-button:hover {
+  border-color: var(--brand-primary);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+}
+
+.workspace-back-button:focus-visible {
+  outline: 3px solid var(--brand-primary-soft);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-nav,
+  .workspace-nav > strong,
+  .workspace-nav > a,
+  .workspace-nav::after,
+  .workspace-back-button {
+    transition: none !important;
+  }
+}
