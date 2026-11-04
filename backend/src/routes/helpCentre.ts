@@ -7,6 +7,7 @@ import { resolveGeographicLocation } from '../intelligence/geocoding'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
+const geographicLookupRequests = new Map<string, number>()
 
 type ListingMatch = {
   key: string
@@ -405,6 +406,15 @@ router.post('/location/resolve', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Enter a location between 2 and 160 characters.' })
     return
   }
+
+  const userId = userIdFrom(res)
+  const lastRequestAt = geographicLookupRequests.get(userId) ?? 0
+  if (Date.now() - lastRequestAt < 5000) {
+    res.status(429).json({ error: 'Please wait a few seconds before checking another location.' })
+    return
+  }
+  if (geographicLookupRequests.size > 5000) geographicLookupRequests.clear()
+  geographicLookupRequests.set(userId, Date.now())
 
   try {
     const resolved = await resolveGeographicLocation(query)
