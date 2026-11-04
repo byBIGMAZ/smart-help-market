@@ -418,7 +418,7 @@ useEffect(() => {
         ] as EditableSettingKey[]).map((key) => {
           const setting = getSetting(key)
           if (!setting) return null
-          const isBoolean = key === 'help.assistant.enabled' || key === 'help.messages.paid_enabled'
+          const isBoolean = key === 'help.assistant.enabled'
           return (
             <div className="admin-setting-item" key={key}>
               <div className="admin-setting-information">
