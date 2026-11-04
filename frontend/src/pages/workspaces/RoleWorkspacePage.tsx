@@ -1321,6 +1321,11 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
     visibility: 'Profile visibility',
   }
 
+  const approvalFieldLabels: Record<string, string> = {
+    fullName: 'Full legal name',
+    phone: 'Phone number',
+    dateOfBirth: 'Date of birth',
+  }
   const approvalFields = new Set(['fullName', 'phone', 'dateOfBirth'])
 
   const saveProfile = (event: React.FormEvent<HTMLFormElement>) => {
@@ -1349,8 +1354,24 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
     }
 
     const timestamp = new Date().toISOString()
-    const approvalChanges = changedKeys.filter((key) => approvalFields.has(key))
-    const ordinaryChanges = changedKeys.filter((key) => !approvalFields.has(key))
+    type ProfilePolicy = { approval: boolean; cooldown: number }
+    const defaultPolicy: Record<string, ProfilePolicy> = {
+      'Full legal name': { approval: true, cooldown: 24 },
+      'Phone number': { approval: true, cooldown: 24 },
+      'Date of birth': { approval: true, cooldown: 24 },
+    }
+    let policy = defaultPolicy
+    try {
+      const rawPolicy = window.localStorage.getItem('smart-help-market:admin-profile-approval-rules:v1')
+      if (rawPolicy) policy = { ...defaultPolicy, ...(JSON.parse(rawPolicy) as Record<string, ProfilePolicy>) }
+    } catch {
+      // Security-sensitive defaults remain enabled if policy preview data is invalid.
+    }
+    const approvalChanges = changedKeys.filter((key) => {
+      if (!approvalFields.has(key)) return false
+      return policy[approvalFieldLabels[key]]?.approval !== false
+    })
+    const ordinaryChanges = changedKeys.filter((key) => !approvalChanges.includes(key))
 
     const newPending: ProfileChangeRecord[] = approvalChanges.map((field) => ({
       id: `${Date.now()}-${field}`,
@@ -1379,8 +1400,13 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
       updatedProfile[field] = submitted[field]
     }
 
-    const nextCooldown = changedKeys.length > 0
-      ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    const cooldownHours = changedKeys.reduce((maximum, key) => {
+      if (!approvalFields.has(key)) return Math.max(maximum, 24)
+      const fieldPolicy = policy[approvalFieldLabels[key]]
+      return Math.max(maximum, Number.isFinite(fieldPolicy?.cooldown) ? Math.max(0, fieldPolicy.cooldown) : 24)
+    }, 0)
+    const nextCooldown = cooldownHours > 0
+      ? new Date(Date.now() + cooldownHours * 60 * 60 * 1000).toISOString()
       : saved.cooldownUntil
 
     setSaved((current) => ({
@@ -1441,7 +1467,7 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
           <span aria-hidden="true">🔐</span>
           <div>
             <strong>Profile change protection</strong>
-            <p>Routine profile updates have a 24-hour cooldown. Sensitive details require review.</p>
+            <p>Profile edits follow the platform cooldown policy. Sensitive details may require administrator review.</p>
           </div>
         </div>
         {cooldownActive ? (
@@ -1457,8 +1483,8 @@ function ProfileEditor({ user }: { user: MarketplaceUser | null }) {
           </div>
         )}
         <div className="smart-profile-rules">
-          <span>Routine fields: 24-hour cooldown</span>
-          <span>Full name, phone and date of birth: admin approval</span>
+          <span>Cooldown: applied according to profile policy</span>
+          <span>Full name, phone and date of birth: protected by approval rules</span>
         </div>
       </section>
 
