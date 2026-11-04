@@ -2040,30 +2040,30 @@ export default function RoleWorkspacePage() {
                   </div>
 
                   <div className="landlord-analytics-kpis">
-                    <article>
+                    <Link className="landlord-kpi-link" to="/landlord/properties">
                       <span className="landlord-kpi-icon">⌂</span>
                       <span>Property records</span>
                       <strong>3</strong>
                       <small>Properties in this preview</small>
-                    </article>
-                    <article>
+                    </Link>
+                    <Link className="landlord-kpi-link" to="/landlord/tenants">
                       <span className="landlord-kpi-icon">♙</span>
                       <span>Active tenants</span>
                       <strong>2</strong>
                       <small>Sample active tenancy records</small>
-                    </article>
-                    <article>
+                    </Link>
+                    <Link className="landlord-kpi-link" to="/landlord/rent">
                       <span className="landlord-kpi-icon">₦</span>
                       <span>Rent scheduled</span>
                       <strong>₦1.3m</strong>
                       <small>₦850k due soon · ₦450k upcoming</small>
-                    </article>
-                    <article>
+                    </Link>
+                    <Link className="landlord-kpi-link" to="/landlord/complaints">
                       <span className="landlord-kpi-icon">⚙</span>
                       <span>Open operational cases</span>
                       <strong>4</strong>
                       <small>2 complaints · 2 maintenance requests</small>
-                    </article>
+                    </Link>
                   </div>
 
                   <div className="landlord-analytics-grid">
@@ -2299,7 +2299,19 @@ export default function RoleWorkspacePage() {
                 )}
 
                 {created.map((item, index) => (
-                  <article key={`${item}-${index}`}>
+                  <article
+                    key={`${item}-${index}`}
+                    className="workspace-record-card"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelectedWorkspaceRecord({ title: item, description: 'Created in this browser session.', status: 'Draft' })}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        setSelectedWorkspaceRecord({ title: item, description: 'Created in this browser session.', status: 'Draft' })
+                      }
+                    }}
+                  >
                     <span className="workspace-list-icon">＋</span>
                     <div>
                       <strong>{item}</strong>
