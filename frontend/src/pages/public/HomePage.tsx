@@ -511,36 +511,14 @@ function App() {
           </div>
         </div>
 
-        <div className="steps-grid">
-          <article className="step-card">
-            <span className="step-number">01</span>
-            <span className="step-icon">⌕</span>
-            <h3>Discover</h3>
-            <p>
-              Search properties, products and services that match your needs.
-            </p>
-          </article>
-
-          <article className="step-card">
-            <span className="step-number">02</span>
-            <span className="step-icon">◇</span>
-            <h3>Compare</h3>
-            <p>Explore listing information and compare available options.</p>
-          </article>
-
-          <article className="step-card">
-            <span className="step-number">03</span>
-            <span className="step-icon">↗</span>
-            <h3>Connect</h3>
-            <p>
-              Contact verified participants when the platform's secure
-              workflows are ready.
-            </p>
-          </article>
+        <div className="shm-how-journey">
+          <article className="shm-how-card"><div className="shm-how-visual"><span className="shm-how-orbit" /><span className="shm-how-object">🔎</span></div><span className="step-number">01</span><h3>Discover what you need</h3><p>Explore homes, products and trusted services from one marketplace.</p></article>
+          <article className="shm-how-card"><div className="shm-how-visual"><span className="shm-how-orbit" /><span className="shm-how-object">🧭</span></div><span className="step-number">02</span><h3>Compare and connect</h3><p>Review details, compare your options and contact the right person.</p></article>
+          <article className="shm-how-card"><div className="shm-how-visual"><span className="shm-how-orbit" /><span className="shm-how-object">🤝</span></div><span className="step-number">03</span><h3>Move forward with confidence</h3><p>Follow the agreed steps and use available transaction protections where supported.</p></article>
         </div>
       </section>
 
-      <section className="cta-section">
+      <EscrowExplainer />\n\n      <section className="cta-section">
         <div>
           <span className="section-kicker">HAVE SOMETHING TO OFFER?</span>
           <h2>Bring your next opportunity to the market.</h2>
