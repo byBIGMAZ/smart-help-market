@@ -578,7 +578,7 @@ router.post('/chat', async (req: Request, res: Response) => {
 router.post('/feedback', async (req: Request, res: Response) => {
   const messageId = typeof req.body?.assistantMessageId === 'string' ? req.body.assistantMessageId : ''
   const helpful = req.body?.helpful
-  if (!/^[1-9]\\d*$/.test(messageId) || typeof helpful !== 'boolean') {
+  if (!/^[1-9]\d*$/.test(messageId) || typeof helpful !== 'boolean') {
     res.status(400).json({ error: 'A valid assistant response and feedback rating are required.' })
     return
   }
