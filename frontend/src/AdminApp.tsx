@@ -1373,7 +1373,7 @@ function openAutomationMonitoring() {
                 <span className="admin-time-stars">✦　·　✧　·　✦</span>
               </div>
               <ProfilePhotoSlideshow
-                storageKey={`shm.dashboard.photos.super-admin.${user?.id || user?.email || 'administrator'}`}
+                storageKey={`shm.dashboard.photos.super-admin.${user?.id || 'administrator'}`}
                 displayName={user?.displayName || 'Administrator'}
               />
             </div>
