@@ -109,7 +109,7 @@ export default function MarketplaceLayout({
       </div>
 
       <MobileBottomNav />
-      {!['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(pathname.split('/').filter(Boolean)[0] || '') && <QuickNavigationOrb />}
+      {!isWorkspaceRoute && !isOwnerWorkspaceRoute && <QuickNavigationOrb />}
     </div>
   )
 }
