@@ -1,0 +1,495 @@
+import { Router, type Request, type Response } from 'express'
+import { getDatabasePool } from '../database'
+import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession'
+import { requirePermission } from '../auth/requirePermission'
+
+const router = Router()
+const MAX_MESSAGE_LENGTH = 1200
+
+type ListingMatch = {
+  key: string
+  title: string
+  category: string
+  location: string
+  price: string
+  priceUnit: string
+  icon: string
+  isDemo: boolean
+}
+
+type SuggestedAction = { label: string; path: string }
+type AssistantResult = {
+  text: string
+  suggestions?: string[]
+  actions?: SuggestedAction[]
+  matches?: ListingMatch[]
+  needsAdmin?: boolean
+  context?: Record<string, unknown>
+}
+
+function readNumber(value: unknown, fallback: number): number {
+  const parsed = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : fallback
+}
+
+async function getSetting(key: string, fallback: unknown): Promise<unknown> {
+  const result = await getDatabasePool().query<{ setting_value: unknown }>(
+    'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
+    [key],
+  )
+  return result.rows[0]?.setting_value ?? fallback
+}
+
+function normalize(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9₦\s-]/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+function routeForRequest(message: string, roles: string[]): SuggestedAction[] {
+  const text = normalize(message)
+  const role = ['buyer', 'landlord', 'seller', 'provider', 'agent'].find((item) => roles.includes(item)) || 'buyer'
+  const routes: Array<{ terms: string[]; label: string; path: string }> = [
+    { terms: ['neighbourhood', 'neighborhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${role}/community` },
+    { terms: ['saved', 'favourite', 'favorite', 'wishlist'], label: 'Open saved items', path: '/buyer/saved' },
+    { terms: ['my message', 'messages', 'inbox', 'chat'], label: 'Open messages', path: `/${role}/messages` },
+    { terms: ['notification', 'alerts'], label: 'Open notifications', path: `/${role}/notifications` },
+    { terms: ['my profile', 'edit profile', 'profile'], label: 'Open my profile', path: `/${role}/profile` },
+    { terms: ['account', 'account settings'], label: 'Open account overview', path: `/${role}/account` },
+    { terms: ['privacy', 'preferences'], label: 'Open privacy and preferences', path: `/${role}/privacy-settings` },
+    { terms: ['inspection', 'visit property'], label: 'Open inspections', path: `/${role}/inspections` },
+    { terms: ['tenant', 'tenants'], label: 'Open tenant management', path: '/landlord/tenants' },
+    { terms: ['rent payment', 'rent and renewal', 'renewal', 'arrears'], label: 'Open rent and renewals', path: '/landlord/rent' },
+    { terms: ['maintenance', 'repair'], label: 'Open maintenance', path: '/landlord/maintenance' },
+    { terms: ['my properties', 'manage properties', 'property portfolio'], label: 'Manage properties', path: '/landlord/properties' },
+    { terms: ['add property', 'list property', 'post property'], label: 'Create a property listing', path: '/landlord/properties/new' },
+    { terms: ['my products', 'manage products', 'inventory'], label: 'Open products and inventory', path: '/seller/products' },
+    { terms: ['add product', 'list product'], label: 'Add a product', path: '/seller/products/new' },
+    { terms: ['orders', 'my sales'], label: 'Open orders', path: '/seller/orders' },
+    { terms: ['bookings', 'my services'], label: 'Open bookings and services', path: '/provider/bookings' },
+    { terms: ['add service', 'list service'], label: 'Add a service', path: '/provider/services/new' },
+    { terms: ['my listings', 'manage listings'], label: 'Open listings', path: `/${role}/listings` },
+    { terms: ['clients'], label: 'Open clients', path: '/agent/clients' },
+    { terms: ['commission', 'earnings'], label: 'Open commissions and earnings', path: '/agent/commissions' },
+    { terms: ['dashboard', 'overview'], label: 'Open dashboard', path: `/${role}/dashboard` },
+    { terms: ['browse', 'explore marketplace', 'marketplace'], label: 'Explore marketplace', path: '/explore' },
+    { terms: ['category', 'categories'], label: 'Browse categories', path: '/categories' },
+    { terms: ['help centre', 'help center', 'support'], label: 'Open Help Centre', path: '/help' },
+  ]
+  const match = routes.find((item) => item.terms.some((term) => text.includes(term)))
+  return match ? [{ label: match.label, path: match.path }] : []
+}
+
+async function answerMessage(userId: string, rawMessage: string, context: Record<string, unknown>, roles: string[]): Promise<AssistantResult> {
+  const message = normalize(rawMessage)
+  const pendingSearch = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
+  const isLocationAnswer = Boolean(pendingSearch) && rawMessage.trim().length <= 80
+  const searchText = isLocationAnswer ? `${pendingSearch} ${rawMessage}` : rawMessage
+  const nextContext = { ...context }
+  if (isLocationAnswer) delete nextContext.pendingSearchText
+
+  const actions = routeForRequest(rawMessage, roles)
+  if (actions.length) {
+    return {
+      text: `I found the right place for that. Use the shortcut below and I’ll take you directly there.`,
+      actions,
+      suggestions: ['What else can you help me with?', 'Find something in the marketplace'],
+      context: nextContext,
+    }
+  }
+
+  const propertyTerms = ['apartment', 'house', 'home', 'room', 'flat', 'land', 'property', 'rent', 'buy', 'for sale', 'self contained', 'self-contained']
+  const productTerms = ['product', 'laptop', 'phone', 'computer', 'furniture', 'electronics', 'buy a', 'shop']
+  const serviceTerms = ['service', 'plumber', 'plumbing', 'electrician', 'electrical', 'cleaning', 'repair', 'mechanic', 'designer']
+  const category = propertyTerms.some((term) => message.includes(term))
+    ? 'properties'
+    : productTerms.some((term) => message.includes(term))
+      ? 'products'
+      : serviceTerms.some((term) => message.includes(term))
+        ? 'services'
+        : null
+
+  if (!category && (message.includes('how do i') || message.includes('where can i') || message.includes('how can i'))) {
+    return {
+      text: 'I can guide you around the marketplace. Tell me the feature you want to use, or choose one of these common destinations.',
+      actions: [
+        { label: 'My dashboard', path: `/${roles.find((role) => ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(role)) || 'buyer'}/dashboard` },
+        { label: 'Explore marketplace', path: '/explore' },
+        { label: 'My messages', path: '/buyer/messages' },
+        { label: 'Neighbourhood space', path: '/buyer/community' },
+      ],
+      suggestions: ['How do I save a listing?', 'How do I contact a landlord?', 'How do I create a listing?'],
+      context: nextContext,
+    }
+  }
+
+  if (!category && !pendingSearch) {
+    return {
+      text: 'I can help you find properties, products and services, or guide you to any feature on the website. What are you trying to do?',
+      suggestions: ['Find a property to rent', 'Find a product', 'Find a service', 'Help me navigate the website', 'Speak to an administrator'],
+      context: nextContext,
+    }
+  }
+
+  if (category === 'properties' && !isLocationAnswer && !/\b(in|at|around|near|within)\s+[a-z]/i.test(rawMessage)) {
+    const locations = await getDatabasePool().query<{ location: string }>(
+      `SELECT DISTINCT location_display AS location
+       FROM public.marketplace_listings
+       WHERE status = 'published' AND length(trim(location_display)) > 0
+       ORDER BY location_display
+       LIMIT 8`,
+    )
+    const choices = locations.rows.map((row) => row.location).filter(Boolean)
+    nextContext.pendingSearchText = rawMessage
+    return {
+      text: 'Which area would you prefer? I can narrow the available property listings by location.',
+      suggestions: [...choices, 'Any location'].slice(0, 8),
+      context: nextContext,
+    }
+  }
+
+  const terms = normalize(searchText).split(' ').filter((word) => word.length > 2 && !['the', 'for', 'and', 'with', 'from', 'near', 'around', 'find', 'need', 'want', 'looking', 'show', 'available', 'please', 'some'].includes(word)).slice(0, 8)
+  const patterns = terms.map((term) => `%${term}%`)
+  const result = await getDatabasePool().query<ListingMatch>(
+    `SELECT
+       l.listing_key AS key,
+       l.title,
+       c.category_name AS category,
+       l.location_display AS location,
+       l.price::text AS price,
+       l.price_unit AS "priceUnit",
+       l.icon,
+       l.is_demo AS "isDemo"
+     FROM public.marketplace_listings l
+     JOIN public.marketplace_categories c ON c.category_key = l.category_key
+     WHERE l.status = 'published'
+       AND c.is_active = TRUE
+       AND l.category_key = $1
+       AND (
+         cardinality($2::text[]) = 0
+         OR concat_ws(' ', l.title, l.description, l.location_display, c.category_name, l.listing_tag) ILIKE ANY($2::text[])
+       )
+     ORDER BY
+       CASE WHEN concat_ws(' ', l.title, l.location_display) ILIKE $3 THEN 0 ELSE 1 END,
+       l.created_at DESC
+     LIMIT 5`,
+    [category, patterns, `%${normalize(searchText)}%`],
+  )
+
+  if (result.rows.length) {
+    return {
+      text: `I searched the published ${category} listings and found ${result.rows.length} possible match${result.rows.length === 1 ? '' : 'es'}. Open any result to see its full details.`,
+      matches: result.rows,
+      suggestions: ['Show me more options', 'Change my location', 'Speak to an administrator'],
+      context: nextContext,
+    }
+  }
+
+  return {
+    text: `I couldn't find a published ${category} listing that matches those details right now. Would you like to broaden the search or try another location?`,
+    suggestions: ['Show all available options', 'Try another location', 'Search another category', 'Speak to an administrator'],
+    context: nextContext,
+  }
+}
+
+function userIdFrom(res: Response): string {
+  return String(res.locals.authenticatedUserId ?? '')
+}
+
+router.get('/public-config', async (_req, res) => {
+  try {
+    const enabled = await getSetting('help.assistant.enabled', true)
+    res.json({ enabled: enabled !== false, guestPreview: true })
+  } catch {
+    res.status(503).json({ error: 'Help Centre configuration is unavailable.' })
+  }
+})
+
+router.use(requireAuthenticatedSession)
+
+router.get('/status', async (_req, res) => {
+  try {
+    const userId = userIdFrom(res)
+    const [limitValue, enabledValue, usage] = await Promise.all([
+      getSetting('help.messages.free_limit', 30),
+      getSetting('help.assistant.enabled', true),
+      getDatabasePool().query<{ messages_used: number; period_start: string }>(
+        `SELECT messages_used, period_start::text
+         FROM public.marketplace_help_usage
+         WHERE user_id = $1 AND period_start = date_trunc('month', CURRENT_DATE)::date`,
+        [userId],
+      ),
+    ])
+    const limit = readNumber(limitValue, 30)
+    const used = Number(usage.rows[0]?.messages_used ?? 0)
+    res.json({ enabled: enabledValue !== false, used, limit, remaining: Math.max(0, limit - used), period: 'monthly' })
+  } catch {
+    res.status(503).json({ error: 'Help Centre usage could not be loaded.' })
+  }
+})
+
+router.get('/conversations', async (_req, res) => {
+  try {
+    const result = await getDatabasePool().query(
+      `SELECT conversation_id::text AS id, title, status, created_at AS "createdAt", updated_at AS "updatedAt"
+       FROM public.marketplace_help_conversations
+       WHERE user_id = $1
+       ORDER BY updated_at DESC, conversation_id DESC
+       LIMIT 30`,
+      [userIdFrom(res)],
+    )
+    res.json({ conversations: result.rows })
+  } catch {
+    res.status(500).json({ error: 'Your Help Centre conversations could not be loaded.' })
+  }
+})
+
+router.get('/conversations/:conversationId/messages', async (req, res) => {
+  const conversationId = req.params.conversationId
+  if (typeof conversationId !== 'string' || !/^[1-9]\d*$/.test(conversationId)) {
+    res.status(400).json({ error: 'Invalid conversation.' })
+    return
+  }
+  try {
+    const owner = await getDatabasePool().query(
+      'SELECT 1 FROM public.marketplace_help_conversations WHERE conversation_id = $1 AND user_id = $2',
+      [conversationId, userIdFrom(res)],
+    )
+    if (!owner.rowCount) {
+      res.status(404).json({ error: 'Conversation not found.' })
+      return
+    }
+    const result = await getDatabasePool().query(
+      `SELECT message_id::text AS id, sender_type AS sender, message_text AS text, metadata, created_at AS "createdAt"
+       FROM public.marketplace_help_messages
+       WHERE conversation_id = $1
+       ORDER BY message_id ASC`,
+      [conversationId],
+    )
+    res.json({ messages: result.rows })
+  } catch {
+    res.status(500).json({ error: 'Conversation messages could not be loaded.' })
+  }
+})
+
+router.post('/chat', async (req: Request, res: Response) => {
+  const message = typeof req.body?.message === 'string' ? req.body.message.trim() : ''
+  const requestedConversationId = req.body?.conversationId
+  if (!message || message.length > MAX_MESSAGE_LENGTH) {
+    res.status(400).json({ error: `Enter a message between 1 and ${MAX_MESSAGE_LENGTH} characters.` })
+    return
+  }
+  if (requestedConversationId !== undefined && (typeof requestedConversationId !== 'string' || !/^[1-9]\d*$/.test(requestedConversationId))) {
+    res.status(400).json({ error: 'Invalid conversation.' })
+    return
+  }
+
+  const userId = userIdFrom(res)
+  const client = await getDatabasePool().connect()
+  try {
+    await client.query('BEGIN')
+    await client.query('SELECT pg_advisory_xact_lock($1::bigint)', [Number(userId)])
+    const enabled = await client.query<{ setting_value: unknown }>(
+      'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1',
+      ['help.assistant.enabled'],
+    )
+    if (enabled.rows[0]?.setting_value === false) {
+      await client.query('ROLLBACK')
+      res.status(503).json({ error: 'The Help Centre assistant is temporarily unavailable.' })
+      return
+    }
+    const limitResult = await client.query<{ setting_value: unknown }>(
+      'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1',
+      ['help.messages.free_limit'],
+    )
+    const limit = readNumber(limitResult.rows[0]?.setting_value, 30)
+    await client.query(
+      `INSERT INTO public.marketplace_help_usage (user_id, period_start)
+       VALUES ($1, date_trunc('month', CURRENT_DATE)::date)
+       ON CONFLICT (user_id, period_start) DO NOTHING`,
+      [userId],
+    )
+    const usage = await client.query<{ messages_used: number }>(
+      `SELECT messages_used FROM public.marketplace_help_usage
+       WHERE user_id = $1 AND period_start = date_trunc('month', CURRENT_DATE)::date
+       FOR UPDATE`,
+      [userId],
+    )
+    const used = Number(usage.rows[0]?.messages_used ?? 0)
+    if (used >= limit) {
+      await client.query('ROLLBACK')
+      res.status(429).json({
+        error: 'You have used your included Help Centre messages for this month.',
+        usage: { used, limit, remaining: 0 },
+        paidPackagesAvailable: false,
+        message: 'Additional paid messages will be available when secure payment integration is enabled.',
+      })
+      return
+    }
+
+    let conversationId = requestedConversationId as string | undefined
+    let context: Record<string, unknown> = {}
+    if (conversationId) {
+      const conversation = await client.query<{ context: Record<string, unknown> }>(
+        'SELECT context FROM public.marketplace_help_conversations WHERE conversation_id = $1 AND user_id = $2 FOR UPDATE',
+        [conversationId, userId],
+      )
+      if (!conversation.rowCount) {
+        await client.query('ROLLBACK')
+        res.status(404).json({ error: 'Conversation not found.' })
+        return
+      }
+      context = conversation.rows[0].context || {}
+    } else {
+      const created = await client.query<{ id: string }>(
+        `INSERT INTO public.marketplace_help_conversations (user_id, title)
+         VALUES ($1, $2)
+         RETURNING conversation_id::text AS id`,
+        [userId, message.slice(0, 72)],
+      )
+      conversationId = created.rows[0].id
+    }
+
+    await client.query(
+      `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text)
+       VALUES ($1, 'user', $2)`,
+      [conversationId, message],
+    )
+
+    const roleResult = await client.query<{ role_key: string }>(
+      `SELECT r.role_key FROM public.marketplace_user_roles ur
+       JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+       WHERE ur.user_id = $1 ORDER BY r.role_key`,
+      [userId],
+    )
+    const answer = await answerMessage(userId, message, context, roleResult.rows.map((row) => row.role_key))
+    await client.query(
+      `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
+       VALUES ($1, 'assistant', $2, $3::jsonb)`,
+      [conversationId, answer.text, JSON.stringify({
+        suggestions: answer.suggestions || [],
+        actions: answer.actions || [],
+        matches: answer.matches || [],
+      })],
+    )
+    await client.query(
+      `UPDATE public.marketplace_help_conversations
+       SET context = $2::jsonb, updated_at = NOW(), status = CASE WHEN $3 THEN 'needs_admin' ELSE status END
+       WHERE conversation_id = $1`,
+      [conversationId, JSON.stringify(answer.context || {}), answer.needsAdmin === true],
+    )
+    await client.query(
+      `UPDATE public.marketplace_help_usage
+       SET messages_used = messages_used + 1, updated_at = NOW()
+       WHERE user_id = $1 AND period_start = date_trunc('month', CURRENT_DATE)::date`,
+      [userId],
+    )
+    await client.query('COMMIT')
+    res.json({
+      conversationId,
+      reply: answer.text,
+      suggestions: answer.suggestions || [],
+      actions: answer.actions || [],
+      matches: answer.matches || [],
+      usage: { used: used + 1, limit, remaining: Math.max(0, limit - used - 1) },
+    })
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => undefined)
+    console.error('Help Centre chat failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'The assistant could not process your message. Please try again.' })
+  } finally {
+    client.release()
+  }
+})
+
+router.post('/support-cases', async (req: Request, res: Response) => {
+  const conversationId = typeof req.body?.conversationId === 'string' ? req.body.conversationId : ''
+  const subject = typeof req.body?.subject === 'string' ? req.body.subject.trim().slice(0, 160) : ''
+  const details = typeof req.body?.details === 'string' ? req.body.details.trim().slice(0, 2000) : ''
+  if (!/^[1-9]\d*$/.test(conversationId) || !subject || !details) {
+    res.status(400).json({ error: 'A conversation, subject and message are required.' })
+    return
+  }
+  try {
+    const db = getDatabasePool()
+    const client = await db.connect()
+    try {
+      await client.query('BEGIN')
+      const owner = await client.query(
+        'SELECT 1 FROM public.marketplace_help_conversations WHERE conversation_id = $1 AND user_id = $2 FOR UPDATE',
+        [conversationId, userIdFrom(res)],
+      )
+      if (!owner.rowCount) {
+        await client.query('ROLLBACK')
+        res.status(404).json({ error: 'Conversation not found.' })
+        return
+      }
+      const created = await client.query<{ id: string }>(
+        `INSERT INTO public.marketplace_help_support_cases (conversation_id, user_id, subject, details)
+         VALUES ($1, $2, $3, $4) RETURNING case_id::text AS id`,
+        [conversationId, userIdFrom(res), subject, details],
+      )
+      await client.query(
+        `UPDATE public.marketplace_help_conversations SET status = 'needs_admin', updated_at = NOW()
+         WHERE conversation_id = $1`,
+        [conversationId],
+      )
+      await client.query(
+        `INSERT INTO public.marketplace_notifications (audience, notification_type, title, message, metadata)
+         VALUES ('administrators', 'help_support', $1, $2, $3::jsonb)`,
+        ['Help Centre needs administrator attention', subject, JSON.stringify({ caseId: created.rows[0].id, conversationId })],
+      )
+      await client.query('COMMIT')
+      res.status(201).json({ status: 'ok', caseId: created.rows[0].id, message: 'Your request has been sent to the support team.' })
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined)
+      throw error
+    } finally {
+      client.release()
+    }
+  } catch {
+    res.status(500).json({ error: 'Your request could not be sent to the support team.' })
+  }
+})
+
+router.get('/admin/cases', requirePermission('dashboard.view'), async (_req, res) => {
+  try {
+    const result = await getDatabasePool().query(
+      `SELECT c.case_id::text AS id, c.subject, c.details, c.status,
+              c.created_at AS "createdAt", u.display_name AS "userName", u.email,
+              c.conversation_id::text AS "conversationId"
+       FROM public.marketplace_help_support_cases c
+       JOIN public.marketplace_users u ON u.user_id = c.user_id
+       ORDER BY CASE c.status WHEN 'open' THEN 0 WHEN 'assigned' THEN 1 ELSE 2 END, c.created_at DESC
+       LIMIT 100`,
+    )
+    res.json({ cases: result.rows })
+  } catch {
+    res.status(500).json({ error: 'Support cases could not be loaded.' })
+  }
+})
+
+router.patch('/admin/cases/:caseId', requirePermission('dashboard.view'), async (req, res) => {
+  const caseId = req.params.caseId
+  const status = req.body?.status
+  if (typeof caseId !== 'string' || !/^[1-9]\d*$/.test(caseId) || !['open', 'assigned', 'resolved'].includes(status)) {
+    res.status(400).json({ error: 'Invalid support case update.' })
+    return
+  }
+  try {
+    const result = await getDatabasePool().query(
+      `UPDATE public.marketplace_help_support_cases
+       SET status = $2, updated_at = NOW()
+       WHERE case_id = $1
+       RETURNING case_id::text AS id, status`,
+      [caseId, status],
+    )
+    if (!result.rowCount) {
+      res.status(404).json({ error: 'Support case not found.' })
+      return
+    }
+    res.json({ status: 'ok', supportCase: result.rows[0] })
+  } catch {
+    res.status(500).json({ error: 'Support case could not be updated.' })
+  }
+})
+
+export default router
