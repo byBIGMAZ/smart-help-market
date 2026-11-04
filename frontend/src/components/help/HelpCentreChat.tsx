@@ -186,7 +186,13 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
   const [feedbackSent, setFeedbackSent] = useState<Record<string, boolean>>({})
   const [correctionFor, setCorrectionFor] = useState('')
   const [correctionIntent, setCorrectionIntent] = useState('')
+  const [, setClockTick] = useState(0)
   const bottomRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClockTick((current) => current + 1), 60_000)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     let active = true
