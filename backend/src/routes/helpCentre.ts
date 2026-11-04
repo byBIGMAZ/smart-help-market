@@ -21,6 +21,7 @@ type ListingMatch = {
 type SuggestedAction = { label: string; path: string }
 type AssistantResult = {
   text: string
+  guide?: { kind: 'escrow'; steps: Array<{ title: string; description: string; icon: string }>; disclaimer: string }
   suggestions?: string[]
   actions?: SuggestedAction[]
   matches?: ListingMatch[]
@@ -216,7 +217,18 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
 
   if (prediction.intent === 'escrow_explanation') {
     return {
-      text: 'Escrow is a transaction arrangement where a payment is held by an authorised independent provider until the agreed conditions are met. In a typical transaction, the buyer pays into escrow, the seller completes the agreed delivery or service, the buyer confirms or a defined dispute process is followed, and the funds are released according to the agreement. Important: this is an educational explanation of the escrow concept. It does not mean SMART HELP MARKET currently holds or protects funds through a live escrow service. Always check the active payment and transaction terms before paying.',
+      text: 'Escrow is a transaction arrangement where an authorised independent provider holds a payment until the agreed conditions are met. Let me walk you through a typical example.',
+      guide: {
+        kind: 'escrow',
+        steps: [
+          { title: 'Agree on the terms', description: 'The buyer and seller agree on the item or service, amount, delivery requirements, inspection period and dispute conditions before payment.', icon: '🤝' },
+          { title: 'Payment is secured', description: 'The buyer pays the authorised escrow provider. The provider confirms receipt and holds the funds under the agreed terms.', icon: '🛡️' },
+          { title: 'Seller fulfils the agreement', description: 'The seller delivers the item or completes the agreed service. Evidence and milestones should follow the transaction terms.', icon: '📦' },
+          { title: 'Buyer reviews the delivery', description: 'The buyer confirms that the agreement was fulfilled, or raises a dispute within the agreed review period.', icon: '🔎' },
+          { title: 'Funds are released or disputed', description: 'The escrow provider releases funds or follows the agreed dispute-resolution process. The exact outcome depends on the contract and provider rules.', icon: '✅' },
+        ],
+        disclaimer: 'Educational example only. This does not mean SMART HELP MARKET currently holds or protects funds through a live escrow service. Check the active payment and transaction terms before paying.',
+      },
       suggestions: ['Explain the buyer protection steps', 'What happens if there is a dispute?', 'How do I inspect a property?'],
       context: nextContext,
     }
@@ -552,6 +564,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         suggestions: answer.suggestions || [],
         actions: answer.actions || [],
         matches: answer.matches || [],
+        guide: answer.guide || null,
         intent: prediction.intent,
         modelVersion: prediction.modelVersion,
       })],
@@ -589,6 +602,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       suggestions: answer.suggestions || [],
       actions: answer.actions || [],
       matches: answer.matches || [],
+      guide: answer.guide || null,
       usage: { used: used + 1, limit, remaining: Math.max(0, limit - used - 1) },
       needsAdmin: answer.needsAdmin === true,
     })
