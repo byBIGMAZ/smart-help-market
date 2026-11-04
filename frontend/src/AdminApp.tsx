@@ -51,7 +51,7 @@ import {
 import './AdminApp.css'
 import './AdminAuditLogs.css'
 import './AdminSystemTheme.css'
-import './AdminProfileApprovals.css'
+import './AdminProfileApprovals.css'\nimport ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
@@ -1371,6 +1371,10 @@ function openAutomationMonitoring() {
                 <span className="admin-time-cloud admin-time-cloud-two" />
                 <span className="admin-time-stars">✦　·　✧　·　✦</span>
               </div>
+              <ProfilePhotoSlideshow
+                storageKey={`shm.dashboard.photos.super-admin.${user?.id || user?.email || 'administrator'}`}
+                displayName={user?.displayName || 'Administrator'}
+              />
             </div>
 
             <div className="admin-section-heading">
