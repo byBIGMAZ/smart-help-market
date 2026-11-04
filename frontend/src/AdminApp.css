@@ -1081,3 +1081,25 @@
 
 /* Time-aware dashboard sky and animated settings gear. */
 .admin-time-scene{position:relative;isolation:isolate;overflow:hidden}.admin-time-scene>div:first-child{position:relative;z-index:2}.admin-time-illustration{position:absolute;inset:0 0 0 auto;width:42%;overflow:hidden;pointer-events:none}.admin-time-orb{position:absolute;top:22%;right:25%;width:clamp(72px,9vw,112px);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 32%,#fff8d2,#ffd166 70%);box-shadow:0 0 35px #ffd16688,0 0 90px #ffd16644;animation:admin-orb-glow 4s ease-in-out infinite}.admin-time-morning .admin-time-orb:after{position:absolute;inset:-20%;content:"";border:2px dashed #ffd16699;border-radius:50%;animation:admin-rays-turn 28s linear infinite}.admin-time-afternoon .admin-time-orb{width:clamp(84px,10vw,128px);background:radial-gradient(circle at 35% 32%,#fff,#ffe28b 70%);box-shadow:0 0 55px #ffe28b99}.admin-time-evening{background:linear-gradient(120deg,#39251f,#17241b)!important}.admin-time-evening .admin-time-orb{top:45%;background:radial-gradient(circle,#ffe3a8,#f18b55 70%);box-shadow:0 0 55px #f18b5588}.admin-time-night{background:radial-gradient(ellipse at 80% 10%,#283d72,#111a30 72%)!important}.admin-time-night .admin-time-orb{top:18%;width:76px;background:#f2f0d9;box-shadow:0 0 40px #f2f0d977}.admin-time-night .admin-time-orb:after{position:absolute;top:-3px;left:22px;width:68px;height:68px;content:"";border-radius:50%;background:#1a2949}.admin-time-stars{position:absolute;opacity:0;top:15%;right:8%;color:#fff4c9;letter-spacing:.7em;animation:admin-stars-twinkle 3s ease-in-out infinite}.admin-time-cloud{position:absolute;right:5%;bottom:18%;width:100px;height:23px;border-radius:50%;background:#fff;opacity:.16;filter:blur(7px);animation:admin-cloud-drift 12s ease-in-out infinite alternate}.admin-time-cloud-two{right:48%;bottom:35%;transform:scale(.7);animation-delay:-5s}.admin-time-night .admin-time-cloud{display:none}.admin-time-night .admin-time-stars{opacity:1}.admin-animated-gear{display:inline-block;transform-origin:50% 50%;animation:admin-gear-turn 9s linear infinite}.admin-settings-heading-gear{margin-right:7px;color:var(--admin-accent,#a6ed69)}@keyframes admin-gear-turn{to{transform:rotate(360deg)}}@keyframes admin-rays-turn{to{transform:rotate(360deg)}}@keyframes admin-orb-glow{50%{filter:brightness(1.12);box-shadow:0 0 55px #ffd166aa,0 0 110px #ffd16655}}@keyframes admin-stars-twinkle{50%{opacity:.45}}@keyframes admin-cloud-drift{to{translate:18px 0}}@media(max-width:560px){.admin-time-illustration{width:34%;opacity:.72}.admin-time-orb{right:13%;top:24%}.admin-time-stars{right:0;font-size:10px;letter-spacing:.2em}.admin-welcome-panel{min-height:160px}}@media(prefers-reduced-motion:reduce){.admin-time-scene *,.admin-animated-gear{animation:none!important;transition:none!important}}
+
+.admin-topbar-actions .admin-signout-icon {
+  display: inline-grid;
+  width: 42px;
+  height: 42px;
+  min-width: 42px;
+  place-items: center;
+  padding: 0;
+}
+.admin-topbar-actions .admin-signout-icon svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.admin-topbar-actions .admin-signout-icon:focus-visible {
+  outline: 3px solid #a6ed6955;
+  outline-offset: 3px;
+}
