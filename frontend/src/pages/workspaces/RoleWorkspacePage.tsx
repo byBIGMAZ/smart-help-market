@@ -1620,6 +1620,12 @@ export default function RoleWorkspacePage() {
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [workspaceMenuPosition, setWorkspaceMenuPosition] = useState({ top: 16, left: 16 })
   const [dockOffset, setDockOffset] = useState({ x: 0, y: 0 })
+  const [dashboardNow, setDashboardNow] = useState(() => new Date())
+
+  useEffect(() => {
+    const clock = window.setInterval(() => setDashboardNow(new Date()), 60000)
+    return () => window.clearInterval(clock)
+  }, [])
 
   useEffect(() => {
     const keepDockVisible = () => {
@@ -1851,30 +1857,31 @@ export default function RoleWorkspacePage() {
             <LandlordManagementCenter section={section} title={active.label} />
           ) : isDashboard ? (
             <div className="workspace-dashboard">
-              <div className="workspace-welcome">
-                <div>
-                  <span className="extended-kicker">{role === 'buyer' ? 'YOUR MARKETPLACE & COMMUNITY' : 'YOUR DASHBOARD'}</span>
-                  <h3>
-                    {(() => {
-                      const hour = new Date().getHours()
-                      const greeting = hour < 12
-                        ? 'Good morning'
-                        : hour < 17
-                          ? 'Good afternoon'
-                          : 'Good evening'
-                      const firstName = marketplaceUser?.displayName?.trim().split(/\s+/)[0]
-                      return `${greeting}${firstName ? `, ${firstName}` : ''}!`
-                    })()}
-                  </h3>
-                  <p>{dashboard.introduction}</p>
+              {(() => {
+                const hour = dashboardNow.getHours()
+                const timeScene = hour >= 5 && hour < 12 ? 'morning' : hour >= 12 && hour < 17 ? 'afternoon' : hour >= 17 && hour < 21 ? 'evening' : 'night'
+                const greeting = timeScene === 'morning' ? 'Good morning' : timeScene === 'afternoon' ? 'Good afternoon' : timeScene === 'evening' ? 'Good evening' : 'Good night'
+                const firstName = marketplaceUser?.displayName?.trim().split(/\s+/)[0]
+                return <div className={`workspace-welcome shm-time-welcome shm-time-${timeScene}`}>
+                  <div className="shm-time-copy">
+                    <span className="extended-kicker">{role === 'buyer' ? 'YOUR MARKETPLACE & COMMUNITY' : 'YOUR DASHBOARD'}</span>
+                    <h3>{greeting}{firstName ? `, ${firstName}` : ''}!</h3>
+                    <p>{dashboard.introduction}</p>
+                  </div>
+                  <div className="shm-time-art" aria-hidden="true">
+                    <span className="shm-time-sun" />
+                    <span className="shm-time-rays" />
+                    <span className="shm-time-cloud shm-time-cloud-one" />
+                    <span className="shm-time-cloud shm-time-cloud-two" />
+                    <span className="shm-time-moon" />
+                    <span className="shm-time-stars">✦　·　✧　·　✦　·　✧</span>
+                    <span className="shm-time-horizon" />
+                  </div>
+                  <span className="workspace-welcome-icon" aria-hidden="true">
+                    {role === 'buyer' ? '⌕' : role === 'landlord' ? '⌂' : role === 'seller' ? '▣' : role === 'provider' ? '✦' : '♙'}
+                  </span>
                 </div>
-                <span className="workspace-welcome-icon" aria-hidden="true">
-                  {role === 'buyer' ? '⌕' :
-                    role === 'landlord' ? '⌂' :
-                    role === 'seller' ? '▣' :
-                    role === 'provider' ? '✦' : '♙'}
-                </span>
-              </div>
+              })()}
 
               <div className="workspace-stats workspace-stats-four">
                 {dashboard.stats.map((stat, index) => (
