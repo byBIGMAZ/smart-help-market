@@ -73,6 +73,11 @@ function App() {
   const [listingsError, setListingsError] = useState('')
 
   useEffect(() => {
+    const timer = window.setInterval(() => setHeroPromptIndex((current) => (current + 1) % heroPrompts.length), 4600)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
     let active = true
 
     getPublicPlatformSettings()
