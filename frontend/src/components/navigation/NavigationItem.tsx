@@ -1,9 +1,10 @@
 import { Link, useLocation } from 'react-router-dom'
+import type { ReactNode } from 'react'
 
 interface NavigationItemProps {
   to: string
   label: string
-  icon: string
+  icon: ReactNode
   mobile?: boolean
 }
 
