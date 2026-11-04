@@ -865,6 +865,9 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
   const records = recordsBySection[section] ?? config.records
   const [selectedRecord, setSelectedRecord] = useState<LandlordDemoRecord | null>(null)
   const [tenantSubmissions] = useState<Record<string, TenantSharedSubmission>>(readTenantSubmissions)
+  const selectedTenantSubmission = selectedRecord?.tenantProfile
+    ? tenantSubmissions[selectedRecord.tenantProfile.email.trim().toLowerCase()]
+    : undefined
 
   const setRecords = (
     update:
@@ -1128,21 +1131,21 @@ function LandlordManagementCenter({ section, title }: { section: string; title: 
                 <div><span>Security deposit</span><strong>₦{selectedRecord.tenantProfile.deposit.toLocaleString('en-NG')}</strong></div>
                 <div><span>Agreement status</span><strong>{selectedRecord.tenantProfile.agreementStatus}</strong></div>
                 <div><span>Renewal date</span><strong>{selectedRecord.tenantProfile.renewalDate || 'Not scheduled'}</strong></div>
-                {(() => {
-                  const submission = tenantSubmissions[selectedRecord.tenantProfile.email.trim().toLowerCase()]
-                  if (!submission) return <p className="shm-record-modal-note">No tenant-submitted profile is linked to this email in this browser preview. Ask the tenant to complete their profile and share their tenant information using the same email address.</p>
-                  return <div className="shm-tenant-submission">
+                {selectedTenantSubmission ? (
+                  <div className="shm-tenant-submission">
                     <h4>Information submitted by tenant</h4>
-                    <div><span>Full name</span><strong>{submission.fullName || 'Not provided'}</strong></div>
-                    <div><span>Occupation</span><strong>{submission.occupation || 'Not provided'}</strong></div>
-                    <div><span>Location</span><strong>{[submission.neighbourhood, submission.city, submission.state, submission.country].filter(Boolean).join(', ') || 'Not provided'}</strong></div>
-                    <div className="shm-tenant-submission-bio"><span>About the tenant</span><p>{submission.bio || 'No biography supplied.'}</p></div>
+                    <div><span>Full name</span><strong>{selectedTenantSubmission.fullName || 'Not provided'}</strong></div>
+                    <div><span>Occupation</span><strong>{selectedTenantSubmission.occupation || 'Not provided'}</strong></div>
+                    <div><span>Location</span><strong>{[selectedTenantSubmission.neighbourhood, selectedTenantSubmission.city, selectedTenantSubmission.state, selectedTenantSubmission.country].filter(Boolean).join(', ') || 'Not provided'}</strong></div>
+                    <div className="shm-tenant-submission-bio"><span>About the tenant</span><p>{selectedTenantSubmission.bio || 'No biography supplied.'}</p></div>
                     <div className="shm-tenant-documents"><strong>Uploaded documents</strong>
-                      {(submission.documents || []).length ? (submission.documents || []).map((doc, index) => <a key={index} href={doc.dataUrl} download={doc.name} target="_blank" rel="noreferrer">{doc.name} ↗</a>) : <small>No supporting documents uploaded.</small>}
+                      {(selectedTenantSubmission.documents || []).length ? (selectedTenantSubmission.documents || []).map((doc, index) => <a key={index} href={doc.dataUrl} download={doc.name} target="_blank" rel="noreferrer">{doc.name} ↗</a>) : <small>No supporting documents uploaded.</small>}
                     </div>
-                    <small>Tenant submission updated {new Date(submission.updatedAt).toLocaleString('en-NG')}</small>
+                    <small>Tenant submission updated {new Date(selectedTenantSubmission.updatedAt).toLocaleString('en-NG')}</small>
                   </div>
-                })()}
+                ) : (
+                  <p className="shm-record-modal-note">No tenant-submitted profile is linked to this email in this browser preview. Ask the tenant to complete their profile and share their tenant information using the same email address.</p>
+                )}
                 <div className="shm-record-history"><span>Occupancy history</span>{selectedRecord.tenantProfile.occupancyHistory.map((entry,index)=><small key={index}>{entry}</small>)}</div>
               </>}
             </div>
