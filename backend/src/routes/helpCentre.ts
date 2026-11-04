@@ -212,7 +212,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
        ORDER BY location_display
        LIMIT 100`,
     )
-    const matchedLocation = knownLocations.rows.find((row) => normalize(searchText).includes(normalize(row.location)))
+    const matchedLocation = knownLocations.rows.find((row) => normalize(searchText).includes(normalize(row.location)) || normalize(searchText).includes(normalize(row.location.split(',')[0])))
     if (matchedLocation) nextContext.selectedLocation = matchedLocation.location
   }
   const hasBudget = /(?:₦|\\b(?:under|below|less than|up to|maximum|max|budget|between|above|over|at least)\\b|\\d\\s*[km]\\b)/i.test(searchText)
