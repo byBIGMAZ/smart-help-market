@@ -3,11 +3,9 @@ import { getDatabasePool } from '../database'
 import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession'
 import { requirePermission } from '../auth/requirePermission'
 import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, hashIntentFeatures, type BigmazIntent, type IntentWeight } from '../intelligence/bigmazEngine'
-import { resolveGeographicLocation } from '../intelligence/geocoding'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
-const geographicLookupRequests = new Map<string, number>()
 
 type ListingMatch = {
   key: string
@@ -400,56 +398,6 @@ router.get('/public-config', async (_req, res) => {
 
 router.use(requireAuthenticatedSession)
 
-router.post('/location/resolve', async (req: Request, res: Response) => {
-  const query = typeof req.body?.query === 'string' ? req.body.query.trim() : ''
-  if (query.length < 2 || query.length > 160) {
-    res.status(400).json({ error: 'Enter a location between 2 and 160 characters.' })
-    return
-  }
-
-  const userId = userIdFrom(res)
-  const lastRequestAt = geographicLookupRequests.get(userId) ?? 0
-  if (Date.now() - lastRequestAt < 5000) {
-    res.status(429).json({ error: 'Please wait a few seconds before checking another location.' })
-    return
-  }
-  if (geographicLookupRequests.size > 5000) geographicLookupRequests.clear()
-  geographicLookupRequests.set(userId, Date.now())
-
-  try {
-    const resolved = await resolveGeographicLocation(query)
-    if (resolved.status === 'disabled') {
-      res.status(503).json({ status: 'disabled', error: 'Geographic lookup is not enabled yet.' })
-      return
-    }
-    if (resolved.status === 'not_configured') {
-      res.status(503).json({ status: 'not_configured', error: 'The geographic provider has not been configured.' })
-      return
-    }
-    if (resolved.status === 'not_found' || !resolved.result) {
-      res.status(404).json({ status: 'not_found', error: 'No verified location match was found. Try adding a state or nearby town.' })
-      return
-    }
-
-    res.status(200).json({
-      status: 'resolved',
-      location: {
-        displayName: resolved.result.displayName,
-        latitude: resolved.result.latitude,
-        longitude: resolved.result.longitude,
-        countryCode: resolved.result.countryCode,
-        provider: resolved.result.provider,
-        confidence: resolved.result.confidence,
-      },
-    })
-  } catch (error) {
-    console.error(
-      'Geographic location resolution failed:',
-      error instanceof Error ? error.message : 'Unknown error',
-    )
-    res.status(502).json({ error: 'Location lookup is temporarily unavailable.' })
-  }
-})
 
 router.get('/status', async (_req, res) => {
   try {
