@@ -65,6 +65,7 @@ function App() {
   const [heroPromptIndex, setHeroPromptIndex] = useState(0)
   const [showGuestWelcome, setShowGuestWelcome] = useState(false)
   const [guestEmail, setGuestEmail] = useState('')
+  const [guestNotice, setGuestNotice] = useState('')
 
   const [platformName, setPlatformName] = useState(
     'SMART HELP MARKET BY BIGMAZ',
@@ -236,20 +237,23 @@ function App() {
   return (
     <main className="marketplace">
       {showGuestWelcome && (
-        <div className="shm-guest-welcome-backdrop" role="presentation">
-          <section className="shm-guest-welcome" role="dialog" aria-modal="true" aria-labelledby="shm-guest-title">
-            <button className="shm-guest-close" type="button" aria-label="Continue as guest" onClick={continueAsGuest}>×</button>
+        <div className="shm-guest-welcome-dock" role="presentation">
+          <section className="shm-guest-welcome" role="region" aria-labelledby="shm-guest-title">
+            <button className="shm-guest-close" type="button" aria-label="Dismiss welcome options" onClick={() => setShowGuestWelcome(false)}>×</button>
             <span className="shm-guest-mark">SH</span>
             <span className="section-kicker">WELCOME TO YOUR MARKETPLACE</span>
             <h2 id="shm-guest-title">Let’s get you started.</h2>
             <p>Continue with your email to make it easier to personalise your marketplace experience. You can also explore as a guest.</p>
+            <button className="shm-guest-google" type="button" onClick={() => setGuestNotice("Google sign-in will be enabled after secure authentication is connected.")}><span>G</span> Continue with Google</button>
+            <div className="shm-guest-or">OR CONTINUE WITH EMAIL</div>
             <form onSubmit={handleGuestEmail}>
               <label htmlFor="shm-guest-email">Email address</label>
               <input id="shm-guest-email" type="email" autoComplete="email" maxLength={254} placeholder="you@example.com" value={guestEmail} onChange={(event) => setGuestEmail(event.target.value)} required />
               <button className="shm-guest-continue" type="submit">Continue with email <span>→</span></button>
             </form>
+            {guestNotice && <p className="shm-guest-notice" role="status">{guestNotice}</p>}
             <button className="shm-guest-browse" type="button" onClick={continueAsGuest}>Continue as guest</button>
-            <small>Your email is saved only in this browser for now. Verification and account connection will be added during backend integration.</small>
+            <small>Email entry is a local preview only. Google sign-in and verification will be connected during backend integration.</small>
           </section>
         </div>
       )}
@@ -357,7 +361,7 @@ function App() {
           search={search}
           location={location}
           onSearchChange={setSearch}
-          onLocationChange={setLocation}
+          onLocationChange={(value) => { setLocation(value); try { window.localStorage.setItem('smart-help-market:experience-location:v1', value) } catch { /* Optional preference. */ } }}
           onSubmit={() => {
             document.getElementById('discover')?.scrollIntoView({ behavior: 'smooth' })
           }}
