@@ -38,7 +38,9 @@ async function setupGeographicIntelligence() {
             CHECK (
               (location_latitude IS NULL AND location_longitude IS NULL)
               OR (
-                location_latitude BETWEEN -90 AND 90
+                location_latitude IS NOT NULL
+                AND location_longitude IS NOT NULL
+                AND location_latitude BETWEEN -90 AND 90
                 AND location_longitude BETWEEN -180 AND 180
               )
             );
