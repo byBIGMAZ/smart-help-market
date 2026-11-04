@@ -128,6 +128,7 @@ const workspaces: Record<Role, {
       { label: 'Messages', path: '/agent/messages' },
       { label: 'Enquiries', path: '/agent/enquiries' },
       { label: 'Notifications', path: '/agent/notifications' },
+      { label: 'Inspections', path: '/agent/inspections' },
       { label: 'Commissions', path: '/agent/commissions' },
       { label: 'Earnings', path: '/agent/earnings' },
       { label: 'Neighbourhood community', path: '/agent/community' },
@@ -325,6 +326,10 @@ const sectionRecords: Record<Role, Record<string, WorkspaceRecord[]>> = {
       { title: 'Prospective student tenant', description: 'Sample client enquiry.', status: 'Follow-up' },
       { title: 'Residential buyer', description: 'Sample buyer relationship.', status: 'Active' },
       { title: 'Property investor', description: 'Sample client relationship.', status: 'New' },
+    ],
+    inspections: [
+      { title: 'Client property inspection', description: 'Sample scheduled property viewing.', status: 'Scheduled' },
+      { title: 'Residential inspection report', description: 'Sample property condition review.', status: 'Completed' },
     ],
     commissions: [
       { title: 'Residential property commission', description: 'Sample commission calculation.', status: 'Pending' },
