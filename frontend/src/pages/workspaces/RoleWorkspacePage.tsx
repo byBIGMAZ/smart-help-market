@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getMarketplaceUser, marketplaceLogout, type MarketplaceUser } from '../../services/marketplaceAuth'
 import '../../styles/extended-pages.css'
 import ProfilePhotoSlideshow from '../../components/profile/ProfilePhotoSlideshow'
+import WorkspaceFloatingSidebar from '../../components/navigation/WorkspaceFloatingSidebar'
 
 type Role = 'buyer' | 'landlord' | 'seller' | 'provider' | 'agent'
 
@@ -1890,13 +1891,24 @@ export default function RoleWorkspacePage() {
           <button
             type="button"
             className="workspace-back-button"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate(window.history.length > 1 ? -1 : `/${role}/dashboard`)}
             aria-label="Go back to the previous page"
             title="Go back"
           >
             <span aria-hidden="true">←</span>
             Back
           </button>
+          {!isDashboard && (
+            <Link
+              className="workspace-dashboard-shortcut"
+              to={`/${role}/dashboard`}
+              aria-label="Go to dashboard"
+              title="Go to dashboard"
+            >
+              <span aria-hidden="true">⌂</span>
+              Dashboard
+            </Link>
+          )}
           <Link className="extended-secondary" to="/explore">
             Browse marketplace
           </Link>
@@ -1938,20 +1950,9 @@ export default function RoleWorkspacePage() {
       )}
 
 
+      <WorkspaceFloatingSidebar links={workspace.links} />
+
       <div className="workspace-layout">
-        <aside className="workspace-nav" aria-label="Workspace navigation">
-          <strong>WORKSPACE MENU</strong>
-          {workspace.links.map((item) => (
-            <Link
-              className={item.path === pathname ? 'workspace-nav-active' : ''}
-              to={item.path}
-              key={item.path}
-              aria-current={item.path === pathname ? 'page' : undefined}
-            >
-              {item.label}<span>›</span>
-            </Link>
-          ))}
-        </aside>
         <section className="workspace-main">
           <div className="workspace-section-heading">
             <div>
