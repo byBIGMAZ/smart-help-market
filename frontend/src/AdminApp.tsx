@@ -1391,33 +1391,33 @@ function openAutomationMonitoring() {
 
             {overview ? (
               <div className="admin-stat-grid">
-                <article className="admin-stat-card">
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openUsers}>
                   <span className="admin-stat-icon">♙</span>
                   <span className="admin-stat-label">Total users</span>
                   <strong>{overview.users.total.toLocaleString()}</strong>
                   <small>{overview.users.active} active accounts</small>
-                </article>
+                </button>
 
-                <article className="admin-stat-card">
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openModeration}>
                   <span className="admin-stat-icon">⌂</span>
                   <span className="admin-stat-label">Total listings</span>
                   <strong>{overview.listings.total.toLocaleString()}</strong>
                   <small>{overview.listings.published} published</small>
-                </article>
+                </button>
 
-                <article className="admin-stat-card">
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openCategories}>
                   <span className="admin-stat-icon">◇</span>
                   <span className="admin-stat-label">Categories</span>
                   <strong>{overview.categories.total.toLocaleString()}</strong>
                   <small>Marketplace categories</small>
-                </article>
+                </button>
 
-                <article className="admin-stat-card">
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openAuditLogs}>
                   <span className="admin-stat-icon">◉</span>
                   <span className="admin-stat-label">Active sessions</span>
                   <strong>{overview.activeSessions.toLocaleString()}</strong>
-                  <small>Sessions not yet expired</small>
-                </article>
+                  <small>Sessions not yet expired · View audit logs</small>
+                </button>
               </div>
             ) : (
               <div className="admin-empty-panel">
