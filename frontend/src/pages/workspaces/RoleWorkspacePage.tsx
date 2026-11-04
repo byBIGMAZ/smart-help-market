@@ -2344,7 +2344,6 @@ export default function RoleWorkspacePage() {
                     <div className="shm-record-detail-grid">
                       <div><span>Record type</span><strong>{active.label}</strong></div>
                       <div><span>Status</span><strong>{selectedWorkspaceRecord.status}</strong></div>
-                      {role === 'landlord' && section === 'properties' && <div className="shm-record-modal-note">Property information shown here is the selected property record. Full listing images, pricing, unit availability and location will populate from the saved listing once listing storage is connected.</div>}
                     </div>
                     <button type="button" className="extended-secondary" onClick={() => setSelectedWorkspaceRecord(null)}>Close details</button>
                   </section>
