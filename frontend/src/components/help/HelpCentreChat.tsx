@@ -7,6 +7,7 @@ import {
   getHelpConversations,
   getHelpStatus,
   sendHelpMessage,
+  submitHelpFeedback,
   type HelpConversation,
   type HelpMessage,
   type HelpUsage,
@@ -15,22 +16,116 @@ import './HelpCentreChat.css'
 
 type Mode = 'floating' | 'page'
 
+const guestScenarios = [
+  {
+    messages: [
+      { sender: 'assistant', text: 'Good to see you! I can help you explore real marketplace opportunities.' },
+      { sender: 'user', text: 'I need accommodation close to my school.' },
+      { sender: 'assistant', text: 'I would first identify your campus, then prioritise suitable places by real travel distance.' },
+    ],
+    result: 'Location-aware property discovery',
+    detail: 'Campus, road distance and budget matching',
+    icon: '⌖',
+  },
+  {
+    messages: [
+      { sender: 'assistant', text: 'What are you trying to get done today?' },
+      { sender: 'user', text: 'I need a reliable electrician.' },
+      { sender: 'assistant', text: 'I would check published service providers and show only real matching profiles.' },
+    ],
+    result: 'Service provider discovery',
+    detail: 'Published services and available details',
+    icon: '⚡',
+  },
+  {
+    messages: [
+      { sender: 'assistant', text: 'I can help you find people with compatible accommodation preferences.' },
+      { sender: 'user', text: 'I need a roommate who is tidy and does not smoke.' },
+      { sender: 'assistant', text: 'I would compare the preferences people have chosen and explain the compatibility.' },
+    ],
+    result: 'Roommate compatibility',
+    detail: 'Preferences, budget and location',
+    icon: '♧',
+  },
+  {
+    messages: [
+      { sender: 'assistant', text: 'You can ask me about the area around a property too.' },
+      { sender: 'user', text: 'Is the neighbourhood usually peaceful?' },
+      { sender: 'assistant', text: 'I would review permitted community discussions and separate residents’ reports from verified facts.' },
+    ],
+    result: 'Neighbourhood intelligence',
+    detail: 'Community context with source transparency',
+    icon: '⌂',
+  },
+  {
+    messages: [
+      { sender: 'assistant', text: 'I can explain marketplace processes step by step.' },
+      { sender: 'user', text: 'How does escrow work?' },
+      { sender: 'assistant', text: 'I can walk you through the buyer, payment, seller and release stages with an interactive explanation.' },
+    ],
+    result: 'Interactive learning guide',
+    detail: 'Visual explanations and guided steps',
+    icon: '◇',
+  },
+]
+
+function timeGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 12) return 'Good morning'
+  if (hour >= 12 && hour < 17) return 'Good afternoon'
+  if (hour >= 17 && hour < 21) return 'Good evening'
+  return 'Working late?'
+}
+
 function GuestPreview() {
+  const [scenarioIndex, setScenarioIndex] = useState(0)
+  const [visibleCount, setVisibleCount] = useState(0)
+  const scenario = guestScenarios[scenarioIndex]
+
+  useEffect(() => {
+    const complete = visibleCount >= scenario.messages.length
+    const timer = window.setTimeout(() => {
+      if (!complete) {
+        setVisibleCount((current) => current + 1)
+        return
+      }
+      setVisibleCount(0)
+      setScenarioIndex((current) => (current + 1) % guestScenarios.length)
+    }, complete ? 2600 : 1850)
+    return () => window.clearTimeout(timer)
+  }, [scenarioIndex, visibleCount, scenario.messages.length])
+
   return (
     <div className="help-guest-preview">
-      <div className="help-preview-orbit" aria-hidden="true"><span>✦</span></div>
-      <div className="help-preview-message help-preview-assistant">
-        Hello! I can help you find a home, product or service, or guide you around the website.
+      <div className="help-preview-heading">
+        <div className="help-preview-orbit" aria-hidden="true"><span>✦</span></div>
+        <div><strong>BIGMAZ AI</strong><small>{timeGreeting()} · Proprietary marketplace intelligence</small></div>
+        <span className="help-preview-live"><i/> LIVE PREVIEW</span>
       </div>
-      <div className="help-preview-message help-preview-user">Find me an apartment in Auchi.</div>
-      <div className="help-preview-message help-preview-assistant">
-        Certainly. Let me check the marketplace and narrow down the available options.
-        <div className="help-preview-typing"><i/><i/><i/><span>Searching listings</span></div>
+      <div className="help-preview-stage" key={scenarioIndex}>
+        {scenario.messages.slice(0, visibleCount).map((message, index) => (
+          <div
+            className={`help-preview-message ${message.sender === 'user' ? 'help-preview-user' : 'help-preview-assistant'}`}
+            key={`${scenarioIndex}-${index}`}
+          >
+            {message.text}
+          </div>
+        ))}
+        {visibleCount < scenario.messages.length && (
+          <div className="help-preview-typing"><i/><i/><i/><span>BIGMAZ AI is thinking</span></div>
+        )}
+        {visibleCount >= scenario.messages.length && (
+          <div className="help-preview-result help-preview-result-enter">
+            <span>{scenario.icon}</span>
+            <div><b>{scenario.result}</b><small>{scenario.detail}</small></div>
+            <strong>↗</strong>
+          </div>
+        )}
       </div>
-      <div className="help-preview-result"><span>⌂</span><div><b>Matching properties</b><small>Clickable marketplace results</small></div><strong>↗</strong></div>
+      <div className="help-preview-disclaimer">Preview conversation only. Live searches use published marketplace information after sign-in.</div>
       <div className="help-guest-lock">
         <span>🔐</span>
-        <div><strong>Sign in to start your own conversation</strong><small>Your conversations and support requests stay connected to your account.</small></div>
+        <div><strong>Start your own intelligent conversation</strong><small>Sign in to search live listings, save conversations and receive personalised assistance.</small></div>
       </div>
       <div className="help-guest-actions">
         <Link to="/login" className="help-chat-primary">Sign in</Link>
@@ -58,6 +153,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
   const [supportDetails, setSupportDetails] = useState('')
   const [supportNotice, setSupportNotice] = useState('')
   const [supportSending, setSupportSending] = useState(false)
+  const [feedbackSent, setFeedbackSent] = useState<Record<string, boolean>>({})
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -123,7 +219,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
       const result = await sendHelpMessage(value, conversationId || undefined, pathname)
       setConversationId(result.conversationId)
       setMessages((current) => [...current, {
-        id: `assistant-${Date.now()}`,
+        id: result.assistantMessageId,
         sender: 'assistant',
         text: result.reply,
         metadata: {
@@ -142,6 +238,16 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
     } finally {
       setTyping(false)
       setSending(false)
+    }
+  }
+
+  async function rateResponse(messageId: string, helpful: boolean) {
+    if (feedbackSent[messageId]) return
+    try {
+      await submitHelpFeedback(messageId, helpful)
+      setFeedbackSent((current) => ({ ...current, [messageId]: helpful }))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Your feedback could not be saved.')
     }
   }
 
@@ -183,7 +289,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
   return (
     <section className={`help-chat-shell help-chat-mode-${mode}`}>
       <header className="help-chat-header">
-        <div className="help-chat-brand"><span className="help-chat-brand-icon">✦</span><div><strong>SMART HELP ASSISTANT</strong><small><i/> Ready to help, {user.displayName.split(' ')[0]}</small></div></div>
+        <div className="help-chat-brand"><span className="help-chat-brand-icon">✦</span><div><strong>SMART HELP ASSISTANT</strong><small><i/> {timeGreeting()}, {user.displayName.split(' ')[0]} · BIGMAZ Intelligence</small></div></div>
         <div className="help-chat-header-actions">
           {mode === 'page' && <button type="button" onClick={startNewConversation}>＋ New chat</button>}
           {mode === 'floating' && onClose && <button type="button" className="help-chat-close" onClick={onClose} aria-label="Close Help Centre">×</button>}
@@ -231,6 +337,17 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
                   {message.metadata?.actions?.map((action) => <Link className="help-action-link" to={action.path} key={action.path} onClick={onClose}>{action.label}<span>↗</span></Link>)}
                   {message.metadata?.suggestions && message.metadata.suggestions.length > 0 && (
                     <div className="help-chat-suggestions">{message.metadata.suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void submitMessage(undefined, suggestion)}>{suggestion}</button>)}</div>
+                  )}
+                  {message.sender === 'assistant' && /^\\d+$/.test(message.id) && (
+                    <div className="help-message-feedback" aria-label="Rate this response">
+                      {feedbackSent[message.id] !== undefined
+                        ? <small>Thanks for helping BIGMAZ AI improve.</small>
+                        : <>
+                            <span>Was this helpful?</span>
+                            <button type="button" onClick={() => void rateResponse(message.id, true)} aria-label="Helpful answer">👍</button>
+                            <button type="button" onClick={() => void rateResponse(message.id, false)} aria-label="Not helpful">👎</button>
+                          </>}
+                    </div>
                   )}
                   <time>{new Date(message.createdAt).toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' })}</time>
                 </div>
