@@ -201,3 +201,13 @@
 .shm-billboard-pole{width:5px!important;height:34px!important}
 @media(max-width:760px){.shm-location-billboard{top:6px!important;right:8px!important;width:126px!important;transform:scale(.88)}.shm-billboard-pole{height:27px!important}}
 @media(max-width:420px){.shm-location-billboard{width:112px!important;transform:scale(.82)}.shm-billboard-face small{font-size:6px!important}}
+
+
+/* Billboard: restore its original compact sign proportions, only reposition it above. */
+.shm-location-billboard{position:absolute!important;top:8px!important;right:14px!important;bottom:auto!important;left:auto!important;width:190px!important;min-width:190px!important;max-width:calc(100vw - 28px)!important;padding:0 6px!important;transform:none!important;transform-origin:top right!important}
+.shm-billboard-face{padding:8px 11px!important;gap:2px!important;border-width:2px!important;border-radius:6px!important}
+.shm-billboard-face span{font-size:7px!important;line-height:1.1!important}
+.shm-billboard-face strong{font-size:15px!important;line-height:1.15!important;white-space:nowrap!important}
+.shm-billboard-face small{font-size:8px!important;line-height:1.15!important}
+.shm-billboard-pole{height:28px!important;width:6px!important}
+@media(max-width:760px){.shm-location-billboard{top:7px!important;right:8px!important;width:158px!important;min-width:158px!important;max-width:calc(100vw - 16px)!important}.shm-billboard-face{padding:7px 8px!important}.shm-billboard-face strong{font-size:13px!important}.shm-billboard-face small{font-size:7px!important}.shm-billboard-pole{height:22px!important}}
