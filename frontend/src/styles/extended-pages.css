@@ -2221,3 +2221,10 @@
 
 
 .shm-tenant-submitted-indicator{display:inline-flex;width:fit-content;margin:4px 0;padding:6px 9px;border:1px solid color-mix(in srgb,var(--brand-primary) 35%,var(--border));border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary);font-size:9px;font-weight:800}
+
+
+.shm-tenant-passports{display:grid;gap:8px;padding-top:10px;border-top:1px solid var(--border)}
+.shm-tenant-passports>strong{color:var(--text-primary);font-size:11px}
+.shm-tenant-passports>div{display:flex;flex-wrap:wrap;gap:9px}
+.shm-tenant-passports a{display:block;width:78px;height:78px;overflow:hidden;border:1px solid var(--border);border-radius:12px;background:var(--surface-secondary)}
+.shm-tenant-passports img{display:block;width:100%;height:100%;object-fit:cover}
