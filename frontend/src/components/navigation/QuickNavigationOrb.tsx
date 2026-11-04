@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type PointerEvent } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import './QuickNavigationOrb.css'
 
@@ -44,7 +44,6 @@ function readPosition(): OrbPosition | null {
 
 export default function QuickNavigationOrb() {
   const location = useLocation()
-  const orbRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ pointerId: number; pointerX: number; pointerY: number; startX: number; startY: number; moved: boolean } | null>(null)
   const [open, setOpen] = useState(false)
   const [customising, setCustomising] = useState(false)
@@ -78,7 +77,7 @@ export default function QuickNavigationOrb() {
 
   const defaultPosition = {
     x: viewport.width - 34,
-    y: Math.max(116, viewport.height - (viewport.width <= 720 ? 112 : 150)),
+    y: Math.max(116, viewport.height - (viewport.width <= 720 ? 184 : 150)),
   }
   const center = position || defaultPosition
   const opensRight = center.x < viewport.width / 2
@@ -130,7 +129,6 @@ export default function QuickNavigationOrb() {
 
   return (
     <div
-      ref={orbRef}
       className={`shm-quick-orb ${open ? 'is-open' : ''} ${opensRight ? 'opens-right' : 'opens-left'}`}
       style={{ left: center.x, top: center.y }}
     >
