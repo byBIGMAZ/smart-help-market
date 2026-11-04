@@ -131,7 +131,7 @@
 
 
 /* Immersive responsive motion scenes, kept decorative and behind content. */
-.shm-ambient { z-index:0; }
+.shm-ambient { z-index:3; }
 .shm-ambient-sky { height:38vh; opacity:.55; }
 .shm-ambient-morning .shm-ambient-sky { background:radial-gradient(ellipse at 78% 8%,#ffd98b70,transparent 55%); }
 .shm-ambient-afternoon .shm-ambient-sky { background:radial-gradient(ellipse at 80% 0%,#8edbff50,transparent 58%); }
@@ -145,7 +145,7 @@
 @keyframes shm-sun-rotate { to { transform:rotate(360deg); } }
 .shm-ambient-moon { opacity:0; }
 .shm-ambient-night .shm-ambient-moon { opacity:1; width:54px;height:54px; background:#f4f0d8; box-shadow:0 0 40px #f4f0d855; }
-.shm-ambient-road { z-index:1; height:42px; opacity:.38; }
+.shm-ambient-road { z-index:1; height:42px; opacity:.5; bottom:8px; }
 .shm-ambient-road:before { height:10px; border-radius:50%; background:linear-gradient(90deg,transparent,#33413b,transparent); opacity:.8; }
 .shm-road-line { top:23px; border-color:#a9b6a8; opacity:.7; }
 .shm-road-vehicle { top:5px; width:92px;height:31px; font-size:0; animation:shm-road-drive 25s linear infinite; filter:drop-shadow(0 5px 4px #0005); }
@@ -175,3 +175,5 @@
 @media(max-width:760px){.shm-escrow-section{grid-template-columns:1fr;gap:20px;padding:20px}.shm-escrow-movie{height:210px}.shm-escrow-wallet{left:4%}.shm-escrow-vault{left:37%}.shm-escrow-package{right:4%}.shm-escrow-person.buyer{left:4%}.shm-escrow-person.seller{right:4%}.shm-how-journey{grid-template-columns:1fr}.shm-how-card{min-height:185px}.shm-ambient-road{display:block;opacity:.48}.shm-road-vehicle{width:78px}.shm-location-control{right:10px;bottom:78px}}
 @media(min-width:761px) and (max-width:1050px){.shm-escrow-section{grid-template-columns:1fr;gap:22px}.shm-escrow-movie{height:240px}}
 @media(prefers-reduced-motion:reduce){.shm-ambient *, .shm-escrow-section *, .category-icon::before,.category-icon::after,.shm-how-object,.shm-how-orbit,.shm-hero-prompt{animation:none!important;transition:none!important}}
+
+@media(max-width:760px){.shm-ambient-road{bottom:70px;opacity:.62}.shm-road-vehicle{transform-origin:center bottom}.shm-location-control{bottom:82px}}
