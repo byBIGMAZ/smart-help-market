@@ -44,9 +44,12 @@ function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9₦\s-]/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
-function routeForRequest(message: string, roles: string[]): SuggestedAction[] {
+function routeForRequest(message: string, roles: string[], preferredRole?: string): SuggestedAction[] {
   const text = normalize(message)
-  const role = ['buyer', 'landlord', 'seller', 'provider', 'agent'].find((item) => roles.includes(item)) || 'buyer'
+  const validRoles = ['buyer', 'landlord', 'seller', 'provider', 'agent']
+  const role = preferredRole && validRoles.includes(preferredRole) && roles.includes(preferredRole)
+    ? preferredRole
+    : validRoles.find((item) => roles.includes(item)) || 'buyer'
   const routes: Array<{ terms: string[]; label: string; path: string }> = [
     { terms: ['neighbourhood', 'neighborhood', 'neighboarhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${role}/community` },
     { terms: ['saved', 'favourite', 'favorite', 'wishlist'], label: 'Open saved items', path: '/buyer/saved' },
@@ -105,7 +108,7 @@ function parseBudget(text: string): { min: number | null; max: number | null } {
   return { min: null, max: null }
 }
 
-async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[]): Promise<AssistantResult> {
+async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[], preferredRole?: string): Promise<AssistantResult> {
   const message = normalize(rawMessage)
   const nextContext = { ...context }
   let searchText = rawMessage
@@ -167,7 +170,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   const searchMessage = normalize(searchText)
-  const actions = routeForRequest(rawMessage, roles)
+  const actions = routeForRequest(rawMessage, roles, preferredRole)
   if (actions.length) {
     return {
       text: 'I found the right place for that. Use the shortcut below and I will take you directly there.',
@@ -394,6 +397,8 @@ router.post('/chat', async (req: Request, res: Response) => {
   }
 
   const userId = userIdFrom(res)
+  const currentPath = typeof req.body?.currentPath === 'string' ? req.body.currentPath.slice(0, 300) : ''
+  const preferredRole = currentPath.split('/').filter(Boolean)[0]
   const client = await getDatabasePool().connect()
   try {
     await client.query('BEGIN')
@@ -471,7 +476,7 @@ router.post('/chat', async (req: Request, res: Response) => {
        WHERE ur.user_id = $1 ORDER BY r.role_key`,
       [userId],
     )
-    const answer = await answerMessage(message, context, roleResult.rows.map((row) => row.role_key))
+    const answer = await answerMessage(message, context, roleResult.rows.map((row) => row.role_key), preferredRole)
     await client.query(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)`,
