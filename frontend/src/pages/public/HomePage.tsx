@@ -348,7 +348,7 @@ function App() {
             <h2>Explore listings</h2>
           </div>
 
-          <span className="results-count">
+          <span className="results-count shm-result-count">
             {listingsLoading
               ? 'Loading listings…'
               : `${filteredListings.length} ${
