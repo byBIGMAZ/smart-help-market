@@ -54,7 +54,7 @@ function App() {
   const [category, setCategory] = useState<Category>('All')
   const [search, setSearch] = useState('')
   const [location, setLocation] = useState('')
-  const [saved, setSaved] = useState<string[]>([])
+  const [saved, setSaved] = useState<string[]>([])\n  const [heroPromptIndex, setHeroPromptIndex] = useState(0)\n  const heroPrompts = ['Looking for a place to call home? Start here.', 'Need a product or a helping hand? We bring options closer.', 'Have something to offer? Your next customer could be here.', 'Whatever moves you forward, find it in one place.']
 
   const [platformName, setPlatformName] = useState(
     'SMART HELP MARKET BY BIGMAZ',
@@ -235,7 +235,7 @@ function App() {
           <h1>
             Find what you need.
             <br />
-            <span>Get help. Move forward.</span>
+            <span className="shm-hero-voice">Get help. Move forward.</span>
           </h1>
 
           <p>
