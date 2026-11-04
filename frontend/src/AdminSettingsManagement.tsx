@@ -12,6 +12,11 @@ type EditableSettingKey =
   | 'platform.locale'
   | 'platform.timezone'
   | 'communication.contact_policy'
+  | 'help.assistant.enabled'
+  | 'help.messages.free_limit'
+  | 'help.messages.paid_enabled'
+  | 'help.messages.pack_size'
+  | 'help.messages.pack_price_ngn'
 
 const EDITABLE_KEYS: EditableSettingKey[] = [
   'platform.name',
@@ -19,6 +24,11 @@ const EDITABLE_KEYS: EditableSettingKey[] = [
   'platform.locale',
   'platform.timezone',
   'communication.contact_policy',
+  'help.assistant.enabled',
+  'help.messages.free_limit',
+  'help.messages.paid_enabled',
+  'help.messages.pack_size',
+  'help.messages.pack_price_ngn',
 ]
 
 const SETTING_LABELS: Record<EditableSettingKey, string> = {
@@ -27,6 +37,11 @@ const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'platform.locale': 'Regional Locale',
   'platform.timezone': 'System Timezone',
   'communication.contact_policy': 'In-App Contact Restrictions',
+  'help.assistant.enabled': 'Help Assistant Enabled',
+  'help.messages.free_limit': 'Included Monthly Messages',
+  'help.messages.paid_enabled': 'Paid Message Packages Enabled',
+  'help.messages.pack_size': 'Paid Package Message Quantity',
+  'help.messages.pack_price_ngn': 'Paid Package Price (NGN)',
 }
 
 const SETTING_HELP: Record<EditableSettingKey, string> = {
@@ -35,6 +50,11 @@ const SETTING_HELP: Record<EditableSettingKey, string> = {
   'platform.locale': 'The regional language and formatting configuration.',
   'platform.timezone': 'The timezone used for platform date and time operations.',
   'communication.contact_policy': 'Configure phone, email, external link, social handle and off-platform contact restrictions using the JSON policy.',
+  'help.assistant.enabled': 'Turn the SMART HELP assistant on or off for signed-in users.',
+  'help.messages.free_limit': 'Number of assistant messages each user receives per calendar month before the usage limit is reached.',
+  'help.messages.paid_enabled': 'Keep disabled until a real payment gateway and payment verification workflow are connected.',
+  'help.messages.pack_size': 'Number of additional assistant messages in a future paid package.',
+  'help.messages.pack_price_ngn': 'Proposed package price in Nigerian Naira. This is configuration only until payment processing is integrated.',
 }
 
 function getStringValue(value: unknown): string {
@@ -142,7 +162,24 @@ useEffect(() => {
     setNotice('')
 
     try {
-      const response = await updateAdminSetting(key, value)
+      let settingValue: unknown = value
+      if (key === 'help.assistant.enabled' || key === 'help.messages.paid_enabled') {
+        if (value !== 'true' && value !== 'false') {
+          setError('Choose true or false for this setting.')
+          setNotice('')
+          return
+        }
+        settingValue = value === 'true'
+      } else if (key.startsWith('help.messages.')) {
+        const numericValue = Number(value)
+        if (!Number.isSafeInteger(numericValue) || numericValue < 0) {
+          setError('Help Centre message and price settings must be non-negative whole numbers.')
+          setNotice('')
+          return
+        }
+        settingValue = numericValue
+      }
+      const response = await updateAdminSetting(key, settingValue)
 
       setSettings((current) =>
         current.map((setting) =>
@@ -283,7 +320,7 @@ useEffect(() => {
           </div>
         </div>
 
-        {EDITABLE_KEYS.filter((key) => key !== 'platform.name').map(
+        {(['platform.currency', 'platform.locale', 'platform.timezone'] as EditableSettingKey[]).map(
           (key) => {
             const setting = getSetting(key)
 
@@ -380,6 +417,69 @@ useEffect(() => {
             </div>
           )
         })()}
+      </div>
+
+      <div className="admin-settings-group">
+        <div className="admin-settings-group-heading">
+          <div>
+            <h3>SMART HELP Centre &amp; Usage Limits</h3>
+            <p>Control assistant availability and the included monthly message allowance. Paid packages remain disabled until secure payment processing is connected.</p>
+          </div>
+        </div>
+        {([
+          'help.assistant.enabled',
+          'help.messages.free_limit',
+          'help.messages.paid_enabled',
+          'help.messages.pack_size',
+          'help.messages.pack_price_ngn',
+        ] as EditableSettingKey[]).map((key) => {
+          const setting = getSetting(key)
+          if (!setting) return null
+          const isBoolean = key === 'help.assistant.enabled' || key === 'help.messages.paid_enabled'
+          return (
+            <div className="admin-setting-item" key={key}>
+              <div className="admin-setting-information">
+                <label htmlFor={`setting-${key}`}>{SETTING_LABELS[key]}</label>
+                <p>{SETTING_HELP[key]}</p>
+                <span className="admin-setting-visibility">Private administrator setting</span>
+              </div>
+              <div className="admin-setting-control">
+                {isBoolean ? (
+                  <select
+                    id={`setting-${key}`}
+                    value={values[key] ?? 'false'}
+                    onChange={(event) => handleValueChange(key, event.target.value)}
+                    disabled={savingKey !== null}
+                  >
+                    <option value="true">Enabled</option>
+                    <option value="false">Disabled</option>
+                  </select>
+                ) : (
+                  <input
+                    id={`setting-${key}`}
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={values[key] ?? ''}
+                    onChange={(event) => handleValueChange(key, event.target.value)}
+                    disabled={savingKey !== null}
+                  />
+                )}
+                <button
+                  type="button"
+                  className="admin-primary-button"
+                  onClick={() => void handleSave(key)}
+                  disabled={savingKey !== null || values[key] === getStringValue(setting.value)}
+                >
+                  {savingKey === key ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          )
+        })}
+        {!getSetting('help.assistant.enabled') && (
+          <p>Run the Help Centre database setup command to create these settings.</p>
+        )}
       </div>
 
       <div className="admin-settings-note">
