@@ -1,0 +1,14 @@
+.shm-help-widget-root{position:fixed;inset:0;z-index:2400;pointer-events:none}
+.shm-help-widget-backdrop{position:fixed;inset:0;z-index:1;border:0;background:rgb(5 14 25 / .16);backdrop-filter:blur(2px);pointer-events:auto}
+.shm-help-widget-trigger{position:fixed;z-index:3;display:grid;place-items:center;width:58px;height:58px;padding:0;border:1px solid color-mix(in srgb,var(--brand-primary) 48%,var(--border));border-radius:50%;background:color-mix(in srgb,var(--surface) 90%,transparent);color:var(--brand-primary);box-shadow:0 10px 32px rgb(0 0 0 / .22),inset 0 1px 0 rgb(255 255 255 / .55);opacity:.5;cursor:grab;touch-action:none;pointer-events:auto;transform:translate(-50%,-50%);transition:opacity .22s ease,background .22s ease,box-shadow .22s ease}
+.shm-help-widget-trigger:hover,.shm-help-widget-trigger:focus-visible,.shm-help-widget-trigger.is-open{opacity:1}
+.shm-help-widget-trigger:active{cursor:grabbing}
+.shm-help-trigger-spark{font-size:27px;line-height:1}
+.shm-help-trigger-bubble{position:absolute;right:-3px;top:-4px;display:grid;place-items:center;width:23px;height:18px;border:2px solid var(--surface);border-radius:10px;background:var(--brand-primary);color:white;font-size:9px;letter-spacing:1px}
+.shm-help-widget-trigger i{position:absolute;inset:-6px;border:1px solid var(--brand-primary);border-radius:50%;opacity:.22;animation:shm-help-pulse 3.4s ease-out infinite}
+.shm-help-widget-trigger.is-open{background:var(--brand-primary);color:white;box-shadow:0 12px 36px rgb(0 0 0 / .28)}
+.shm-help-widget-panel{position:fixed;z-index:2;overflow:hidden;border:1px solid color-mix(in srgb,var(--text-primary) 16%,transparent);border-radius:23px;background:color-mix(in srgb,var(--surface) 76%,transparent);color:var(--text-primary);box-shadow:0 24px 75px rgb(0 0 0 / .28),inset 0 1px 0 rgb(255 255 255 / .35);-webkit-backdrop-filter:blur(30px) saturate(170%);backdrop-filter:blur(30px) saturate(170%);pointer-events:auto;animation:shm-help-panel-enter .26s cubic-bezier(.2,.8,.2,1) both}
+@keyframes shm-help-pulse{0%{transform:scale(.92);opacity:.4}80%,100%{transform:scale(1.22);opacity:0}}
+@keyframes shm-help-panel-enter{from{opacity:0;transform:translateY(12px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:720px){.shm-help-widget-trigger{width:52px;height:52px}.shm-help-widget-panel{border-radius:18px;max-width:calc(100vw - 16px)}}
+@media(prefers-reduced-motion:reduce){.shm-help-widget-trigger i,.shm-help-widget-panel{animation:none!important;transition:none!important}}
