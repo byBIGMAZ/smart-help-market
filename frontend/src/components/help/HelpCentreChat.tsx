@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { getMarketplaceUser, type MarketplaceUser } from '../services/marketplaceAuth'
+import { getMarketplaceUser, type MarketplaceUser } from '../../services/marketplaceAuth'
 import {
   createHelpSupportCase,
   getHelpConversationMessages,
@@ -10,7 +10,7 @@ import {
   type HelpConversation,
   type HelpMessage,
   type HelpUsage,
-} from '../services/helpCentre'
+} from '../../services/helpCentre'
 import './HelpCentreChat.css'
 
 type Mode = 'floating' | 'page'
@@ -222,7 +222,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
                   {message.metadata?.matches?.map((match) => (
                     <Link className="help-match-card" to={`/listing/${encodeURIComponent(match.key)}`} key={match.key} onClick={onClose}>
                       <span className="help-match-icon">{match.icon || '◈'}</span>
-                      <span><strong>{match.title}</strong><small>{match.category} · {match.location || 'Location not specified'}</small><small>{match.isDemo ? 'Demonstration listing' : 'Published listing'}</small></span>
+                      <span><strong>{match.title}</strong><small>{match.category} · {match.location || 'Location not specified'}</small><small>{match.isDemo ? 'Demonstration listing' : 'Published listing'}</small><small>{Number(match.price) > 0 ? `₦${Number(match.price).toLocaleString('en-NG')} ${match.priceUnit || ''}` : 'Contact for price'}</small></span>
                       <b>↗</b>
                     </Link>
                   ))}
