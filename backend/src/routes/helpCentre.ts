@@ -115,6 +115,8 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     const previous = typeof context.pendingSearchText === 'string' ? context.pendingSearchText : ''
     searchText = `${previous} ${rawMessage}`.trim()
     delete nextContext.pendingSearchText
+    if (normalize(rawMessage) === 'any location') delete nextContext.selectedLocation
+    else nextContext.selectedLocation = rawMessage.trim()
     nextContext.awaiting = 'budget'
     nextContext.pendingBudgetSearchText = searchText
     return {
@@ -202,6 +204,17 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   const hasLocation = /\\b(in|at|around|near|within)\\s+[a-z]/i.test(searchText)
+  if (category === 'properties' && hasLocation && typeof nextContext.selectedLocation !== 'string') {
+    const knownLocations = await getDatabasePool().query<{ location: string }>(
+      `SELECT DISTINCT location_display AS location
+       FROM public.marketplace_listings
+       WHERE status = 'published' AND length(trim(location_display)) > 0
+       ORDER BY location_display
+       LIMIT 100`,
+    )
+    const matchedLocation = knownLocations.rows.find((row) => normalize(searchText).includes(normalize(row.location)))
+    if (matchedLocation) nextContext.selectedLocation = matchedLocation.location
+  }
   const hasBudget = /(?:₦|\\b(?:under|below|less than|up to|maximum|max|budget|between|above|over|at least)\\b|\\d\\s*[km]\\b)/i.test(searchText)
 
   if (category === 'properties' && !hasLocation && awaiting !== 'budget') {
@@ -256,6 +269,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
        )
        AND ($4::numeric IS NULL OR l.price >= $4)
        AND ($5::numeric IS NULL OR l.price <= $5)
+       AND ($6::text IS NULL OR l.location_display ILIKE '%' || $6 || '%')
      ORDER BY
        CASE WHEN concat_ws(' ', l.title, l.location_display) ILIKE $3 THEN 0 ELSE 1 END,
        l.created_at DESC
