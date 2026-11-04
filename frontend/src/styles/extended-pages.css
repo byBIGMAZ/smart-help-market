@@ -2217,3 +2217,6 @@
 }
 @media(max-width:680px){.landlord-analytics-kpis>.landlord-kpi-link{padding:13px}}
 @media(prefers-reduced-motion:reduce){.landlord-analytics-kpis>.landlord-kpi-link{transition:none}.landlord-analytics-kpis>.landlord-kpi-link:hover{transform:none}}
+
+
+.shm-tenant-submitted-indicator{display:inline-flex;width:fit-content;margin:4px 0;padding:6px 9px;border:1px solid color-mix(in srgb,var(--brand-primary) 35%,var(--border));border-radius:999px;background:var(--brand-primary-soft);color:var(--brand-primary);font-size:9px;font-weight:800}
