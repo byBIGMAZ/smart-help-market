@@ -19,7 +19,7 @@ export default function AmbientExperience() {
     const timer = window.setInterval(() => setScene(getTimeScene()), 60000)
     return () => window.clearInterval(timer)
   }, [])
-  const edo = /edo/i.test(location)
+  const hasLocation = Boolean(location.trim())
   return <div className={`shm-ambient shm-ambient-${scene}`} aria-label={`Marketplace atmosphere: ${scene}`}>
     <span key={route.pathname} className="shm-route-progress" aria-hidden="true" />
     <div className="shm-ambient-sky" aria-hidden="true">
@@ -32,7 +32,7 @@ export default function AmbientExperience() {
       <span className="shm-road-vehicle shm-car"><i /><b /><em /></span>
       <span className="shm-road-vehicle shm-van"><i /><b /><em /></span>
     </div>
-    {edo && <div className="shm-location-billboard" aria-live="polite"><div className="shm-billboard-face"><span>WELCOME TO</span><strong>{location.toUpperCase()}</strong><small>Great opportunities begin here ✨</small></div><i className="shm-billboard-pole pole-left"/><i className="shm-billboard-pole pole-right"/></div>
+    {hasLocation && <div className="shm-location-billboard" aria-live="polite"><div className="shm-billboard-face"><span>WELCOME TO</span><strong>{location.toUpperCase()}</strong><small>Great opportunities begin here ✨</small></div><i className="shm-billboard-pole pole-left"/><i className="shm-billboard-pole pole-right"/></div>
     <div className="shm-ambient-road" aria-hidden="true"><span className="shm-road-line"/><span className="shm-road-bus"><i/><b/></span></div>}
   </div>
 }
