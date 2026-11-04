@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type CSSProperties } from 'react'
 
 const steps = [
   { icon: '🛍️', title: 'Agree on the deal', copy: 'Buyer and seller agree on the item or service, price, delivery and terms before payment.' },
@@ -24,7 +24,7 @@ export default function EscrowExplainer() {
               <span>{index < active ? '✓' : step.icon}</span><small>{index + 1}</small>
             </button>
           ))}
-          <span className="shm-escrow-progress" style={{ '--progress': `${(active / (steps.length - 1)) * 100}%` } as React.CSSProperties} />
+          <span className="shm-escrow-progress" style={{ '--progress': `${(active / (steps.length - 1)) * 100}%` } as CSSProperties} />
         </div>
         <article className="shm-escrow-stage" key={active}>
           <span className="shm-escrow-stage-icon">{steps[active].icon}</span>
