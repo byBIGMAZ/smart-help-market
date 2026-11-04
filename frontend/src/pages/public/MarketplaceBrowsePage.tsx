@@ -239,7 +239,7 @@ export default function MarketplaceBrowsePage({
             </div>
           </div>
 
-          <div className="category-grid">
+          <div className="category-grid shm-stagger">
             {categories.map((item) => {
               const count = listings.filter(
                 (listing) =>
@@ -300,7 +300,7 @@ export default function MarketplaceBrowsePage({
                 <h2>Marketplace listings</h2>
               </div>
 
-              <span className="results-count">
+              <span className="results-count shm-result-count">
                 {loading
                   ? 'Loading listings…'
                   : `${filteredListings.length} ${
@@ -369,7 +369,7 @@ export default function MarketplaceBrowsePage({
 
             {!loading && !error && (
               <>
-                <div className="listing-grid">
+                <div className="listing-grid shm-stagger">
                   {filteredListings.map((listing) => (
                     <article
                       className="listing-card"
