@@ -1,40 +1,47 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState } from 'react'
 
 const steps = [
-  { icon: '🛍️', title: 'Agree on the deal', copy: 'Buyer and seller agree on the item or service, price, delivery and terms before payment.' },
-  { icon: '🔒', title: 'Payment is secured', copy: 'The buyer pays through the platform. Funds are held under the applicable escrow arrangement, not released straight to the seller.' },
-  { icon: '📦', title: 'Delivery or service', copy: 'The seller delivers the item or completes the agreed service. Both sides can follow the transaction progress.' },
-  { icon: '🤝', title: 'Confirm and release', copy: 'When the buyer confirms fulfilment, the payment can be released according to the transaction terms. Disputes follow the platform resolution process.' },
+  { icon: '🤝', title: 'Agree on the deal', copy: 'Buyer and seller confirm the item or service, price, delivery details and terms before payment.', scene: 'agreement' },
+  { icon: '₦', title: 'Your payment is received', copy: 'The buyer pays through the agreed secure payment flow. The funds stay held under the applicable escrow arrangement instead of going straight to the seller.', scene: 'payment' },
+  { icon: '📦', title: 'Funds stay protected while work gets done', copy: 'The seller delivers the item or completes the service. The payment remains held while the buyer checks that the agreed work is complete.', scene: 'delivery' },
+  { icon: '✓', title: 'You are satisfied. Funds are released', copy: 'After the buyer confirms fulfilment, funds can be released according to the transaction terms. Disputes follow the platform resolution process.', scene: 'release' },
 ]
 
 export default function EscrowExplainer() {
   const [active, setActive] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(() => setActive((current) => (current + 1) % steps.length), 5200)
+    return () => window.clearInterval(timer)
+  }, [])
   return (
-    <section className="shm-escrow-section" id="how-it-works">
+    <section className="shm-escrow-section" aria-labelledby="shm-escrow-title">
       <div className="shm-escrow-intro">
         <span className="section-kicker">A CLEARER WAY TO TRANSACT</span>
-        <h2>Know where your money is, every step of the way.</h2>
-        <p>Explore the transaction journey. Select each stage to see how a protected transaction is designed to work.</p>
-        <div className="shm-escrow-trust"><span>🔐</span><div><strong>Protection through clear steps</strong><small>Escrow availability and release conditions depend on the transaction and platform terms.</small></div></div>
+        <h2 id="shm-escrow-title">Your money stays protected until the deal is fulfilled.</h2>
+        <p>Watch how a protected transaction is designed to work, from agreement to delivery and release.</p>
+        <div className="shm-escrow-trust"><span>🔐</span><div><strong>Know where your payment is</strong><small>Funds are held and released only under the applicable transaction terms and escrow arrangement.</small></div></div>
       </div>
-      <div className="shm-escrow-demo">
-        <div className="shm-escrow-track" aria-label={`Step ${active + 1} of 4`}>
-          {steps.map((step, index) => (
-            <button key={step.title} type="button" className={`shm-escrow-node ${index === active ? 'is-active' : ''} ${index < active ? 'is-complete' : ''}`} onClick={() => setActive(index)} aria-pressed={index === active}>
-              <span>{index < active ? '✓' : step.icon}</span><small>{index + 1}</small>
-            </button>
-          ))}
-          <span className="shm-escrow-progress" style={{ '--progress': `${(active / (steps.length - 1)) * 100}%` } as CSSProperties} />
+      <div className="shm-escrow-demo" aria-live="polite">
+        <div className="shm-escrow-movie" data-scene={steps[active].scene}>
+          <div className="shm-escrow-scene-glow" />
+          <div className="shm-escrow-scene-platform" />
+          <div className="shm-escrow-wallet"><span>₦</span><small>PAYMENT</small></div>
+          <div className="shm-escrow-vault"><span>🔒</span><small>SECURE HOLD</small></div>
+          <div className="shm-escrow-package"><span>📦</span><small>DELIVERY</small></div>
+          <div className="shm-escrow-person buyer"><span>🙂</span><small>BUYER</small></div>
+          <div className="shm-escrow-person seller"><span>🧑🏽‍🔧</span><small>SELLER</small></div>
+          <div className="shm-escrow-money-trail"><i>₦</i><i>₦</i><i>₦</i></div>
+          <div className="shm-escrow-status"><span>✓</span> {active === 3 ? 'PAYMENT RELEASED' : active === 2 ? 'PAYMENT PROTECTED' : active === 1 ? 'PAYMENT RECEIVED' : 'DEAL AGREED'}</div>
+        </div>
+        <div className="shm-escrow-track" aria-label={`Stage ${active + 1} of 4`}>
+          <span className="shm-escrow-progress" style={{ width: `${((active + 1) / steps.length) * 100}%` }} />
+          {steps.map((step, index) => <span key={step.title} className={index <= active ? 'is-complete' : ''}>{index < active ? '✓' : index + 1}</span>)}
         </div>
         <article className="shm-escrow-stage" key={active}>
-          <span className="shm-escrow-stage-icon">{steps[active].icon}</span>
-          <span className="shm-escrow-stage-count">STAGE 0{active + 1} / 04</span>
+          <span className="shm-escrow-stage-count">STEP 0{active + 1} / 04 · AUTO-PLAY</span>
           <h3>{steps[active].title}</h3>
           <p>{steps[active].copy}</p>
-          <div className="shm-escrow-stage-actions">
-            <button type="button" disabled={active === 0} onClick={() => setActive((value) => Math.max(0, value - 1))}>← Previous</button>
-            <button type="button" onClick={() => setActive((value) => value === steps.length - 1 ? 0 : value + 1)}>{active === steps.length - 1 ? 'Replay journey' : 'Next stage →'}</button>
-          </div>
+          <div className="shm-escrow-auto-progress"><span key={active} /></div>
         </article>
       </div>
     </section>
