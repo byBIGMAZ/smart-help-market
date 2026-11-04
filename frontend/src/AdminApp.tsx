@@ -51,7 +51,8 @@ import {
 import './AdminApp.css'
 import './AdminAuditLogs.css'
 import './AdminSystemTheme.css'
-import './AdminProfileApprovals.css'\nimport ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
+import './AdminProfileApprovals.css'
+import ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
