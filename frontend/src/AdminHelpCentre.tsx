@@ -21,7 +21,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
     ...init,
     credentials: 'include',
-    headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...init?.headers },
+    headers: { Accept: 'application/json', ...(init?.body ? { 'Content-Type': 'application/json' } : {}), ...(init?.headers as Record<string, string> | undefined) },
   })
   const data = await response.json().catch(() => null)
   if (!response.ok) throw new Error(data?.error || `Request failed (HTTP ${response.status}).`)
