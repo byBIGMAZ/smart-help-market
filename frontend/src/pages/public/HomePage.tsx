@@ -532,9 +532,7 @@ function App() {
           className="button button-light"
           to="/register?type=service_provider"
         >
-          Become a pro      <EscrowExplainer />
-
-vider <span aria-hidden="true">→</span>
+          Become a pro <span aria-hidden="true">→</span>
         </Link>
       </section>
 
