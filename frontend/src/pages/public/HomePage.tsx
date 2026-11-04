@@ -63,6 +63,8 @@ function App() {
   const [location, setLocation] = useState('')
   const [saved, setSaved] = useState<string[]>([])
   const [heroPromptIndex, setHeroPromptIndex] = useState(0)
+  const [showGuestWelcome, setShowGuestWelcome] = useState(false)
+  const [guestEmail, setGuestEmail] = useState('')
 
   const [platformName, setPlatformName] = useState(
     'SMART HELP MARKET BY BIGMAZ',
@@ -77,6 +79,31 @@ function App() {
   const [listings, setListings] = useState<MarketplaceListing[]>([])
   const [listingsLoading, setListingsLoading] = useState(true)
   const [listingsError, setListingsError] = useState('')
+
+  useEffect(() => {
+    try {
+      if (!window.localStorage.getItem('shm:guest-welcome-completed')) {
+        const timer = window.setTimeout(() => setShowGuestWelcome(true), 650)
+        return () => window.clearTimeout(timer)
+      }
+    } catch { /* Browsing remains available when storage is disabled. */ }
+  }, [])
+
+  function continueAsGuest() {
+    try { window.localStorage.setItem('shm:guest-welcome-completed', 'true') } catch { /* Optional local preference. */ }
+    setShowGuestWelcome(false)
+  }
+
+  function handleGuestEmail(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const email = guestEmail.trim()
+    if (!email) return
+    try {
+      window.localStorage.setItem('shm:guest-email-preview', email)
+      window.localStorage.setItem('shm:guest-welcome-completed', 'true')
+    } catch { /* Frontend-only preview, not an account action. */ }
+    setShowGuestWelcome(false)
+  }
 
   useEffect(() => {
     const timer = window.setInterval(() => setHeroPromptIndex((current) => (current + 1) % HERO_PROMPTS.length), 4600)
@@ -208,6 +235,25 @@ function App() {
 
   return (
     <main className="marketplace">
+      {showGuestWelcome && (
+        <div className="shm-guest-welcome-backdrop" role="presentation">
+          <section className="shm-guest-welcome" role="dialog" aria-modal="true" aria-labelledby="shm-guest-title">
+            <button className="shm-guest-close" type="button" aria-label="Continue as guest" onClick={continueAsGuest}>×</button>
+            <span className="shm-guest-mark">SH</span>
+            <span className="section-kicker">WELCOME TO YOUR MARKETPLACE</span>
+            <h2 id="shm-guest-title">Let’s get you started.</h2>
+            <p>Continue with your email to make it easier to personalise your marketplace experience. You can also explore as a guest.</p>
+            <form onSubmit={handleGuestEmail}>
+              <label htmlFor="shm-guest-email">Email address</label>
+              <input id="shm-guest-email" type="email" autoComplete="email" maxLength={254} placeholder="you@example.com" value={guestEmail} onChange={(event) => setGuestEmail(event.target.value)} required />
+              <button className="shm-guest-continue" type="submit">Continue with email <span>→</span></button>
+            </form>
+            <button className="shm-guest-browse" type="button" onClick={continueAsGuest}>Continue as guest</button>
+            <small>Your email is saved only in this browser for now. Verification and account connection will be added during backend integration.</small>
+          </section>
+        </div>
+      )}
+
       <header className="site-header">
         <a
           className="brand"
@@ -225,6 +271,7 @@ function App() {
           <a href="#discover">Explore</a>
           <a href="#categories">Categories</a>
           <a href="#how-it-works">How it works</a>
+          <Link to="/escrow-pro">Escrow Pro</Link>
         </nav>
 
         <div className="header-actions">
@@ -342,7 +389,7 @@ function App() {
               onClick={() => setCategory(item.key)}
             >
               <span className="category-icon">
-                {getCategoryIcon(item.key)}
+                <span className={`category-icon-art category-art-${item.key.toLowerCase().replace(/[^a-z0-9-]/g, '')}`} aria-hidden="true">{getCategoryIcon(item.key)}</span>
               </span>
 
               <span className="category-card-copy">
