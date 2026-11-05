@@ -90,7 +90,7 @@ router.put('/configuration', async (req, res) => {
       res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
       return
     }
-    if (!Number.isFinite(transactionSettings.transactionExpiryMinutes) || !Number.isFinite(transactionSettings.minimumAmount) || !Number.isFinite(transactionSettings.maximumAmount) ||
+    if (!Number.isSafeInteger(transactionSettings.transactionExpiryMinutes) || !Number.isSafeInteger(transactionSettings.minimumAmount) || !Number.isSafeInteger(transactionSettings.maximumAmount) ||\n        !Number.isSafeInteger(escrowSettings.holdingPeriodHours) || !Number.isSafeInteger(inspectionSettings.bookingExpiryHours) ||
         !Number.isFinite(feeSettings.platformFeeValue) || !Number.isFinite(feeSettings.agentCommissionValue) ||
         typeof feeSettings.platformFeeEnabled !== 'boolean' || typeof feeSettings.agentCommissionEnabled !== 'boolean' ||
         !['fixed', 'percentage'].includes(feeSettings.platformFeeType) || !['fixed', 'percentage'].includes(feeSettings.agentCommissionType) ||
@@ -242,7 +242,7 @@ router.put('/credentials', async (req, res) => {
       )
       const record = otp.rows[0]
       if (!record || record.attempts >= 5 || !timingSafeEqual(Buffer.from(record.code_hash, 'hex'), Buffer.from(hashOtp(code), 'hex'))) {
-        if (record) await client.query('UPDATE public.marketplace_payment_credential_otps SET attempts = attempts + 1 WHERE otp_id = $1', [record.otp_id])
+        if (record && record.attempts < 5) await client.query('UPDATE public.marketplace_payment_credential_otps SET attempts = attempts + 1 WHERE otp_id = $1', [record.otp_id])
         await client.query('COMMIT')
         res.status(400).json({ error: 'The code is invalid, expired or has reached its attempt limit.' })
         return
