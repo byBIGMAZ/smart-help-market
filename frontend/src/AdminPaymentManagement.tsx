@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import './AdminPaymentManagement.css'
 
 type PaymentConfiguration = {
   enabled: boolean
