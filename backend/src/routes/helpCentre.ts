@@ -73,10 +73,10 @@ function resolveAssistantRole(
   )
   const text = normalize(message)
   const explicitRoleCues: Array<{ role: WorkspaceRole; cues: string[] }> = [
-    { role: 'landlord', cues: ['as a landlord', 'my landlord account', 'landlord workspace', 'property owner', 'as the property owner'] },
-    { role: 'agent', cues: ['as an agent', 'my agent account', 'agent workspace', 'real estate agent', 'agency workspace'] },
-    { role: 'seller', cues: ['as a seller', 'my seller account', 'seller workspace', 'vendor account'] },
-    { role: 'service_provider', cues: ['as a service provider', 'my provider account', 'service provider workspace'] },
+    { role: 'landlord', cues: ['as a landlord', 'my landlord account', 'landlord workspace', 'landlord listing', 'property owner', 'as the property owner'] },
+    { role: 'agent', cues: ['as an agent', 'my agent account', 'agent workspace', 'agent listing', 'real estate agent', 'agency workspace'] },
+    { role: 'seller', cues: ['as a seller', 'my seller account', 'seller workspace', 'product listing', 'vendor account'] },
+    { role: 'service_provider', cues: ['as a service provider', 'my provider account', 'service provider workspace', 'service listing'] },
     { role: 'buyer', cues: ['as a buyer', 'my buyer account', 'buyer workspace'] },
   ]
   for (const item of explicitRoleCues) {
