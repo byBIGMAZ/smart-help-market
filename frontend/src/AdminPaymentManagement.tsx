@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, type ClipboardEvent } from 'react'
 import './AdminPaymentManagement.css'
 
 type PaymentConfiguration = {
@@ -91,6 +91,8 @@ export default function AdminPaymentManagement() {
   }
 
   const resetCredentialDialog = () => {
+    const tokenToCancel = authorizationToken
+    if (tokenToCancel) void api('/api/admin/payments/credentials/cancel-verification', 'POST', { authorizationToken: tokenToCancel }).catch(() => undefined)
     setCredentialModalOpen(false)
     setCodeSent(false)
     setOtpDigits(Array(6).fill(''))
@@ -150,7 +152,7 @@ export default function AdminPaymentManagement() {
     if (next.every(value => value !== '')) void verifyCode(next.join(''))
   }
 
-  const handleOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+  const handleOtpPaste = (event: ClipboardEvent<HTMLInputElement>) => {
     event.preventDefault()
     const pasted = event.clipboardData.getData('text').replace(/\\D/g, '').slice(0, 6)
     if (!pasted) return
