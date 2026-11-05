@@ -65,10 +65,10 @@ const SETTING_HELP: Record<string, string> = {
   'geo.country_code': 'Restrict location lookup results to a two-letter country code, such as ng.',
   'geo.cache_ttl_hours': 'How many hours successful location lookup results remain cached.',
   'geo.max_results': 'Maximum number of location matches returned by the provider. The current provider supports up to five.',
-  'verification.required.landlord': 'Require landlords to complete account verification before creating property listings.',
-  'verification.required.seller': 'Require sellers to complete account verification before creating product listings.',
-  'verification.required.service_provider': 'Require service providers to complete account verification before creating service listings.',
-  'verification.required.agent': 'Require agents to complete account verification before creating property listings.',
+  'verification.required.landlord': 'Require landlords to complete account verification before publishing property listings.',
+  'verification.required.seller': 'Require sellers to complete account verification before publishing product listings.',
+  'verification.required.service_provider': 'Require service providers to complete account verification before publishing service listings.',
+  'verification.required.agent': 'Require agents to complete account verification before publishing property listings.',
 }
 
 const GROUP_LABELS: Record<string, string> = {
