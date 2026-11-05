@@ -82,3 +82,56 @@ export async function updateOwnerListingDraft(
     input,
   )
 }
+
+
+export interface OwnerListingSubmissionResult {
+  status: string
+  submitted?: boolean
+  paymentRequired?: boolean
+  reference?: string
+  amountMinor?: number
+  currencyCode?: string
+  authorizationUrl?: string
+  message?: string
+}
+
+interface OwnerListingSubmissionResponse extends OwnerListingSubmissionResult {
+  error?: string
+}
+
+async function ownerListingAction(
+  listingId: string,
+  action: 'submit' | 'verify-payment',
+  reference?: string,
+): Promise<OwnerListingSubmissionResult> {
+  if (!/^[1-9]\\d*$/.test(listingId)) {
+    throw new Error('A valid listing ID is required.')
+  }
+
+  const response = await fetch(
+    `/api/listings/owner/${encodeURIComponent(listingId)}/${action === 'submit' ? 'submit' : 'verify-payment'}`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(action === 'verify-payment' ? { reference } : {}),
+    },
+  )
+
+  const data = await response.json().catch(() => null) as OwnerListingSubmissionResponse | null
+  if (!response.ok || !data || data.status !== 'ok') {
+    throw new Error(data?.error || 'The marketplace could not complete this listing action.')
+  }
+  return data
+}
+
+export function submitOwnerListingForReview(listingId: string) {
+  return ownerListingAction(listingId, 'submit')
+}
+
+export function verifyOwnerListingFeePayment(listingId: string, reference: string) {
+  return ownerListingAction(listingId, 'verify-payment', reference)
+}
