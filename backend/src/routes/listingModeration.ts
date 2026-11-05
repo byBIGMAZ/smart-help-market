@@ -403,7 +403,8 @@ function createModerationHandler(action: ModerationAction) {
           return
         }
 
-        const policyKey = owner.account_type
+        const verificationAccountTypes = ['landlord', 'seller', 'service_provider', 'agent']
+        const policyKey = owner.account_type && verificationAccountTypes.includes(owner.account_type)
           ? `verification.required.${owner.account_type}`
           : ''
         const policy = policyKey
@@ -412,7 +413,7 @@ function createModerationHandler(action: ModerationAction) {
               [policyKey],
             )
           : { rows: [] as { setting_value: unknown }[] }
-        const verificationRequired = policy.rows[0]?.setting_value !== false
+        const verificationRequired = Boolean(policyKey) && policy.rows[0]?.setting_value !== false
 
         if (verificationRequired && owner.verification_status !== 'approved') {
           await client.query('ROLLBACK')
