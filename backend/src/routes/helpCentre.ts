@@ -1073,6 +1073,16 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   if (prediction.intent === 'greeting') {
+    const greetingRoles = roles
+      .map((role) => canonicalWorkspaceRole(role))
+      .filter((role): role is WorkspaceRole => role !== null)
+    if (!activeRole && greetingRoles.length > 1) {
+      return {
+        text: 'Hello! 😊 I can see that your account has access to more than one marketplace workspace. Which role would you like me to assist you with in this conversation?',
+        suggestions: greetingRoles.map((role) => `As a ${role === 'service_provider' ? 'service provider' : role}`),
+        context: nextContext,
+      }
+    }
     const roleWelcome: Record<WorkspaceRole, { text: string; suggestions: string[] }> = {
       buyer: {
         text: 'Hello! 😊 I can help you discover properties, products and services, manage enquiries, save items and understand your buyer tools. What would you like to do?',
