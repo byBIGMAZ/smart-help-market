@@ -136,6 +136,11 @@ export default function OwnerListingsPage() {
       .then((result) => {
         if (!active) return
         setListingActionMessage(result.message || 'Payment confirmed and listing submitted for review.')
+        const cleanUrl = new URL(window.location.href)
+        cleanUrl.searchParams.delete('payment')
+        cleanUrl.searchParams.delete('listingId')
+        cleanUrl.searchParams.delete('reference')
+        window.history.replaceState({}, '', cleanUrl.toString())
         return loadListings()
       })
       .catch((cause) => {
@@ -146,12 +151,6 @@ export default function OwnerListingsPage() {
       .finally(() => {
         if (active) setListingActionBusy(false)
       })
-
-    const cleanUrl = new URL(window.location.href)
-    cleanUrl.searchParams.delete('payment')
-    cleanUrl.searchParams.delete('listingId')
-    cleanUrl.searchParams.delete('reference')
-    window.history.replaceState({}, '', cleanUrl.toString())
 
     return () => {
       active = false
