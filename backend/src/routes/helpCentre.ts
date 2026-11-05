@@ -47,24 +47,92 @@ function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9₦\s-]/g, ' ').replace(/\s+/g, ' ').trim()
 }
 
+type WorkspaceRole = 'buyer' | 'landlord' | 'seller' | 'service_provider' | 'agent'
+
+function canonicalWorkspaceRole(value: string | undefined): WorkspaceRole | null {
+  const role = (value || '').toLowerCase()
+  if (role === 'provider' || role === 'service_provider') return 'service_provider'
+  if (role === 'buyer' || role === 'landlord' || role === 'seller' || role === 'agent') return role
+  return null
+}
+
+function workspacePathRole(role: WorkspaceRole): string {
+  return role === 'service_provider' ? 'provider' : role
+}
+
+function resolveAssistantRole(
+  assignedRoles: string[],
+  preferredRole: string | undefined,
+  message: string,
+  context: Record<string, unknown>,
+): WorkspaceRole | null {
+  const available = new Set(
+    assignedRoles
+      .map((role) => canonicalWorkspaceRole(role))
+      .filter((role): role is WorkspaceRole => role !== null),
+  )
+  const requested = canonicalWorkspaceRole(preferredRole)
+  if (requested && available.has(requested)) return requested
+
+  const text = normalize(message)
+  const explicitRoleCues: Array<{ role: WorkspaceRole; cues: string[] }> = [
+    { role: 'landlord', cues: ['as a landlord', 'my landlord account', 'landlord workspace', 'property owner', 'as the property owner'] },
+    { role: 'agent', cues: ['as an agent', 'my agent account', 'agent workspace', 'real estate agent', 'agency workspace'] },
+    { role: 'seller', cues: ['as a seller', 'my seller account', 'seller workspace', 'vendor account'] },
+    { role: 'service_provider', cues: ['as a service provider', 'my provider account', 'service provider workspace'] },
+    { role: 'buyer', cues: ['as a buyer', 'my buyer account', 'buyer workspace'] },
+  ]
+  for (const item of explicitRoleCues) {
+    if (available.has(item.role) && item.cues.some((cue) => text.includes(cue))) return item.role
+  }
+
+  const landlordTask = ['tenant', 'rent collection', 'rent payment', 'arrears', 'maintenance request', 'landlord complaint', 'renewal', 'occupancy'].some((cue) => text.includes(cue))
+  const agentTask = ['commission', 'commissions', 'my clients', 'prospective client', 'represented property', 'agency listing'].some((cue) => text.includes(cue))
+  const sellerTask = ['inventory', 'stock level', 'product order', 'my sales', 'seller listing'].some((cue) => text.includes(cue))
+  const providerTask = ['service booking', 'my bookings', 'service availability', 'working hours'].some((cue) => text.includes(cue))
+
+  if (landlordTask && available.has('landlord')) return 'landlord'
+  if (agentTask && available.has('agent')) return 'agent'
+  if (sellerTask && available.has('seller')) return 'seller'
+  if (providerTask && available.has('service_provider')) return 'service_provider'
+
+  const listingCreationIssue = ['create listing', 'creating listing', 'post listing', 'posting listing', 'add property', 'new property', 'listing will not save', 'listing wont save', 'listing error'].some((cue) => text.includes(cue))
+  if (listingCreationIssue) {
+    const listingRoles = (['landlord', 'agent'] as const).filter((role) => available.has(role))
+    if (listingRoles.length === 1) return listingRoles[0]
+    if (listingRoles.length > 1) {
+      const remembered = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
+      if (remembered && listingRoles.includes(remembered as 'landlord' | 'agent')) return remembered
+      return null
+    }
+  }
+
+  const remembered = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
+  if (remembered && available.has(remembered)) return remembered
+  if (available.size === 1) return [...available][0]
+  return null
+}
+
 function routeForRequest(message: string, roles: string[], preferredRole?: string): SuggestedAction[] {
   const text = normalize(message)
-  const validRoles = ['buyer', 'landlord', 'seller', 'provider', 'agent']
-  const role = preferredRole && validRoles.includes(preferredRole) && roles.includes(preferredRole)
-    ? preferredRole
-    : validRoles.find((item) => roles.includes(item)) || 'buyer'
-  const roleListingPath = role === 'landlord' ? '/landlord/properties' : role === 'seller' ? '/seller/products' : role === 'provider' ? '/provider/services' : role === 'agent' ? '/agent/listings' : '/buyer/saved'
+  const role = canonicalWorkspaceRole(preferredRole)
+    && roles.map((item) => canonicalWorkspaceRole(item)).includes(canonicalWorkspaceRole(preferredRole))
+    ? canonicalWorkspaceRole(preferredRole)
+    : (['buyer', 'landlord', 'seller', 'service_provider', 'agent'] as WorkspaceRole[])
+        .find((item) => roles.map((assigned) => canonicalWorkspaceRole(assigned)).includes(item)) || 'buyer'
+  const rolePath = workspacePathRole(role)
+  const roleListingPath = role === 'landlord' ? '/landlord/properties' : role === 'seller' ? '/seller/products' : role === 'service_provider' ? '/provider/services' : role === 'agent' ? '/agent/listings' : '/buyer/saved'
   const routes: Array<{ terms: string[]; label: string; path: string }> = [
-    { terms: ['create community post', 'publish a post', 'new community post'], label: 'Create a community post', path: `/${role}/community/new` },
-    { terms: ['neighbourhood', 'neighborhood', 'neighboarhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${role}/community` },
+    { terms: ['create community post', 'publish a post', 'new community post'], label: 'Create a community post', path: `/${rolePath}/community/new` },
+    { terms: ['neighbourhood', 'neighborhood', 'neighboarhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${rolePath}/community` },
     { terms: ['saved', 'favourite', 'favorite', 'wishlist'], label: 'Open saved items', path: '/buyer/saved' },
-    { terms: ['my message', 'messages', 'inbox', 'chat'], label: 'Open messages', path: `/${role}/messages` },
-    { terms: ['notification', 'alerts'], label: 'Open notifications', path: `/${role}/notifications` },
-    { terms: ['my profile', 'edit profile', 'profile'], label: 'Open my profile', path: `/${role}/profile` },
-    { terms: ['account', 'account settings'], label: 'Open account overview', path: `/${role}/account` },
-    { terms: ['privacy', 'preferences'], label: 'Open privacy and preferences', path: `/${role}/privacy-settings` },
-    { terms: ['inspection', 'visit property'], label: 'Open inspections', path: `/${role}/inspections` },
-    { terms: ['enquiry', 'enquiries', 'my enquiries'], label: 'Open enquiries', path: `/${role}/enquiries` },
+    { terms: ['my message', 'messages', 'inbox', 'chat'], label: 'Open messages', path: `/${rolePath}/messages` },
+    { terms: ['notification', 'alerts'], label: 'Open notifications', path: `/${rolePath}/notifications` },
+    { terms: ['my profile', 'edit profile', 'profile'], label: 'Open my profile', path: `/${rolePath}/profile` },
+    { terms: ['account', 'account settings'], label: 'Open account overview', path: `/${rolePath}/account` },
+    { terms: ['privacy', 'preferences'], label: 'Open privacy and preferences', path: `/${rolePath}/privacy-settings` },
+    { terms: ['inspection', 'visit property'], label: 'Open inspections', path: `/${rolePath}/inspections` },
+    { terms: ['enquiry', 'enquiries', 'my enquiries'], label: 'Open enquiries', path: `/${rolePath}/enquiries` },
     { terms: ['transaction', 'transactions', 'purchase history'], label: 'Open transactions', path: '/buyer/transactions' },
     { terms: ['roommate', 'room mate', 'shared accommodation'], label: 'Open roommate matching', path: '/buyer/roommates' },
     { terms: ['tenant', 'tenants'], label: 'Open tenant management', path: '/landlord/tenants' },
@@ -84,7 +152,7 @@ function routeForRequest(message: string, roles: string[], preferredRole?: strin
     { terms: ['my listings', 'manage listings'], label: 'Open my listings', path: roleListingPath },
     { terms: ['clients'], label: 'Open clients', path: '/agent/clients' },
     { terms: ['commission', 'commissions', 'earnings'], label: 'Open commissions and earnings', path: '/agent/commissions' },
-    { terms: ['dashboard', 'overview'], label: 'Open dashboard', path: `/${role}/dashboard` },
+    { terms: ['dashboard', 'overview'], label: 'Open dashboard', path: `/${rolePath}/dashboard` },
     { terms: ['browse', 'explore marketplace', 'marketplace'], label: 'Explore marketplace', path: '/explore' },
     { terms: ['category', 'categories'], label: 'Browse categories', path: '/categories' },
     { terms: ['help centre', 'help center', 'support'], label: 'Open Help Centre', path: '/help' },
@@ -136,11 +204,78 @@ async function predictIntent(message: string) {
 }
 
 async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[], preferredRole?: string): Promise<AssistantResult> {
+  const activeRole = resolveAssistantRole(roles, preferredRole, rawMessage, context)
+
   const message = normalize(rawMessage)
   const nextContext = { ...context }
   const prediction = await predictIntent(rawMessage)
   let searchText = rawMessage
   const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
+
+  if (activeRole) nextContext.activeRole = activeRole
+
+  const listingHelpRequest = [
+    'issue creating listing', 'problem creating listing', 'trouble creating listing',
+    'having issues creating my listing', 'cannot create listing', "can't create listing",
+    'unable to create listing', 'listing will not save', 'listing wont save',
+    'error creating listing', 'problem posting property', 'trouble posting property',
+  ].some((cue) => message.includes(cue))
+
+  if (listingHelpRequest) {
+    const listingRoles = roles
+      .map((role) => canonicalWorkspaceRole(role))
+      .filter((role): role is WorkspaceRole => role === 'landlord' || role === 'agent')
+
+    if (!activeRole && listingRoles.length > 1) {
+      return {
+        text: 'I can help with that. Your account has both Landlord and Agent access. Are you creating this listing as a landlord for your own property, or as an agent for a property you represent?',
+        suggestions: ['As a landlord', 'As an agent'],
+        context: nextContext,
+      }
+    }
+
+    if (activeRole === 'landlord') {
+      return {
+        text: 'I can help you troubleshoot your landlord property listing. Start from your Landlord workspace and open Add a property. Tell me exactly where you get stuck: opening Listing Studio, entering property details, adding unit information, saving the draft, or submitting the listing. I will guide you through the landlord workflow.',
+        actions: [{ label: 'Open landlord property listings', path: '/landlord/properties' }, { label: 'Create a property listing', path: '/landlord/properties/new' }],
+        suggestions: ['Listing Studio will not open', 'My property details will not save', 'I get an error when saving'],
+        context: nextContext,
+      }
+    }
+
+    if (activeRole === 'agent') {
+      return {
+        text: 'I can help with the Agent listing workflow. Use your Agent workspace to create or manage a listing for a property you are authorised to represent. Agent tools are separate from the landlord’s property-ownership, tenant, rent and maintenance management tools. Tell me whether you are stuck opening the listing form, entering represented-property details, saving a draft, or submitting the listing.',
+        actions: [{ label: 'Open agent listings', path: '/agent/listings' }, { label: 'Create an agent listing', path: '/agent/listings/new' }],
+        suggestions: ['The agent listing form will not open', 'My represented property details will not save', 'I get an error when saving'],
+        context: nextContext,
+      }
+    }
+
+    if (roles.includes('agent') && !roles.includes('landlord')) {
+      return {
+        text: 'Your account has Agent access, not Landlord access. You can work with properties you are authorised to represent through the Agent listing workspace. Landlord-only tools such as managing the owner’s tenants, rent collection and property maintenance are not available through the Agent role. If you need to manage your own property as its landlord, request the Landlord role from the platform administrator.',
+        actions: [{ label: 'Open agent listings', path: '/agent/listings' }],
+        context: nextContext,
+      }
+    }
+
+    return {
+      text: 'I could not confirm a Landlord or Agent workspace on your account. Listing tools depend on the roles assigned to your account. Please check your account access or contact the platform administrator so the correct role can be assigned.',
+      needsAdmin: true,
+      context: nextContext,
+    }
+  }
+
+  const landlordOnlyRequest = ['manage tenants', 'tenant management', 'collect rent', 'rent arrears', 'property maintenance', 'manage occupancy'].some((cue) => message.includes(cue))
+  if (landlordOnlyRequest && activeRole === 'agent' && !roles.includes('landlord')) {
+    return {
+      text: 'Those are Landlord property-management responsibilities. Your current Agent workspace is for properties you are authorised to represent, client enquiries and agent activity. It does not grant access to the landlord’s tenant, rent or maintenance management. You can ask the property owner to handle that action or contact support if your account role is incorrect.',
+      actions: [{ label: 'Open agent workspace', path: '/agent/dashboard' }],
+      context: nextContext,
+    }
+  }
+
 
   if (prediction.intent === 'support' || ['speak to an administrator', 'contact support', 'talk to a person', 'human support', 'speak to support', 'report a problem', 'report an issue', 'submit a complaint', 'i have a complaint', 'need an admin'].some((term) => message.includes(term))) {
     return {
@@ -292,10 +427,10 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     return {
       text: 'I can guide you around the marketplace. Tell me the feature you want to use, or choose one of these destinations.',
       actions: [
-        { label: 'My dashboard', path: `/${role}/dashboard` },
+        { label: 'My dashboard', path: `/${rolePath}/dashboard` },
         { label: 'Explore marketplace', path: '/explore' },
-        { label: 'My messages', path: `/${role}/messages` },
-        { label: 'Neighbourhood space', path: `/${role}/community` },
+        { label: 'My messages', path: `/${rolePath}/messages` },
+        { label: 'Neighbourhood space', path: `/${rolePath}/community` },
       ],
       suggestions: ['How do I save a listing?', 'How do I contact a landlord?', 'How do I create a listing?'],
       context: nextContext,
