@@ -89,7 +89,7 @@ export default function AdminOverviewPanel({
     ? Math.min(100, Math.round((overview.users.active / overview.users.total) * 100))
     : 0
   const publishedRate = overview && overview.listings.liveTotal > 0
-    ? Math.min(100, Math.round((overview.listings.published / overview.listings.liveTotal) * 100))
+    ? Math.min(100, Math.round((overview.listings.publishedLive / overview.listings.liveTotal) * 100))
     : 0
 
   return (
@@ -140,7 +140,7 @@ export default function AdminOverviewPanel({
               <div className="admin-overview-progress-item">
                 <div><span>Published listings, excluding demos</span><strong>{publishedRate}%</strong></div>
                 <div className="admin-overview-progress-track"><span style={{ width: `${publishedRate}%` }} /></div>
-                <small>{overview.listings.published.toLocaleString()} of {overview.listings.liveTotal.toLocaleString()} live listings</small>
+                <small>{overview.listings.publishedLive.toLocaleString()} of {overview.listings.liveTotal.toLocaleString()} live listings</small>
               </div>
               <p className="admin-overview-footnote">These are descriptive database ratios, not targets or ratings.</p>
             </section>
@@ -159,7 +159,7 @@ export default function AdminOverviewPanel({
                 <StatusCount label="Paused" value={overview.listings.paused} tone="info" />
                 <StatusCount label="Rejected" value={overview.listings.rejected} tone="danger" />
                 <StatusCount label="Suspended" value={overview.listings.suspended} tone="danger" />
-                <StatusCount label="Published" value={overview.listings.published} tone="success" />
+                <StatusCount label="Published" value={overview.listings.publishedLive} tone="success" />
               </div>
               <p className="admin-overview-footnote">Status counts exclude demonstration listings. Other listing states, such as rented or sold, remain included in the live total.</p>
             </section>
