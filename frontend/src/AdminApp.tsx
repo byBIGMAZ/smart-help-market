@@ -131,19 +131,19 @@ function AdminApp() {
   // One permission-aware navigation catalogue drives both admin navigation surfaces.
   // Server routes remain the final authority for every operation.
   const adminNavigation = [
-    { label: 'Overview', path: 'overview', permission: 'dashboard.view' },
-    { label: 'User Management', path: 'users', permission: 'users.view' },
-    { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view' },
-    { label: 'Categories', path: 'categories', permission: 'categories.view' },
-    { label: 'Platform Settings', path: 'settings', permission: 'settings.view' },
-    { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view' },
-    { label: 'Automation Control', path: 'automation', permission: 'automation.view' },
-    { label: 'Automation Rules', path: 'automation-rules', permission: 'automation.manage' },
-    { label: 'Automation Monitoring', path: 'automation-monitoring', permission: 'automation.view' },
-    { label: 'Role Management', path: 'roles', permission: 'roles.view' },
-    { label: 'Notifications', path: 'notifications', permission: 'notifications.view' },
-    { label: 'Audit Logs', path: 'audit', permission: 'audit.view' },
-    { label: 'Profile Approvals', path: 'profile-approvals', superAdminOnly: true },
+    { label: 'Overview', path: 'overview', permission: 'dashboard.view', superAdminOnly: false },
+    { label: 'User Management', path: 'users', permission: 'users.view', superAdminOnly: false },
+    { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false },
+    { label: 'Categories', path: 'categories', permission: 'categories.view', superAdminOnly: false },
+    { label: 'Platform Settings', path: 'settings', permission: 'settings.view', superAdminOnly: false },
+    { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view', superAdminOnly: false },
+    { label: 'Automation Control', path: 'automation', permission: 'automation.view', superAdminOnly: false },
+    { label: 'Automation Rules', path: 'automation-rules', permission: 'automation.manage', superAdminOnly: false },
+    { label: 'Automation Monitoring', path: 'automation-monitoring', permission: 'automation.view', superAdminOnly: false },
+    { label: 'Role Management', path: 'roles', permission: 'roles.view', superAdminOnly: false },
+    { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false },
+    { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false },
+    { label: 'Profile Approvals', path: 'profile-approvals', permission: '', superAdminOnly: true },
   ]
 
   useEffect(() => {
