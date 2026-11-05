@@ -219,7 +219,7 @@ router.post('/credentials/request-code', async (_req, res) => {
 
 router.post('/credentials/verify-code', async (req, res) => {
   const code = cleanString(req.body?.code, 6)
-  if (!/^\\d{6}$/.test(code)) {
+  if (!/^\d{6}$/.test(code)) {
     res.status(400).json({ error: 'Enter the complete six-digit email verification code.' })
     return
   }
