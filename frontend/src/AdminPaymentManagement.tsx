@@ -229,7 +229,7 @@ export default function AdminPaymentManagement() {
 
       <div className="payment-panel">
         <h3>Marketplace listing fees</h3>
-        <p>Set the listing publication fee for each marketplace type. Amounts are entered in the selected payment currency. These fees are enforced by the backend when listing checkout is connected.</p>
+        <p>Set the listing publication fee for each marketplace type. Amounts are entered in the selected payment currency. These are policy settings only at this stage. Listing checkout and publication enforcement will be connected in the next payment milestone.</p>
         <label className="payment-toggle-row"><span><strong>Require payment for listing publication</strong><small>When enabled, a listing must have a verified listing-fee payment before it can proceed to publication.</small></span><input type="checkbox" checked={config.listingFeeSettings.enabled} onChange={e => updateNested('listingFeeSettings','enabled',e.target.checked)} /></label>
         <div className="payment-grid">
           <NumberField label="Property listing fee" value={config.listingFeeSettings.propertyFee} onChange={v => updateNested('listingFeeSettings','propertyFee',v)} />
