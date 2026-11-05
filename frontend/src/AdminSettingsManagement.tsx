@@ -40,7 +40,7 @@ const SETTING_HELP: Record<EditableSettingKey, string> = {
   'platform.timezone': 'The timezone used for platform date and time operations.',
   'communication.contact_policy': 'Configure phone, email, external link, social handle and off-platform contact restrictions using the JSON policy.',
   'help.assistant.enabled': 'Turn the SMART HELP assistant on or off for signed-in users.',
-  'help.ai.learning_enabled': 'Allow BIGMAZ AI to update bounded intent weights from explicit user corrections. Disable this to pause adaptive model updates.',
+  'help.ai.learning_enabled': 'Allow the built-in BIGMAZ intent engine to improve its phrase weights from explicit user corrections. No external AI service is used.',
   'help.ai.feedback_enabled': 'Allow users to rate assistant responses and submit corrections.',
   'help.messages.free_limit': 'Number of assistant messages each user receives per calendar month before the usage limit is reached.',
   'help.messages.pack_size': 'Number of additional assistant messages in a future paid package.',
