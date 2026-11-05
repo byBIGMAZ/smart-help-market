@@ -166,8 +166,6 @@ async function verifyCategory(categoryKey: string): Promise<boolean> {
   return result.rows.length > 0
 }
 
-router.post('/owner', requireAuthenticatedSession, async (_req, _res, next) => next())
-
 router.post('/owner', requireAuthenticatedSession, async (req, res) => {
   const userId = String(res.locals.authenticatedUserId ?? '')
   if (!userId) {
