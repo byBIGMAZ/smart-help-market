@@ -5,6 +5,7 @@ import {
   type MarketplaceCategory,
 } from '../../services/marketplaceCategories'
 import { createOwnerListingDraft, updateOwnerListingDraft } from '../../services/ownerListingDrafts'
+import { getOwnerListings } from '../../services/ownerListings'
 import './ListingEditorPage.css'
 
 type ListingKind = 'properties' | 'products' | 'services'
@@ -335,6 +336,7 @@ export default function ListingEditorPage() {
       : 'properties'
 
   const storageKey = `smart-help-market-listing-draft-${kind}`
+  const draftId = new URLSearchParams(location.search).get('draftId') || ''
 
   const [values, setValues] = useState<FormValues>(emptyValues)
   const [categories, setCategories] = useState<MarketplaceCategory[]>([])
@@ -350,6 +352,7 @@ export default function ListingEditorPage() {
   const [restored, setRestored] = useState(false)
   const [serverListingId, setServerListingId] = useState('')
   const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isLoadingServerDraft, setIsLoadingServerDraft] = useState(false)
 
   const category = categories.find((item) => item.key === categoryKey)
 
@@ -361,11 +364,17 @@ export default function ListingEditorPage() {
   const isCommercial = propertyType === 'Commercial property'
   const usesUnits = !isLand
 
-  const heading = kind === 'properties'
-    ? 'Build your property listing'
-    : kind === 'products'
-      ? 'Build your product listing'
-      : 'Build your service listing'
+  const heading = draftId
+    ? kind === 'properties'
+      ? 'Edit your property listing'
+      : kind === 'products'
+        ? 'Edit your product listing'
+        : 'Edit your service listing'
+    : kind === 'properties'
+      ? 'Build your property listing'
+      : kind === 'products'
+        ? 'Build your product listing'
+        : 'Build your service listing'
 
   const description = kind === 'properties'
     ? 'Tell us about the property. Your questions will adapt to the type you select.'
@@ -412,6 +421,85 @@ export default function ListingEditorPage() {
       active = false
     }
   }, [storageKey])
+
+  useEffect(() => {
+    if (!draftId) return
+
+    let active = true
+    setIsLoadingServerDraft(true)
+    setError('')
+
+    getOwnerListings()
+      .then((listings) => {
+        if (!active) return
+
+        const listing = listings.find((item) => item.id === draftId)
+        if (!listing || listing.status.toLowerCase() !== 'draft') {
+          setError('This draft could not be found in your account, or it is no longer editable.')
+          return
+        }
+
+        const details = listing.details
+        if (!details || typeof details !== 'object' || Array.isArray(details)) {
+          setError('This saved draft does not contain readable listing details.')
+          return
+        }
+
+        const savedKind = details.kind
+        const rawValues = details.values
+        if (
+          savedKind !== kind ||
+          !rawValues ||
+          typeof rawValues !== 'object' ||
+          Array.isArray(rawValues)
+        ) {
+          setError('This draft belongs to a different listing workspace or has incomplete details.')
+          return
+        }
+
+        const restoredValues = Object.fromEntries(
+          Object.entries(rawValues).filter(
+            (entry): entry is [string, string] => typeof entry[1] === 'string',
+          ),
+        ) as FormValues
+
+        const rawUnits = Array.isArray(details.units) ? details.units : []
+        const restoredUnits: PropertyUnit[] = rawUnits
+          .filter((unit): unit is Record<string, unknown> =>
+            typeof unit === 'object' && unit !== null && !Array.isArray(unit),
+          )
+          .map((unit, index) => ({
+            ...createUnit(index),
+            id: typeof unit.id === 'string' ? unit.id : createUnit(index).id,
+            name: typeof unit.name === 'string' ? unit.name : `Unit ${index + 1}`,
+            rent: typeof unit.rent === 'string' ? unit.rent : '',
+            bedrooms: typeof unit.bedrooms === 'string' ? unit.bedrooms : '',
+            bathrooms: typeof unit.bathrooms === 'string' ? unit.bathrooms : '',
+            description: typeof unit.description === 'string' ? unit.description : '',
+            photos: [],
+            videoUrl: '',
+          }))
+
+        setValues({ ...emptyValues, ...restoredValues })
+        setCategoryKey(listing.categoryKey)
+        setServerListingId(listing.id)
+        setUnits(restoredUnits.length ? restoredUnits : [createUnit(0)])
+        setRestored(true)
+        setNotice('Saved marketplace draft loaded. Continue editing and save your changes when ready.')
+      })
+      .catch((cause) => {
+        if (active) {
+          setError(cause instanceof Error ? cause.message : 'Unable to load this saved draft.')
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoadingServerDraft(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [draftId, kind])
 
   useEffect(() => {
     return () => {
@@ -919,6 +1007,12 @@ export default function ListingEditorPage() {
         </div>
         <Link className="listing-editor-back" to="/owner/listings">My listings</Link>
       </header>
+
+      {isLoadingServerDraft && (
+        <div className="listing-editor-notice" role="status">
+          Loading your saved marketplace draft...
+        </div>
+      )}
 
       <div className="smart-builder-progress">
         <span className="smart-progress-active"/>
