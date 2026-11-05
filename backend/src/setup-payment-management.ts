@@ -14,7 +14,7 @@ async function setupPaymentManagement(): Promise<void> {
         enabled BOOLEAN NOT NULL DEFAULT FALSE,
         mode TEXT NOT NULL DEFAULT 'test' CHECK (mode IN ('test', 'live')),
         public_key TEXT,
-        secret_key_ciphertext TEXT,
+        secret_key_ciphertext TEXT,\n        secret_key_mode TEXT CHECK (secret_key_mode IS NULL OR secret_key_mode IN ('test','live')),
         webhook_secret_ciphertext TEXT,
         currency_code TEXT NOT NULL DEFAULT 'NGN',
         payment_channels JSONB NOT NULL DEFAULT '["card","bank","ussd","mobile_money","bank_transfer"]'::jsonb,
