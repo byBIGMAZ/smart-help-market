@@ -348,6 +348,18 @@ router.put('/credentials', async (req, res) => {
         res.status(401).json({ error: 'Your verification has expired or has already been used. Request a new code.' })
         return
       }
+      const activeTransactions = await client.query<{ total: string }>(
+        `SELECT COUNT(*)::text AS total
+         FROM public.marketplace_payment_transactions
+         WHERE status IN ('initialized', 'pending')
+           AND expires_at > NOW()`,
+      )
+      if (Number(activeTransactions.rows[0]?.total ?? 0) > 0) {
+        await client.query('ROLLBACK')
+        res.status(409).json({ error: 'Payment credentials cannot be changed while active checkouts are awaiting completion or verification. Wait for them to finish or expire.' })
+        return
+      }
+
       const encryptedSecret = secretKey ? encryptCredential(secretKey) : null
       const encryptedWebhook = webhookSecret ? encryptCredential(webhookSecret) : null
       await client.query(
