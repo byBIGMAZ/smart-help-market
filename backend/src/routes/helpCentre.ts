@@ -876,6 +876,23 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       }
     }
 
+    if (listingRole === 'service_provider' && (asksPropertyListing || asksProductListing)) {
+      const availableLandlord = roles.map((role) => canonicalWorkspaceRole(role)).includes('landlord')
+      const availableAgent = roles.map((role) => canonicalWorkspaceRole(role)).includes('agent')
+      const availableSeller = roles.map((role) => canonicalWorkspaceRole(role)).includes('seller')
+      return {
+        text: asksPropertyListing
+          ? 'Your Service Provider role is for service listings. Property listings require Landlord or Agent access.'
+          : 'Your Service Provider role is for service listings. Product listings require Seller access.',
+        actions: [
+          ...(availableLandlord ? [{ label: 'Open Landlord workspace', path: '/landlord/dashboard' }] : []),
+          ...(availableAgent ? [{ label: 'Open Agent workspace', path: '/agent/dashboard' }] : []),
+          ...(availableSeller ? [{ label: 'Open Seller workspace', path: '/seller/dashboard' }] : []),
+        ],
+        context: nextContext,
+      }
+    }
+
     if ((listingRole === 'landlord' || listingRole === 'agent') && (asksProductListing || asksServiceListing)) {
       const availableSeller = roles.map((role) => canonicalWorkspaceRole(role)).includes('seller')
       const availableProvider = roles.map((role) => canonicalWorkspaceRole(role)).includes('service_provider')
