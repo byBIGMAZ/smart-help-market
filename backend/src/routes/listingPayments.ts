@@ -95,22 +95,6 @@ async function readOwnedDraft(listingId: string, userId: string, client: PoolCli
   } as ListingPaymentRow
 }
 
-async function readPaymentConfiguration(): Promise<PaymentConfiguration | null> {
-  const result = await getDatabasePool().query(
-    `SELECT
-       enabled,
-       mode,
-       public_key AS "publicKey",
-       currency_code AS "currencyCode",
-       payment_channels AS "paymentChannels",
-       transaction_settings AS "transactionSettings",
-       listing_fee_settings AS "listingFeeSettings"
-     FROM public.marketplace_payment_configuration
-     WHERE configuration_id = 1
-     LIMIT 1`,
-  )
-  return (result.rows[0] as PaymentConfiguration | undefined) ?? null
-}
 
 router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req, res) => {
   const userId = String(res.locals.authenticatedUserId ?? '')
