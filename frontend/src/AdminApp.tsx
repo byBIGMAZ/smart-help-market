@@ -2340,7 +2340,7 @@ function openAutomationMonitoring() {
 
           <span>
             {section === 'users'
-              ? 'User directory'
+              ? peopleView === 'accounts' ? 'User account directory' : 'Roles and permissions workspace'
               : section === 'roles'
                 ? 'Role and permission directory'
                 : section === 'moderation'
@@ -2354,7 +2354,7 @@ function openAutomationMonitoring() {
                         : section === 'audit'
                           ? 'Administrative audit activity'
                           : section === 'automation'
-                            ? 'Marketplace automation control'
+                            ? 'Marketplace automation workspace'
                             : section === 'automation-rules'
                               ? 'Marketplace automation rules'
                               : section === 'automation-monitoring'
