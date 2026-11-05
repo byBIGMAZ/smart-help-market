@@ -130,25 +130,34 @@ function AdminApp() {
   useState(0)
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [dashboardTime, setDashboardTime] = useState(() => new Date())
+  const [automationView, setAutomationView] = useState<'control' | 'rules' | 'monitoring'>('control')
 
   // One permission-aware navigation catalogue drives both admin navigation surfaces.
   // Server routes remain the final authority for every operation.
   const adminNavigation = [
-    { label: 'Overview', path: 'overview', permission: 'dashboard.view', superAdminOnly: false },
-    { label: 'User Management', path: 'users', permission: 'users.view', superAdminOnly: false },
-    { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false },
-    { label: 'Categories', path: 'categories', permission: 'categories.view', superAdminOnly: false },
-    { label: 'Platform Settings', path: 'settings', permission: 'settings.view', superAdminOnly: false },
-    { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view', superAdminOnly: false },
-    { label: 'Automation Control', path: 'automation', permission: 'automation.view', superAdminOnly: false },
-    { label: 'Automation Rules', path: 'automation-rules', permission: 'automation.manage', superAdminOnly: false },
-    { label: 'Automation Monitoring', path: 'automation-monitoring', permission: 'automation.view', superAdminOnly: false },
-    { label: 'Role Management', path: 'roles', permission: 'roles.view', superAdminOnly: false },
-    { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false },
-    { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false },
-    { label: 'Help Support Inbox', path: 'help-support', permission: '', superAdminOnly: true },
-    { label: 'Profile Approvals', path: 'profile-approvals', permission: '', superAdminOnly: true },
+    { label: 'Overview', path: 'overview', permission: 'dashboard.view', superAdminOnly: false, group: 'Overview' },
+    { label: 'User Management', path: 'users', permission: 'users.view', superAdminOnly: false, group: 'People & Access' },
+    { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false, group: 'Approvals & Listings' },
+    { label: 'Categories', path: 'categories', permission: 'categories.view', superAdminOnly: false, group: 'Marketplace Setup' },
+    { label: 'Platform Settings', path: 'settings', permission: 'settings.view', superAdminOnly: false, group: 'Marketplace Setup' },
+    { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view', superAdminOnly: false, group: 'Insights & Security' },
+    { label: 'Automation', path: 'automation', permission: 'automation.view', superAdminOnly: false, group: 'Automation' },
+    { label: 'Roles & Permissions', path: 'roles', permission: 'roles.view', superAdminOnly: false, group: 'People & Access' },
+    { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false, group: 'Communications & Support' },
+    { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false, group: 'Insights & Security' },
+    { label: 'Help Support Inbox', path: 'help-support', permission: '', superAdminOnly: true, group: 'Communications & Support' },
+    { label: 'Profile Approvals', path: 'profile-approvals', permission: '', superAdminOnly: true, group: 'Approvals & Listings' },
   ]
+
+  const visibleAdminNavigation = adminNavigation.filter((item) =>
+    item.superAdminOnly
+      ? Boolean(user?.roles.includes('super_admin'))
+      : Boolean(item.permission && user?.permissions.includes(item.permission)),
+  )
+  const navigationGroups = Array.from(new Set(visibleAdminNavigation.map((item) => item.group))).map((group) => ({
+    label: group,
+    items: visibleAdminNavigation.filter((item) => item.group === group),
+  }))
 
   useEffect(() => {
     const timer = window.setInterval(() => setDashboardTime(new Date()), 60000)
@@ -669,6 +678,7 @@ function openReports() {
 }
 
 function openAutomation() {
+  setAutomationView('control')
   navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
@@ -680,7 +690,8 @@ function openAutomation() {
 }
 
 function openAutomationRules() {
-  navigateAdminSection('automation-rules')
+  setAutomationView('rules')
+  navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -691,7 +702,8 @@ function openAutomationRules() {
 }
 
 function openAutomationMonitoring() {
-  navigateAdminSection('automation-monitoring')
+  setAutomationView('monitoring')
+  navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -1275,11 +1287,7 @@ function openAutomationMonitoring() {
       </header>
 
       <WorkspaceFloatingSidebar
-        links={adminNavigation
-          .filter((item) => item.superAdminOnly
-            ? user?.roles.includes('super_admin')
-            : Boolean(item.permission && user?.permissions.includes(item.permission)))
-          .map(({ label, path }) => ({ label, path }))}
+        links={visibleAdminNavigation.map(({ label, path, group }) => ({ label, path, group }))}
         onNavigate={handleAdminSidebarNavigation}
         activePath={section}
       />
@@ -1329,22 +1337,25 @@ function openAutomationMonitoring() {
 
         {/* MAIN NAVIGATION */}
         <nav className="admin-section-nav" aria-label="Admin sections">
-          {adminNavigation
-            .filter((item) => item.superAdminOnly
-              ? user?.roles.includes('super_admin')
-              : Boolean(item.permission && user?.permissions.includes(item.permission)))
-            .map((item) => (
-              <button
-                key={item.path}
-                type="button"
-                className={`admin-nav-button ${section === item.path ? 'is-active' : ''}`}
-                aria-current={section === item.path ? 'page' : undefined}
-                onClick={() => handleAdminSidebarNavigation(item.path)}
-              >
-                <span aria-hidden="true">{item.path === 'overview' ? '▦' : item.path === 'settings' ? '⚙' : item.path === 'audit' ? '▤' : '◇'}</span>
-                {item.label}
-              </button>
-            ))}
+          {navigationGroups.map((group) => (
+            <div className="admin-section-nav-group" key={group.label}>
+              <span className="admin-section-nav-group-label">{group.label}</span>
+              <div className="admin-section-nav-group-items">
+                {group.items.map((item) => (
+                  <button
+                    key={item.path}
+                    type="button"
+                    className={`admin-nav-button ${section === item.path ? 'is-active' : ''}`}
+                    aria-current={section === item.path ? 'page' : undefined}
+                    onClick={() => handleAdminSidebarNavigation(item.path)}
+                  >
+                    <span aria-hidden="true">{item.path === 'overview' ? '▦' : item.path === 'settings' ? '⚙' : item.path === 'audit' ? '▤' : item.path === 'automation' ? '⟳' : '◇'}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* OVERVIEW */}
@@ -1985,20 +1996,36 @@ function openAutomationMonitoring() {
           <Suspense fallback={<AdminModuleFallback />}><AdminReports /></Suspense>
         )}
 
-        {/* AUTOMATION CONTROL */}
-{section === 'automation' && (
-  <Suspense fallback={<AdminModuleFallback />}><AdminAutomation onNotice={setNotice} /></Suspense>
-)}
-
-{/* AUTOMATION RULES */}
-{section === 'automation-rules' && (
-  <Suspense fallback={<AdminModuleFallback />}><AdminAutomationRules onNotice={setNotice} /></Suspense>
-)}
-
-{/* AUTOMATION MONITORING */}
-{section === 'automation-monitoring' && (
-  <Suspense fallback={<AdminModuleFallback />}><AdminAutomationMonitoring /></Suspense>
-)}
+        {/* CONSOLIDATED AUTOMATION WORKSPACE */}
+        {section === 'automation' && (
+          <section className="admin-automation-workspace">
+            <div className="admin-section-heading">
+              <div>
+                <span className="admin-kicker">AUTOMATION CENTRE</span>
+                <h2>Automation Workspace</h2>
+                <p className="admin-users-description">Control background automation, manage rules and inspect execution history from one place.</p>
+              </div>
+            </div>
+            <div className="admin-workspace-tabs" role="tablist" aria-label="Automation sections">
+              <button type="button" role="tab" aria-selected={automationView === 'control'} className={automationView === 'control' ? 'is-active' : ''} onClick={() => setAutomationView('control')}>Control</button>
+              {user?.permissions.includes('automation.manage') && (
+                <button type="button" role="tab" aria-selected={automationView === 'rules'} className={automationView === 'rules' ? 'is-active' : ''} onClick={() => setAutomationView('rules')}>Rules</button>
+              )}
+              {user?.permissions.includes('automation.view') && (
+                <button type="button" role="tab" aria-selected={automationView === 'monitoring'} className={automationView === 'monitoring' ? 'is-active' : ''} onClick={() => setAutomationView('monitoring')}>Monitoring</button>
+              )}
+            </div>
+            {automationView === 'control' && (
+              <Suspense fallback={<AdminModuleFallback />}><AdminAutomation onNotice={setNotice} /></Suspense>
+            )}
+            {automationView === 'rules' && user?.permissions.includes('automation.manage') && (
+              <Suspense fallback={<AdminModuleFallback />}><AdminAutomationRules onNotice={setNotice} /></Suspense>
+            )}
+            {automationView === 'monitoring' && user?.permissions.includes('automation.view') && (
+              <Suspense fallback={<AdminModuleFallback />}><AdminAutomationMonitoring /></Suspense>
+            )}
+          </section>
+        )}
 
 {/* HELP CENTRE SUPPORT INBOX */}
 {section === 'help-support' && (
