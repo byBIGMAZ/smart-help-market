@@ -3,6 +3,7 @@ export interface HelpUsage {
   limit: number
   remaining: number
   period: string
+  unlimited?: boolean
 }
 
 export interface HelpGuide {
