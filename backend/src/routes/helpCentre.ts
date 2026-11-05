@@ -1704,14 +1704,19 @@ router.post('/chat', async (req: Request, res: Response) => {
         workflowContext: answer.context || {},
       })
       if (candidate && normalize(candidate) !== normalize(effectiveMessage)) {
-        const interpretedAnswer = await answerMessage(
-          candidate,
-          answer.context || context,
-          assignedRoles,
-          preferredRole,
-        )
+        let interpretedAnswer: AssistantResult | null = null
+        try {
+          interpretedAnswer = await answerMessage(
+            candidate,
+            answer.context || context,
+            assignedRoles,
+            preferredRole,
+          )
+        } catch {
+          interpretedAnswer = null
+        }
         const wasGenericFallback = answer.text.startsWith('I can help you find properties, products and services')
-        if (wasGenericFallback && interpretedAnswer.text !== answer.text) {
+        if (interpretedAnswer && wasGenericFallback && interpretedAnswer.text !== answer.text) {
           const deterministicFallbackAnswer = answer
           const deterministicFallbackPrediction = prediction
           interpretedRequest = candidate
