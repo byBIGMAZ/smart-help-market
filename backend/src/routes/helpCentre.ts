@@ -328,6 +328,11 @@ function expandSuggestionSelection(
     'it opened after refreshing': 'Listing Studio opened after refreshing. What should I do next?',
     'other pages work normally': 'Other pages work normally, but Listing Studio has a problem. Help me narrow it down.',
     'the whole website is slow': 'The whole marketplace website is slow, not just Listing Studio.',
+    'the add property button': 'The Add property button does not respond when I click it.',
+    'the save draft button': 'The Save draft button does not respond when I click it.',
+    'another button': 'Another button on the listing page does not respond when I click it.',
+    'what should a roommate agreement include': 'Explain what a practical roommate agreement should include, including rent, bills, deposits, house rules and ending the arrangement.',
+    'what should i check during inspection': 'Give me a detailed checklist of what to inspect when viewing a property.',
     'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
     'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
   }
@@ -389,7 +394,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: { ...nextContext, awaiting: 'listing_studio_detail' },
       }
     }
-    if (message.includes('button does nothing')) {
+    if (message.includes('button does nothing') || message.includes('button does not respond')) {
       return {
         text: 'If the button does nothing, check whether the page has finished loading, then try once more. If you are on mobile, try rotating the device or opening the site in an updated browser. Please tell me the exact button label and whether anything changes when you click it.',
         suggestions: ['The Add property button', 'The Save draft button', 'Another button'],
@@ -422,10 +427,31 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: { ...nextContext, awaiting: 'listing_save_detail' },
       }
     }
-    if (message.includes('button does nothing')) {
+    if (message.includes('button does nothing') || message.includes('button does not respond') || message.includes('button stays unchanged')) {
       return {
         text: 'If Save draft does nothing, check whether all required fields are complete and whether the page is still processing. Try once, wait for a confirmation, and avoid repeated clicks that could create confusion. If there is no response, tell me whether the button becomes disabled, shows a spinner, or remains unchanged.',
         suggestions: ['The button stays unchanged', 'A spinner appears', 'I can see a success message'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('validation error')) {
+      return {
+        text: 'A validation error means one or more values did not pass the form checks. Read the message carefully and note the field it identifies. Check that required fields are completed, numbers contain valid values, and unit details are consistent with the listing type. Share the exact validation text and field name so I can explain the correction.',
+        suggestions: ['The form still says fields are missing', 'I corrected the field', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('unauthorized')) {
+      return {
+        text: 'An unauthorized response is an account or permission issue, not something to bypass. Confirm that you are signed in to the account that owns this draft and that you opened it from the correct workspace. Do not try another person’s account or change roles yourself. If the correct account still receives this message, support needs to check the server-side ownership and role permissions.',
+        suggestions: ['I am using the correct account', 'I may be signed into another account', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('network error')) {
+      return {
+        text: 'A network error can occur when the browser cannot complete the save request. Check your connection, wait for it to stabilise, and retry once. Keep the current page open until you know whether the draft saved. Then open your listings page in the same account to check for the saved draft before trying again.',
+        suggestions: ['I found the draft', 'It is still missing', 'The network is working now'],
         context: { ...nextContext, awaiting: 'listing_save_detail' },
       }
     }
@@ -434,6 +460,14 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         text: 'Please share the exact error message, including any field name or status code. Do not include passwords, session cookies or secret tokens. I will use the wording to identify whether this looks like a validation, permission, network or server-side error.',
         suggestions: ['It says validation error', 'It says unauthorized', 'It says network error', 'Speak to an administrator'],
         context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('draft saved successfully') || message.includes('found my saved listing draft')) {
+      return {
+        text: 'Good. Your next step is to reopen the saved draft from your workspace and review it carefully. Confirm the listing purpose, location, unit details, prices and contact information. Save any corrections to the same draft. Only proceed to submission when the details are complete and accurate.',
+        actions: [{ label: 'Open my saved listings', path: listingPath }],
+        suggestions: ['Review my listing before submission', 'I need to edit the draft', 'I am ready to submit'],
+        context: nextContext,
       }
     }
     if (message.includes('draft disappeared')) {
