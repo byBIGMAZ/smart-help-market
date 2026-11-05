@@ -133,6 +133,7 @@ async function setupHelpCentreTables() {
         [key, JSON.stringify(value), group, description, isPublic],
       )
     }
+    await db.query("DELETE FROM public.platform_settings WHERE setting_key = 'help.ai.model_enabled'")
     await db.query('COMMIT')
     const result = await db.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
