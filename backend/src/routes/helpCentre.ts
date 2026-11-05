@@ -388,6 +388,15 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
 
   if (awaiting === 'listing_studio_detail') {
     const listingPath = activeRole === 'agent' ? '/agent/listings/new' : '/landlord/properties/new'
+    if (message.includes('opens now') || message.includes('form now') || message.includes('opened after refreshing')) {
+      delete nextContext.awaiting
+      return {
+        text: 'Great. Now that the listing form opens, continue from the first section and complete the required information in order. Save a draft before leaving the page. If you are editing an existing draft, make sure you opened that same draft so your changes update it rather than creating another listing.',
+        actions: [{ label: 'Continue to my listing form', path: listingPath }],
+        suggestions: ['Review my listing before submission', 'I need help with property units', 'I need help with pricing'],
+        context: nextContext,
+      }
+    }
     if (message.includes('access denied')) {
       return {
         text: activeRole === 'agent'
@@ -452,6 +461,25 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: { ...nextContext, awaiting: 'listing_save_detail' },
       }
     }
+    if (message.includes('which fields are compulsory') || message.includes('compulsory fields')) {
+      return {
+        text: 'For a property listing, the required information commonly includes the listing title, property type, purpose (rent, sale or shortlet), location, description and the price or applicable unit-pricing details. Depending on the property type, the form may also require bedrooms, bathrooms, unit details, rental period and availability. Follow the fields marked as required in Listing Studio because the exact requirements can vary by listing type. If you tell me whether it is for rent, sale or shortlet, I can guide you through the relevant sections.',
+        suggestions: ['It is for rent', 'It is for sale', 'It is a shortlet'],
+        context: { ...nextContext, awaiting: 'listing_type_for_fields' },
+      }
+    }
+    if (awaiting === 'listing_type_for_fields' || message.includes('it is for rent') || message.includes('it is for sale') || message.includes('it is a shortlet')) {
+      const purpose = message.includes('shortlet') ? 'shortlet' : message.includes('sale') ? 'sale' : 'rental'
+      return {
+        text: purpose === 'rental'
+          ? 'For a rental listing, prepare the property title and type, location, description, rent amount, payment period, required fees, availability date and the details of each rentable unit. If the property has multiple units, enter the correct unit names and prices rather than combining different rents into one misleading amount.'
+          : purpose === 'sale'
+            ? 'For a property-for-sale listing, prepare the title, property type, location, description, asking price, land or building details, bedrooms and bathrooms where applicable, and clear ownership or representation information. Make sure the asking price and property description are accurate.'
+            : 'For a shortlet listing, prepare the property type, location, description, nightly or other configured rate, available dates, guest capacity, facilities, check-in and check-out information, and any additional fees. Confirm the pricing period is clear to prospective guests.',
+        suggestions: ['I need help with property units', 'I need help with pricing', 'Review my listing before submission'],
+        context: nextContext,
+      }
+    }
     if (message.includes('validation error')) {
       return {
         text: 'A validation error means one or more values did not pass the form checks. Read the message carefully and note the field it identifies. Check that required fields are completed, numbers contain valid values, and unit details are consistent with the listing type. Share the exact validation text and field name so I can explain the correction.',
@@ -488,7 +516,39 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: nextContext,
       }
     }
-    if (message.includes('draft disappeared')) {
+    if (message.includes('never saw a confirmation') || message.includes('no save confirmation')) {
+      return {
+        text: 'If you did not see a save confirmation, do not immediately create another listing. Open your workspace listings page in the same account and check whether the draft is already present. If it is there, reopen it and continue. If it is missing, tell me whether the save button showed a spinner or error so we can narrow down what happened.',
+        actions: [{ label: 'Check my saved listings', path: listingPath }],
+        suggestions: ['I found the draft', 'It is still missing', 'I saw an error message'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('review my listing before submission') || message.includes('review my listing')) {
+      return {
+        text: 'Before submission, review the listing title, property type and purpose, exact public-facing area, description, prices and payment period, unit count and unit-specific details, facilities, availability, contact information and all uploaded media. Confirm that every statement is accurate and that you are authorised to offer the property. Save the draft after corrections. A saved draft is not the same as a published listing.',
+        actions: [{ label: 'Open my saved listings', path: listingPath }],
+        suggestions: ['I need to edit the draft', 'I am ready to submit', 'I need help with pricing'],
+        context: nextContext,
+      }
+    }
+    if (message.includes('i need to edit the draft')) {
+      return {
+        text: 'Open your workspace listings page, find the existing draft and choose Edit draft. Continue editing that record and save it again. Avoid using the New listing button unless you intend to create a separate listing. If the draft does not appear, tell me and we will check that first.',
+        actions: [{ label: 'Open my saved listings', path: listingPath }],
+        suggestions: ['I found the draft', 'It is still missing', 'Review my listing before submission'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('i am ready to submit')) {
+      return {
+        text: 'First complete the review checklist and save the latest draft. Then check whether your workspace currently provides a Submit or Publish action for this listing. Do not assume that saving a draft publishes it. If the submission control is available, review any confirmation and terms before proceeding. If you cannot see a submission option, tell me what status and buttons the listing page displays.',
+        actions: [{ label: 'Open my saved listings', path: listingPath }],
+        suggestions: ['Review my listing before submission', 'I cannot see a submit button', 'Speak to an administrator'],
+        context: nextContext,
+      }
+    }
+    if (message.includes('draft disappeared') || message.includes('draft is still missing')) {
       return {
         text: 'First, open the same workspace’s listings page and check the Drafts section. Make sure you are signed in to the same account that created the draft. Do not create a replacement yet. If it is still missing, tell me the approximate time you saved it and whether you saw a save confirmation so support can trace the correct record.',
         actions: [{ label: 'Open my saved listings', path: listingPath }],
