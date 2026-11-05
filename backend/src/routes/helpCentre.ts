@@ -1650,25 +1650,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
       ['help.ai.model_enabled'],
     )
-    const modelReply = modelSetting.rows[0]?.setting_value === false
-      ? null
-      : await generateBigmazReply({
-      message: effectiveMessage,
-      deterministicReply: answer.text,
-      suggestions: answer.suggestions || [],
-      actions: answer.actions || [],
-      marketplaceMatches: (answer.matches || []).map((match) => ({
-        title: match.title,
-        category: match.category,
-        location: match.location,
-        price: match.price,
-        priceUnit: match.priceUnit,
-      })),
-      account: accountSnapshot,
-      conversation: recentConversation,
-      workflowContext: answer.context || {},
-    })
-    if (modelReply) answer.text = modelReply
+    const modelEnabled = modelSetting.rows[0]?.setting_value !== false
     const prediction = await predictIntent(effectiveMessage)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
@@ -1681,7 +1663,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         guide: answer.guide || null,
         intent: prediction.intent,
         modelVersion: prediction.modelVersion,
-        reasoningMode: modelReply ? 'model_assisted' : 'guided_fallback',
+        reasoningMode: 'guided_fallback',
       })],
     )
     const learningEnabled = await client.query<{ setting_value: unknown }>(
@@ -1710,6 +1692,45 @@ router.post('/chat', async (req: Request, res: Response) => {
       [userId],
     )
     await client.query('COMMIT')
+
+    let modelReply: string | null = null
+    if (modelEnabled) {
+      const generatedReply = await generateBigmazReply({
+        message: effectiveMessage,
+        deterministicReply: answer.text,
+        suggestions: answer.suggestions || [],
+        actions: answer.actions || [],
+        marketplaceMatches: (answer.matches || []).map((match) => ({
+          title: match.title,
+          category: match.category,
+          location: match.location,
+          price: match.price,
+          priceUnit: match.priceUnit,
+        })),
+        account: accountSnapshot,
+        conversation: recentConversation,
+        workflowContext: answer.context || {},
+      })
+      if (generatedReply) {
+        try {
+          const persistedReply = await getDatabasePool().query(
+            `UPDATE public.marketplace_help_messages
+             SET message_text = $1,
+                 metadata = jsonb_set(metadata, '{reasoningMode}', '"model_assisted"'::jsonb, TRUE)
+             WHERE message_id = $2 AND conversation_id = $3 AND sender_type = 'assistant'`,
+            [generatedReply, assistantMessage.rows[0].id, conversationId],
+          )
+          if (persistedReply.rowCount) {
+            modelReply = generatedReply
+            answer.text = generatedReply
+          }
+        } catch {
+          // Keep the already-committed deterministic response if persistence
+          // of the model-enhanced wording fails.
+        }
+      }
+    }
+
     res.json({
       conversationId,
       assistantMessageId: assistantMessage.rows[0].id,
