@@ -85,8 +85,8 @@ function resolveAssistantRole(
 
   const landlordTask = ['tenant', 'rent collection', 'rent payment', 'arrears', 'maintenance request', 'landlord complaint', 'renewal', 'occupancy'].some((cue) => text.includes(cue))
   const agentTask = ['commission', 'commissions', 'my clients', 'prospective client', 'represented property', 'agency listing'].some((cue) => text.includes(cue))
-  const sellerTask = ['inventory', 'stock level', 'product order', 'my sales', 'seller listing'].some((cue) => text.includes(cue))
-  const providerTask = ['service booking', 'my bookings', 'service availability', 'working hours'].some((cue) => text.includes(cue))
+  const sellerTask = ['inventory', 'stock', 'product order', 'orders', 'my orders', 'my sales', 'seller listing', 'product listing'].some((cue) => text.includes(cue))
+  const providerTask = ['service booking', 'bookings', 'my bookings', 'service availability', 'working hours', 'service listing'].some((cue) => text.includes(cue))
 
   if (landlordTask && available.has('landlord')) return 'landlord'
   if (landlordTask && available.has('agent')) return 'agent'
