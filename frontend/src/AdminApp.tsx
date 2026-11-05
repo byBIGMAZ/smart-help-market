@@ -685,7 +685,18 @@ useEffect(() => {
   setNotice('')
 }
 
-function openPayments() {\n  navigateAdminSection('payments')\n  setSelectedRoleId(null)\n  setSelectedRoleUserId(null)\n  setUsersError('')\n  setRolesError('')\n  setAuditError('')\n  setError('')\n  setNotice('')\n}\n\nfunction openReports() {
+function openPayments() {
+  navigateAdminSection('payments')
+  setSelectedRoleId(null)
+  setSelectedRoleUserId(null)
+  setUsersError('')
+  setRolesError('')
+  setAuditError('')
+  setError('')
+  setNotice('')
+}
+
+function openReports() {
   navigateAdminSection('reports')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
@@ -2023,7 +2034,11 @@ function openAutomationMonitoring() {
           <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement isSuperAdmin={Boolean(user?.roles.includes('super_admin'))} /></Suspense>
         )}
 
-        {section === 'payments' && user?.roles.includes('super_admin') && (\n          <Suspense fallback={<AdminModuleFallback />}><AdminPaymentManagement /></Suspense>\n        )}\n\n        {/* REPORTS AND ANALYTICS */}
+        {section === 'payments' && user?.roles.includes('super_admin') && (
+          <Suspense fallback={<AdminModuleFallback />}><AdminPaymentManagement /></Suspense>
+        )}
+
+        {/* REPORTS AND ANALYTICS */}
         {section === 'reports' && (
           <Suspense fallback={<AdminModuleFallback />}><AdminReports /></Suspense>
         )}
