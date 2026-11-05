@@ -26,14 +26,15 @@ function formatNaira(value: string | number | null | undefined): string {
 
 function getListingFacts(listing: OwnerMarketplaceListing): string[] {
   const values = readDraftValues(listing)
+  const details = listing.details as Record<string, unknown> | undefined
+  const kind = details?.kind
   const facts: string[] = []
   const purpose = values.purpose
   const propertyType = values.propertyType
   if (purpose) facts.push(purpose)
   if (propertyType) facts.push(propertyType)
 
-  if (listing.categoryKey === 'properties' && purpose !== 'For sale') {
-    const details = listing.details as Record<string, unknown> | undefined
+  if (kind === 'properties' && purpose !== 'For sale') {
     const rawUnits = Array.isArray(details?.units) ? details.units : []
     const unitPrices = rawUnits
       .map((unit) => unit && typeof unit === 'object' ? (unit as Record<string, unknown>).rent : '')
