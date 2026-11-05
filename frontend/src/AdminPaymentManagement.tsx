@@ -13,6 +13,7 @@ type PaymentConfiguration = {
   feeSettings: { feePayer: 'customer' | 'platform'; platformFeeEnabled: boolean; platformFeeType: 'fixed' | 'percentage'; platformFeeValue: number; agentCommissionEnabled: boolean; agentCommissionType: 'fixed' | 'percentage'; agentCommissionValue: number }
   escrowSettings: { enabled: boolean; holdingPeriodHours: number; automaticRelease: boolean }
   inspectionSettings: { enabled: boolean; requirePayment: boolean; bookingExpiryHours: number }
+  listingFeeSettings: { enabled: boolean; propertyFee: number; productFee: number; serviceFee: number }
   updatedAt: string
 }
 
@@ -75,7 +76,7 @@ export default function AdminPaymentManagement() {
   const update = <K extends keyof PaymentConfiguration>(key: K, value: PaymentConfiguration[K]) => {
     setConfig(current => current ? { ...current, [key]: value } : current)
   }
-  const updateNested = (key: 'transactionSettings' | 'feeSettings' | 'escrowSettings' | 'inspectionSettings', field: string, value: string | number | boolean) => {
+  const updateNested = (key: 'transactionSettings' | 'feeSettings' | 'escrowSettings' | 'inspectionSettings' | 'listingFeeSettings', field: string, value: string | number | boolean) => {
     setConfig(current => current ? ({ ...current, [key]: { ...current[key], [field]: value } } as PaymentConfiguration) : current)
   }
 
@@ -226,6 +227,16 @@ export default function AdminPaymentManagement() {
         <label className="payment-toggle-row"><span><strong>Enable agent commission</strong><small>Commission settlement will be connected to verified transactions.</small></span><input type="checkbox" checked={config.feeSettings.agentCommissionEnabled} onChange={e => updateNested('feeSettings','agentCommissionEnabled',e.target.checked)} /></label>
       </div>
 
+      <div className="payment-panel">
+        <h3>Marketplace listing fees</h3>
+        <p>Set the listing publication fee for each marketplace type. Amounts are entered in the selected payment currency. These fees are enforced by the backend when listing checkout is connected.</p>
+        <label className="payment-toggle-row"><span><strong>Require payment for listing publication</strong><small>When enabled, a listing must have a verified listing-fee payment before it can proceed to publication.</small></span><input type="checkbox" checked={config.listingFeeSettings.enabled} onChange={e => updateNested('listingFeeSettings','enabled',e.target.checked)} /></label>
+        <div className="payment-grid">
+          <NumberField label="Property listing fee" value={config.listingFeeSettings.propertyFee} onChange={v => updateNested('listingFeeSettings','propertyFee',v)} />
+          <NumberField label="Product listing fee" value={config.listingFeeSettings.productFee} onChange={v => updateNested('listingFeeSettings','productFee',v)} />
+          <NumberField label="Service listing fee" value={config.listingFeeSettings.serviceFee} onChange={v => updateNested('listingFeeSettings','serviceFee',v)} />
+        </div>
+      </div>
       <div className="payment-panel">
         <h3>Escrow & inspection policies</h3>
         <p>These are administrative policy preferences. Do not accept customer funds until the escrow ledger, refund, dispute and release workflows are implemented.</p>
