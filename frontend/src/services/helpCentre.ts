@@ -16,7 +16,6 @@ export interface HelpMessage {
   sender: 'user' | 'assistant' | 'admin'
   text: string
   metadata?: {
-    reasoningMode?: 'model_assisted' | 'guided_fallback'
     guide?: HelpGuide | null
     suggestions?: string[]
     actions?: Array<{ label: string; path: string }>
@@ -90,7 +89,6 @@ export async function sendHelpMessage(message: string, conversationId?: string, 
     actions: Array<{ label: string; path: string }>
     matches: NonNullable<HelpMessage['metadata']>['matches']
     needsAdmin: boolean
-    reasoningMode?: 'model_assisted' | 'guided_fallback'
     usage: HelpUsage
   }>(
     await fetch('/api/help-centre/chat', {
