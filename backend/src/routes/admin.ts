@@ -1197,4 +1197,186 @@ adminRouter.put(
   },
 )
 
+
+
+/**
+ * Real marketplace account-verification queue.
+ * This is distinct from profile-change approval: registration currently
+ * records verification_status on marketplace_users, but does not yet
+ * collect identity documents or arbitrary profile-change submissions.
+ */
+adminRouter.get(
+  '/profile-approvals',
+  requirePermission('users.view'),
+  async (req, res) => {
+    const view = req.query.view === 'history' ? 'history' : 'pending'
+    const parsedLimit = Number(req.query.limit ?? 100)
+    if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 200) {
+      res.status(400).json({ error: 'Limit must be between 1 and 200.' })
+      return
+    }
+
+    try {
+      const db = getDatabasePool()
+      if (view === 'pending') {
+        const result = await db.query(
+          `SELECT
+             u.user_id::text AS id,
+             u.display_name AS "displayName",
+             u.email,
+             u.account_type AS "accountType",
+             u.verification_status AS status,
+             u.created_at AS "submittedAt"
+           FROM public.marketplace_users u
+           WHERE u.verification_status = 'pending'
+             AND u.account_status = 'active'
+           ORDER BY u.created_at ASC, u.user_id ASC
+           LIMIT $1`,
+          [parsedLimit],
+        )
+
+        res.status(200).json({ status: 'ok', view, requests: result.rows })
+        return
+      }
+
+      const result = await db.query(
+        `SELECT
+           l.target_id AS id,
+           COALESCE(u.display_name, 'Deleted account') AS "displayName",
+           COALESCE(u.email, '') AS email,
+           COALESCE(u.account_type, 'unknown') AS "accountType",
+           CASE
+             WHEN l.action_key = 'account.verification_approved' THEN 'approved'
+             ELSE 'rejected'
+           END AS status,
+           l.created_at AS "reviewedAt",
+           actor.display_name AS reviewer,
+           COALESCE(l.details->>'reason', '') AS reason
+         FROM public.marketplace_audit_logs l
+         LEFT JOIN public.marketplace_users u
+           ON u.user_id::text = l.target_id
+         LEFT JOIN public.marketplace_users actor
+           ON actor.user_id = l.actor_user_id
+         WHERE l.target_type = 'marketplace_user'
+           AND l.action_key IN (
+             'account.verification_approved',
+             'account.verification_rejected'
+           )
+         ORDER BY l.created_at DESC, l.audit_id DESC
+         LIMIT $1`,
+        [parsedLimit],
+      )
+
+      res.status(200).json({ status: 'ok', view, requests: result.rows })
+    } catch (error: unknown) {
+      console.error(
+        'Account verification queue failed:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+      res.status(500).json({ error: 'Account verification records could not be loaded.' })
+    }
+  },
+)
+
+adminRouter.patch(
+  '/profile-approvals/:userId',
+  requirePermission('users.manage'),
+  async (req, res) => {
+    const userIdParam = req.params.userId
+    const targetUserId = typeof userIdParam === 'string' ? userIdParam : ''
+    const actorUserId = String(res.locals.authenticatedUserId ?? '')
+    const decision = req.body?.decision
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : ''
+
+    if (!/^[1-9]\\d*$/.test(targetUserId)) {
+      res.status(400).json({ error: 'Invalid marketplace account ID.' })
+      return
+    }
+    if (decision !== 'approved' && decision !== 'rejected') {
+      res.status(400).json({ error: 'Decision must be approved or rejected.' })
+      return
+    }
+    if (reason.length < 8 || reason.length > 500) {
+      res.status(400).json({ error: 'Provide a review reason between 8 and 500 characters.' })
+      return
+    }
+    if (!actorUserId) {
+      res.status(401).json({ error: 'Administrator session is required.' })
+      return
+    }
+
+    const db = getDatabasePool()
+    const client = await db.connect()
+    try {
+      await client.query('BEGIN')
+      const accountResult = await client.query(
+        `SELECT
+           user_id::text AS id,
+           display_name AS "displayName",
+           email,
+           account_type AS "accountType",
+           verification_status AS status
+         FROM public.marketplace_users
+         WHERE user_id = $1
+         FOR UPDATE`,
+        [targetUserId],
+      )
+      const account = accountResult.rows[0]
+      if (!account) {
+        await client.query('ROLLBACK')
+        res.status(404).json({ error: 'Marketplace account not found.' })
+        return
+      }
+      if (account.status !== 'pending') {
+        await client.query('ROLLBACK')
+        res.status(409).json({ error: 'This account is no longer awaiting verification review.' })
+        return
+      }
+
+      await client.query(
+        `UPDATE public.marketplace_users
+         SET verification_status = $1, updated_at = NOW()
+         WHERE user_id = $2`,
+        [decision, targetUserId],
+      )
+      await client.query(
+        `INSERT INTO public.marketplace_audit_logs
+           (actor_user_id, action_key, target_type, target_id, details)
+         VALUES ($1, $2, 'marketplace_user', $3, $4::jsonb)`,
+        [
+          actorUserId,
+          decision === 'approved'
+            ? 'account.verification_approved'
+            : 'account.verification_rejected',
+          targetUserId,
+          JSON.stringify({
+            displayName: account.displayName,
+            accountType: account.accountType,
+            previousStatus: 'pending',
+            newStatus: decision,
+            reason,
+          }),
+        ],
+      )
+      await client.query('COMMIT')
+      res.status(200).json({
+        status: 'ok',
+        message: decision === 'approved'
+          ? 'Account verification approved.'
+          : 'Account verification rejected.',
+        request: { ...account, status: decision, reason },
+      })
+    } catch (error: unknown) {
+      await client.query('ROLLBACK').catch(() => undefined)
+      console.error(
+        'Account verification decision failed:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+      res.status(500).json({ error: 'The verification decision could not be saved.' })
+    } finally {
+      client.release()
+    }
+  },
+)
+
 export default adminRouter
