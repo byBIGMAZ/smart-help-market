@@ -289,6 +289,8 @@ function expandSuggestionSelection(
     || prior.includes('agent listing workflow')
     || prior.includes('seller product listing workflow')
     || prior.includes('service provider listing workflow')
+    || prior.includes('product listing issue')
+    || prior.includes('service listing issue')
     || prior.includes('listing studio')
     || prior.includes('represented property details')
   if (listingTroubleshooting) {
