@@ -1712,12 +1712,14 @@ router.post('/chat', async (req: Request, res: Response) => {
         )
         const wasGenericFallback = answer.text.startsWith('I can help you find properties, products and services')
         if (wasGenericFallback && interpretedAnswer.text !== answer.text) {
+          const deterministicFallbackAnswer = answer
+          const deterministicFallbackPrediction = prediction
           interpretedRequest = candidate
           answer = interpretedAnswer
           prediction = await predictIntent(candidate)
-          accountSnapshot.activeRole = typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null
           try {
-            await getDatabasePool().query(
+            await client.query('BEGIN')
+            await client.query(
               `UPDATE public.marketplace_help_messages
                SET message_text = $1, metadata = $2::jsonb
                WHERE message_id = $3 AND conversation_id = $4 AND sender_type = 'assistant'`,
@@ -1731,13 +1733,13 @@ router.post('/chat', async (req: Request, res: Response) => {
                 reasoningMode: 'guided_fallback',
               }), assistantMessage.rows[0].id, conversationId],
             )
-            await getDatabasePool().query(
+            await client.query(
               `UPDATE public.marketplace_help_conversations
                SET context = $2::jsonb, updated_at = NOW()
                WHERE conversation_id = $1 AND user_id = $3`,
               [conversationId, JSON.stringify(answer.context || {}), userId],
             )
-            await getDatabasePool().query(
+            await client.query(
               `UPDATE public.marketplace_ai_learning_events
                SET intent_key = $2, confidence = $3, meaningful_token_count = $4,
                    model_version = $5, feature_hashes = $6::jsonb
@@ -1745,9 +1747,12 @@ router.post('/chat', async (req: Request, res: Response) => {
               [assistantMessage.rows[0].id, prediction.intent, prediction.confidence,
                 countMeaningfulTokens(candidate), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(candidate))],
             )
+            await client.query('COMMIT')
+            accountSnapshot.activeRole = typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null
           } catch {
-            // The original committed answer remains valid if enrichment cannot
-            // be persisted. No marketplace action is performed by this step.
+            await client.query('ROLLBACK').catch(() => undefined)
+            answer = deterministicFallbackAnswer
+            prediction = deterministicFallbackPrediction
             interpretedRequest = null
           }
         }
