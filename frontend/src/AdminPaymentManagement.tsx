@@ -144,7 +144,7 @@ export default function AdminPaymentManagement() {
   }
 
   const updateOtpDigit = (index: number, rawValue: string) => {
-    const digit = rawValue.replace(/\\D/g, '').slice(-1)
+    const digit = rawValue.replace(/\D/g, '').slice(-1)
     const next = [...otpDigits]
     next[index] = digit
     setOtpDigits(next)
@@ -154,7 +154,7 @@ export default function AdminPaymentManagement() {
 
   const handleOtpPaste = (event: ClipboardEvent<HTMLInputElement>) => {
     event.preventDefault()
-    const pasted = event.clipboardData.getData('text').replace(/\\D/g, '').slice(0, 6)
+    const pasted = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
     if (!pasted) return
     const next = Array(6).fill('')
     pasted.split('').forEach((digit, index) => { next[index] = digit })
