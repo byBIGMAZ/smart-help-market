@@ -38,6 +38,11 @@ const SETTING_LABELS: Record<string, string> = {
   'help.ai.learning_enabled': 'Adaptive learning',
   'help.ai.feedback_enabled': 'Response feedback',
   'help.messages.free_limit': 'Free monthly messages',
+  'geo.enabled': 'Geographic lookup',
+  'geo.provider': 'Location lookup provider',
+  'geo.country_code': 'Default country code',
+  'geo.cache_ttl_hours': 'Geocoding cache lifetime (hours)',
+  'geo.max_results': 'Maximum location results',
 }
 
 const SETTING_HELP: Record<string, string> = {
@@ -51,6 +56,11 @@ const SETTING_HELP: Record<string, string> = {
   'help.ai.learning_enabled': 'Allow the built-in engine to improve phrase weights from explicit user corrections.',
   'help.ai.feedback_enabled': 'Allow users to rate assistant responses and submit corrections.',
   'help.messages.free_limit': 'Monthly assistant message allowance per user. Zero means unlimited free use.',
+  'geo.enabled': 'Enable server-side location lookup. Configure the GEOCODING_USER_AGENT server environment variable before enabling this feature.',
+  'geo.provider': 'Only the Nominatim OpenStreetMap provider is currently implemented. Provider credentials and contact details must remain in server environment configuration.',
+  'geo.country_code': 'Restrict location lookup results to a two-letter country code, such as ng.',
+  'geo.cache_ttl_hours': 'How many hours successful location lookup results remain cached.',
+  'geo.max_results': 'Maximum number of location matches returned by the provider. The current provider supports up to five.',
 }
 
 const GROUP_LABELS: Record<string, string> = {
@@ -59,6 +69,7 @@ const GROUP_LABELS: Record<string, string> = {
   communication: 'Contact & communication protection',
   help_centre: 'SMART HELP Centre & BIGMAZ Intelligence',
   help: 'SMART HELP Centre & BIGMAZ Intelligence',
+  geography: 'Location & Geographic Intelligence',
 }
 
 function displayValue(value: unknown): string {
@@ -261,6 +272,7 @@ export default function AdminSettingsManagement() {
             const isBoolean = typeof setting.value === 'boolean' || setting.value === 'true' || setting.value === 'false'
             const policy = isContactPolicy ? parseContactPolicy(setting.value) : null
             const isNumber = typeof setting.value === 'number' || setting.key === 'help.messages.free_limit'
+            const isProvider = setting.key === 'geo.provider'
             const isReadOnlyObject = typeof setting.value === 'object' && setting.value !== null && !isContactPolicy
 
             return (
@@ -304,12 +316,27 @@ export default function AdminSettingsManagement() {
                     />
                   ) : isReadOnlyObject ? (
                     <div className="admin-setting-readonly">Managed by the relevant platform module. Raw configuration is not editable here.</div>
+                  ) : isProvider ? (
+                    <>
+                      <select
+                        id={`setting-${setting.key}`}
+                        value={values[setting.key] ?? 'nominatim'}
+                        onChange={(event) => setValues((current) => ({ ...current, [setting.key]: event.target.value }))}
+                        disabled={savingKey !== null}
+                      >
+                        <option value="nominatim">Nominatim (OpenStreetMap)</option>
+                      </select>
+                      <button type="button" className="admin-primary-button" onClick={() => void handleTextSave(setting)} disabled={savingKey !== null || values[setting.key] === displayValue(setting.value)}>
+                        {savingKey === setting.key ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </>
                   ) : (
                     <>
                       <input
                         id={`setting-${setting.key}`}
                         type={isNumber ? 'number' : 'text'}
-                        min={isNumber ? 0 : undefined}
+                        min={isNumber ? (setting.key === 'geo.max_results' || setting.key === 'geo.cache_ttl_hours' ? 1 : 0) : undefined}
+                        max={setting.key === 'geo.max_results' ? 5 : setting.key === 'geo.cache_ttl_hours' ? 8760 : undefined}
                         step={isNumber ? 1 : undefined}
                         value={values[setting.key] ?? ''}
                         onChange={(event) => setValues((current) => ({ ...current, [setting.key]: event.target.value }))}
