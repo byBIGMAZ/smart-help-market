@@ -1248,7 +1248,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     const previous = typeof nextContext.lastSuggestionContext === 'string' ? nextContext.lastSuggestionContext : ''
     return {
       text: `I understand you selected "${selected}" after I asked: "${previous}". I will keep that context rather than restart the conversation. Please tell me one more detail about what you want to achieve, or describe what happens on your screen.`,
-      suggestions: ['Explain what I should do next', 'I need more specific help', 'Speak to an administrator'],
+      suggestions: ['Speak to an administrator'],
       context: nextContext,
     }
   }
