@@ -545,7 +545,7 @@ export default function ListingEditorPage() {
 
     try {
       const payload = {
-        categoryKey: kind,
+        categoryKey,
         details: {
           version: 1 as const,
           kind,
