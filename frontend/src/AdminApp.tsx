@@ -131,18 +131,18 @@ function AdminApp() {
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [dashboardTime, setDashboardTime] = useState(() => new Date())
   const [automationView, setAutomationView] = useState<'control' | 'rules' | 'monitoring'>('control')
+  const [peopleView, setPeopleView] = useState<'accounts' | 'roles'>('accounts')
 
   // One permission-aware navigation catalogue drives both admin navigation surfaces.
   // Server routes remain the final authority for every operation.
   const adminNavigation = [
     { label: 'Overview', path: 'overview', permission: 'dashboard.view', superAdminOnly: false, group: 'Overview' },
-    { label: 'User Management', path: 'users', permission: 'users.view', superAdminOnly: false, group: 'People & Access' },
+    { label: 'Users & Access', path: 'users', permission: 'users.view', secondaryPermission: 'roles.view', superAdminOnly: false, group: 'People & Access' },
     { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false, group: 'Approvals & Listings' },
     { label: 'Categories', path: 'categories', permission: 'categories.view', superAdminOnly: false, group: 'Marketplace Setup' },
     { label: 'Platform Settings', path: 'settings', permission: 'settings.view', superAdminOnly: false, group: 'Marketplace Setup' },
     { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view', superAdminOnly: false, group: 'Insights & Security' },
     { label: 'Automation', path: 'automation', permission: 'automation.view', superAdminOnly: false, group: 'Automation' },
-    { label: 'Roles & Permissions', path: 'roles', permission: 'roles.view', superAdminOnly: false, group: 'People & Access' },
     { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false, group: 'Communications & Support' },
     { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false, group: 'Insights & Security' },
     { label: 'Help Support Inbox', path: 'help-support', permission: '', superAdminOnly: true, group: 'Communications & Support' },
@@ -152,7 +152,7 @@ function AdminApp() {
   const visibleAdminNavigation = adminNavigation.filter((item) =>
     item.superAdminOnly
       ? Boolean(user?.roles.includes('super_admin'))
-      : Boolean(item.permission && user?.permissions.includes(item.permission)),
+      : Boolean((item.permission && user?.permissions.includes(item.permission)) || (item.secondaryPermission && user?.permissions.includes(item.secondaryPermission))),
   )
   const navigationGroups = Array.from(new Set(visibleAdminNavigation.map((item) => item.group))).map((group) => ({
     label: group,
@@ -580,7 +580,7 @@ useEffect(() => {
     const hasAccess = navigationItem && (
       navigationItem.superAdminOnly
         ? Boolean(user?.roles.includes('super_admin'))
-        : Boolean(navigationItem.permission && user?.permissions.includes(navigationItem.permission))
+        : Boolean((navigationItem.permission && user?.permissions.includes(navigationItem.permission)) || (navigationItem.secondaryPermission && user?.permissions.includes(navigationItem.secondaryPermission)))
     )
     if (!hasAccess || nextSection === section) return
     setSectionHistory((current) => [...current, section])
@@ -601,6 +601,7 @@ useEffect(() => {
     if (window.history.length > 1) window.history.back()
   }
   function openUsers() {
+    setPeopleView('accounts')
     navigateAdminSection('users')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
@@ -624,7 +625,8 @@ useEffect(() => {
   }
 
   function openRoles() {
-    navigateAdminSection('roles')
+    setPeopleView('roles')
+    navigateAdminSection('users')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
@@ -767,7 +769,7 @@ function openAutomationMonitoring() {
       item.path === path && (
         item.superAdminOnly
           ? Boolean(user?.roles.includes('super_admin'))
-          : Boolean(item.permission && user?.permissions.includes(item.permission))
+          : Boolean((item.permission && user?.permissions.includes(item.permission)) || (item.secondaryPermission && user?.permissions.includes(item.secondaryPermission)))
       ),
     )
     if (!allowed) return
@@ -1397,8 +1399,20 @@ function openAutomationMonitoring() {
           </>
         )}
 
-        {/* USER MANAGEMENT */}
+        {/* COMBINED PEOPLE AND ACCESS WORKSPACE TABS */}
         {section === 'users' && (
+          <div className="admin-workspace-tabs" role="tablist" aria-label="People and access sections">
+            {user?.permissions.includes('users.view') && (
+              <button type="button" role="tab" aria-selected={peopleView === 'accounts'} className={peopleView === 'accounts' ? 'is-active' : ''} onClick={openUsers}>User Accounts</button>
+            )}
+            {user?.permissions.includes('roles.view') && (
+              <button type="button" role="tab" aria-selected={peopleView === 'roles'} className={peopleView === 'roles' ? 'is-active' : ''} onClick={openRoles}>Roles &amp; Permissions</button>
+            )}
+          </div>
+        )}
+
+        {/* USER MANAGEMENT */}
+        {section === 'users' && peopleView === 'accounts' && user?.permissions.includes('users.view') && (
           <section className="admin-users-section">
             <div className="admin-section-heading">
               <div>
@@ -1807,7 +1821,7 @@ function openAutomationMonitoring() {
         )}
 
         {/* ROLE MANAGEMENT */}
-        {section === 'roles' && (
+        {section === 'users' && peopleView === 'roles' && user?.permissions.includes('roles.view') && (
           <section className="admin-users-section">
             <div className="admin-section-heading">
               <div>
@@ -1974,7 +1988,7 @@ function openAutomationMonitoring() {
         )}
 
         {/* ROLE PERMISSION EDITOR */}
-        {section === 'roles' && renderPermissionEditor()}
+        {section === 'users' && peopleView === 'roles' && user?.permissions.includes('roles.view') && renderPermissionEditor()}
 
         {/* LISTING MODERATION */}
         {section === 'moderation' && (
