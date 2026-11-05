@@ -1647,7 +1647,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
       ['help.ai.model_enabled'],
     )
-    const modelEnabled = modelSetting.rows[0]?.setting_value !== false
+    const modelEnabled = modelSetting.rows[0]?.setting_value === true
     const prediction = await predictIntent(effectiveMessage)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
