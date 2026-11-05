@@ -350,6 +350,11 @@ function expandSuggestionSelection(
     'review my listing before submission': 'Help me review my listing before submission, checking completeness, accuracy, unit details, prices, location and listing terms.',
     'i need to edit the draft': 'I need to edit the draft I already saved without creating a duplicate.',
     'i am ready to submit': 'I am ready to submit my listing. Explain the submission steps and checks before publishing.',
+    'i cannot see a submit button': 'I cannot see a Submit or Publish button for my saved listing.',
+    'i am using the correct account': 'I am using the correct account but the listing save request still says unauthorized.',
+    'i may be signed into another account': 'I may be signed into a different account from the one that owns the draft.',
+    'i corrected the field': 'I corrected the field that the listing form identified. What should I check now?',
+    'the network is working now': 'My network connection is working now. Help me check whether the draft saved.',
     'explain what i should do next': 'Explain the next practical step based on the current task and my active workspace.',
     'i need more specific help': 'Ask me a focused follow-up question about the problem I am trying to solve.',
     'i need help with property units': 'Explain how to configure the available property units, names, unit-level details and unit-specific prices.',
@@ -441,6 +446,14 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   if (awaiting === 'listing_type_for_fields' || message.includes('the property is for rent') || message.includes('the property is for sale') || message.includes('the property is a shortlet')) {
+    const hasPurpose = message.includes('for rent') || message.includes('for sale') || message.includes('shortlet')
+    if (awaiting === 'listing_type_for_fields' && !hasPurpose) {
+      return {
+        text: 'Which listing purpose are you setting up? The required fields and price structure depend on whether the property is for rent, for sale or a shortlet.',
+        suggestions: ['It is for rent', 'It is for sale', 'It is a shortlet'],
+        context: nextContext,
+      }
+    }
     const purpose = message.includes('shortlet') ? 'shortlet' : message.includes('sale') ? 'sale' : 'rental'
     delete nextContext.awaiting
     return {
@@ -484,6 +497,15 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       text: 'Open your own workspace listing page, find the existing draft and select Edit draft. Continue in that record and save your changes. Do not select New listing unless you deliberately want a separate listing. This avoids accidental duplicate drafts.',
       actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
       suggestions: ['I found the draft', 'It is still missing', 'Review my listing before submission'],
+      context: nextContext,
+    }
+  }
+
+  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('i cannot see a submit button')) {
+    return {
+      text: 'A saved draft may not yet have a submission action, or the action may be shown only after required information is complete. Open the draft and check its status, validation messages and available buttons. Do not assume that Save draft publishes it. If no Submit or Publish action appears after the review, tell me the status label and the buttons you can see.',
+      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
+      suggestions: ['Review my listing before submission', 'I am ready to submit', 'Speak to an administrator'],
       context: nextContext,
     }
   }
@@ -534,6 +556,35 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       return {
         text: 'A validation error means one or more values did not pass the form checks. Read the message carefully and note the field it identifies. Check that required fields are completed, numbers contain valid values, and unit details are consistent with the listing type. Share the exact validation text and field name so I can explain the correction.',
         suggestions: ['The form still says fields are missing', 'I corrected the field', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('may be signed into a different account')) {
+      return {
+        text: 'Sign out and sign back in with the account that originally created the draft. Then open the same workspace and check the Drafts list. Do not create a new listing as a workaround. If you are unsure which account owns the draft, contact support so ownership can be checked safely.',
+        suggestions: ['I am using the correct account', 'I found the draft', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('using the correct account')) {
+      return {
+        text: 'If you are certain this is the account that owns the draft, the issue may be a server-side permission or session problem. Refresh your sign-in session once, reopen the draft from your own workspace and retry only after confirming the draft is still present. If the same unauthorized response appears, send the exact message to support for an ownership and role-permission check.',
+        suggestions: ['It works after signing in again', 'I still see unauthorized', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('corrected the field')) {
+      return {
+        text: 'Now check the entire form for any other required fields marked as incomplete. Save the draft again and wait for a confirmation. If the validation error remains, share the exact field name and message because more than one field may need correction.',
+        suggestions: ['The draft saved successfully', 'The form still says fields are missing', 'I see an error message'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('network connection is working now')) {
+      return {
+        text: 'Before retrying, open your workspace listings page and check whether the draft already exists. If it does, reopen that draft and continue. If it does not, return to the form and save once while the connection is stable. This check helps avoid creating duplicate listings after an uncertain network response.',
+        actions: [{ label: 'Check my saved listings', path: listingPath }],
+        suggestions: ['I found the draft', 'It is still missing', 'The draft saved successfully'],
         context: { ...nextContext, awaiting: 'listing_save_detail' },
       }
     }
