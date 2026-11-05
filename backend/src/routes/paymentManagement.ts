@@ -232,7 +232,7 @@ router.post('/credentials/verify-code', async (req, res) => {
       const otp = await client.query(
         `SELECT otp_id, code_hash, attempts
          FROM public.marketplace_payment_credential_otps
-         WHERE admin_user_id = $1 AND consumed_at IS NULL AND expires_at > NOW()
+         WHERE admin_user_id = $1 AND consumed_at IS NULL AND verified_at IS NULL AND expires_at > NOW()
          ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
         [res.locals.superAdminUserId],
       )
@@ -267,6 +267,26 @@ router.post('/credentials/verify-code', async (req, res) => {
   } catch (error) {
     console.error('Payment OTP verification failed:', error instanceof Error ? error.message : 'Unknown error')
     res.status(500).json({ error: 'The security code could not be verified.' })
+  }
+})
+
+router.post('/credentials/cancel-verification', async (req, res) => {
+  const authorizationToken = cleanString(req.body?.authorizationToken, 200)
+  if (!authorizationToken) {
+    res.status(200).json({ status: 'ok' })
+    return
+  }
+  try {
+    await getDatabasePool().query(
+      `UPDATE public.marketplace_payment_credential_otps
+       SET consumed_at = NOW(), credential_change_token_hash = NULL
+       WHERE admin_user_id = $1 AND credential_change_token_hash = $2 AND consumed_at IS NULL`,
+      [res.locals.superAdminUserId, hashAuthorizationToken(authorizationToken)],
+    )
+    res.status(200).json({ status: 'ok' })
+  } catch (error) {
+    console.error('Payment credential verification cancellation failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'The temporary credential authorization could not be cancelled.' })
   }
 })
 
