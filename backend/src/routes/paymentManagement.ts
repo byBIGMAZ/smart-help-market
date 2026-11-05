@@ -1,0 +1,250 @@
+import { Router } from 'express'
+import { createCipheriv, createHash, createHmac, randomBytes } from 'node:crypto'
+import { getDatabasePool } from '../database'
+import { requireSuperAdmin } from '../auth/requireSuperAdmin'
+
+const router = Router()
+const OTP_LIFETIME_MINUTES = 10
+const OTP_RESEND_COOLDOWN_SECONDS = 60
+
+function getEncryptionKey(): Buffer {
+  const raw = process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY
+  if (!raw) throw new Error('Payment credential encryption is not configured.')
+  const key = Buffer.from(raw, 'base64')
+  if (key.length !== 32) throw new Error('Payment credential encryption key must be 32 bytes.')
+  return key
+}
+
+function encryptCredential(value: string): string {
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', getEncryptionKey(), iv)
+  const encrypted = Buffer.concat([cipher.update(value, 'utf8'), cipher.final()])
+  return [iv.toString('base64'), cipher.getAuthTag().toString('base64'), encrypted.toString('base64')].join('.')
+}
+
+function hashOtp(code: string): string {
+  const pepper = process.env.PAYMENT_OTP_PEPPER
+  if (!pepper || pepper.length < 32) throw new Error('Payment OTP protection is not configured.')
+  return createHmac('sha256', pepper).update(code).digest('hex')
+}
+
+function cleanString(value: unknown, max = 500): string {
+  return typeof value === 'string' ? value.trim().slice(0, max) : ''
+}
+
+router.use(requireSuperAdmin)
+
+router.get('/configuration', async (_req, res) => {
+  try {
+    const result = await getDatabasePool().query(
+      `SELECT enabled, mode, public_key AS "publicKey",
+              (secret_key_ciphertext IS NOT NULL) AS "secretKeyConfigured",
+              (webhook_secret_ciphertext IS NOT NULL) AS "webhookSecretConfigured",
+              currency_code AS "currencyCode", payment_channels AS "paymentChannels",
+              transaction_settings AS "transactionSettings", fee_settings AS "feeSettings",
+              escrow_settings AS "escrowSettings", inspection_settings AS "inspectionSettings",
+              updated_at AS "updatedAt"
+       FROM public.marketplace_payment_configuration WHERE configuration_id = 1`,
+    )
+    res.status(200).json({ status: 'ok', configuration: result.rows[0] ?? null })
+  } catch (error) {
+    console.error('Payment configuration load failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'Payment configuration could not be loaded.' })
+  }
+})
+
+router.put('/configuration', async (req, res) => {
+  const mode = req.body?.mode
+  const enabled = req.body?.enabled
+  const publicKey = cleanString(req.body?.publicKey, 300)
+  const currencyCode = cleanString(req.body?.currencyCode, 3).toUpperCase()
+  const paymentChannels = req.body?.paymentChannels
+  const transactionSettings = req.body?.transactionSettings
+  const feeSettings = req.body?.feeSettings
+  const escrowSettings = req.body?.escrowSettings
+  const inspectionSettings = req.body?.inspectionSettings
+
+  if (!['test', 'live'].includes(mode) || typeof enabled !== 'boolean' ||
+      !/^[A-Z]{3}$/.test(currencyCode) ||
+      !Array.isArray(paymentChannels) ||
+      !paymentChannels.every((v: unknown) => typeof v === 'string' && ['card','bank','ussd','mobile_money','bank_transfer'].includes(v)) ||
+      ![transactionSettings, feeSettings, escrowSettings, inspectionSettings].every(v => v && typeof v === 'object' && !Array.isArray(v))) {
+    res.status(400).json({ error: 'Payment configuration contains invalid values.' })
+    return
+  }
+
+  if (mode === 'live' && !publicKey.startsWith('pk_live_')) {
+    res.status(400).json({ error: 'A valid Paystack live public key is required for live mode.' })
+    return
+  }
+  if (mode === 'test' && publicKey && !publicKey.startsWith('pk_test_')) {
+    res.status(400).json({ error: 'Use a Paystack test public key in test mode.' })
+    return
+  }
+
+  try {
+    const result = await getDatabasePool().query(
+      `UPDATE public.marketplace_payment_configuration
+       SET enabled = $1, mode = $2, public_key = NULLIF($3, ''),
+           currency_code = $4, payment_channels = $5::jsonb,
+           transaction_settings = $6::jsonb, fee_settings = $7::jsonb,
+           escrow_settings = $8::jsonb, inspection_settings = $9::jsonb,
+           updated_by = $10, updated_at = NOW()
+       WHERE configuration_id = 1
+       RETURNING enabled, mode, public_key AS "publicKey",
+         (secret_key_ciphertext IS NOT NULL) AS "secretKeyConfigured",
+         (webhook_secret_ciphertext IS NOT NULL) AS "webhookSecretConfigured",
+         currency_code AS "currencyCode", payment_channels AS "paymentChannels",
+         transaction_settings AS "transactionSettings", fee_settings AS "feeSettings",
+         escrow_settings AS "escrowSettings", inspection_settings AS "inspectionSettings",
+         updated_at AS "updatedAt"`,
+      [enabled, mode, publicKey, currencyCode, JSON.stringify(paymentChannels),
+       JSON.stringify(transactionSettings), JSON.stringify(feeSettings),
+       JSON.stringify(escrowSettings), JSON.stringify(inspectionSettings),
+       res.locals.superAdminUserId],
+    )
+    await getDatabasePool().query(
+      `INSERT INTO public.marketplace_audit_logs (actor_user_id, action_key, target_type, target_id, details)
+       VALUES ($1, 'payment.configuration.updated', 'payment_configuration', '1', $2::jsonb)`,
+      [res.locals.superAdminUserId, JSON.stringify({ mode, enabled, currencyCode })],
+    )
+    res.status(200).json({ status: 'ok', configuration: result.rows[0] })
+  } catch (error) {
+    console.error('Payment configuration update failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'Payment configuration could not be updated.' })
+  }
+})
+
+router.post('/credentials/request-code', async (_req, res) => {
+  try {
+    const db = getDatabasePool()
+    const admin = await db.query<{ email: string }>(
+      'SELECT email FROM public.marketplace_users WHERE user_id = $1 AND account_status = $2 LIMIT 1',
+      [res.locals.superAdminUserId, 'active'],
+    )
+    const email = admin.rows[0]?.email
+    if (!email) {
+      res.status(400).json({ error: 'The Super Admin account does not have a registered email address.' })
+      return
+    }
+
+    const recent = await db.query(
+      `SELECT created_at FROM public.marketplace_payment_credential_otps
+       WHERE admin_user_id = $1 AND created_at > NOW() - INTERVAL '60 seconds'
+       ORDER BY created_at DESC LIMIT 1`,
+      [res.locals.superAdminUserId],
+    )
+    if (recent.rowCount) {
+      res.status(429).json({ error: 'Please wait at least 60 seconds before requesting another code.' })
+      return
+    }
+
+    const resendKey = process.env.RESEND_API_KEY
+    const from = process.env.PAYMENT_OTP_FROM
+    if (!resendKey || !from) {
+      res.status(503).json({ error: 'Secure email delivery is not configured yet. Configure Resend on the backend first.' })
+      return
+    }
+
+    const code = randomBytes(4).readUInt32BE(0).toString().padStart(10, '0').slice(0, 6)
+    const codeHash = hashOtp(code)
+    await db.query(
+      `UPDATE public.marketplace_payment_credential_otps
+       SET consumed_at = NOW() WHERE admin_user_id = $1 AND consumed_at IS NULL`,
+      [res.locals.superAdminUserId],
+    )
+    await db.query(
+      `INSERT INTO public.marketplace_payment_credential_otps (admin_user_id, code_hash, expires_at)
+       VALUES ($1, $2, NOW() + INTERVAL '10 minutes')`,
+      [res.locals.superAdminUserId, codeHash],
+    )
+
+    const mail = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from,
+        to: [email],
+        subject: 'SMART HELP MARKET payment security code',
+        text: `Your one-time code to change payment credentials is ${code}. It expires in 10 minutes and can only be used once. If you did not request this code, ignore this email.`,
+      }),
+    })
+    if (!mail.ok) {
+      await db.query(
+        `UPDATE public.marketplace_payment_credential_otps
+         SET consumed_at = NOW() WHERE admin_user_id = $1 AND code_hash = $2`,
+        [res.locals.superAdminUserId, codeHash],
+      )
+      console.error('Resend email delivery failed with status:', mail.status)
+      res.status(502).json({ error: 'The verification email could not be delivered. Check the Resend configuration.' })
+      return
+    }
+    res.status(200).json({ status: 'ok', message: `A one-time code was sent to ${email.replace(/^(.).+(@.+)$/, '$1••••$2')}.`, expiresInSeconds: OTP_LIFETIME_MINUTES * 60 })
+  } catch (error) {
+    console.error('Payment OTP request failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'A payment security code could not be issued.' })
+  }
+})
+
+router.put('/credentials', async (req, res) => {
+  const code = cleanString(req.body?.code, 6)
+  const secretKey = cleanString(req.body?.secretKey, 500)
+  const webhookSecret = cleanString(req.body?.webhookSecret, 500)
+  if (!/^\d{6}$/.test(code) || (!secretKey && !webhookSecret)) {
+    res.status(400).json({ error: 'Enter the six-digit email code and at least one new credential.' })
+    return
+  }
+  if (secretKey && !secretKey.startsWith(req.body?.mode === 'live' ? 'sk_live_' : 'sk_test_')) {
+    res.status(400).json({ error: 'The Paystack secret key prefix does not match the selected environment.' })
+    return
+  }
+  try {
+    const db = getDatabasePool()
+    const client = await db.connect()
+    try {
+      await client.query('BEGIN')
+      const otp = await client.query(
+        `SELECT otp_id, code_hash, attempts
+         FROM public.marketplace_payment_credential_otps
+         WHERE admin_user_id = $1 AND consumed_at IS NULL AND expires_at > NOW()
+         ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+        [res.locals.superAdminUserId],
+      )
+      const record = otp.rows[0]
+      if (!record || record.attempts >= 5 || record.code_hash !== hashOtp(code)) {
+        if (record) await client.query('UPDATE public.marketplace_payment_credential_otps SET attempts = attempts + 1 WHERE otp_id = $1', [record.otp_id])
+        await client.query('COMMIT')
+        res.status(400).json({ error: 'The code is invalid, expired or has reached its attempt limit.' })
+        return
+      }
+      const encryptedSecret = secretKey ? encryptCredential(secretKey) : null
+      const encryptedWebhook = webhookSecret ? encryptCredential(webhookSecret) : null
+      await client.query(
+        `UPDATE public.marketplace_payment_configuration
+         SET secret_key_ciphertext = COALESCE($1, secret_key_ciphertext),
+             webhook_secret_ciphertext = COALESCE($2, webhook_secret_ciphertext),
+             updated_by = $3, updated_at = NOW()
+         WHERE configuration_id = 1`,
+        [encryptedSecret, encryptedWebhook, res.locals.superAdminUserId],
+      )
+      await client.query('UPDATE public.marketplace_payment_credential_otps SET consumed_at = NOW() WHERE otp_id = $1', [record.otp_id])
+      await client.query(
+        `INSERT INTO public.marketplace_audit_logs (actor_user_id, action_key, target_type, target_id, details)
+         VALUES ($1, 'payment.credentials.rotated', 'payment_configuration', '1', $2::jsonb)`,
+        [res.locals.superAdminUserId, JSON.stringify({ secretKeyChanged: Boolean(secretKey), webhookSecretChanged: Boolean(webhookSecret) })],
+      )
+      await client.query('COMMIT')
+      res.status(200).json({ status: 'ok', message: 'Payment credentials were encrypted and updated. Their values will not be displayed.' })
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined)
+      throw error
+    } finally {
+      client.release()
+    }
+  } catch (error) {
+    console.error('Payment credential update failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'Payment credentials could not be updated.' })
+  }
+})
+
+export default router
