@@ -142,6 +142,29 @@ router.put(
     const client = await db.connect()
 
     try {
+      const superAdminOnlySetting =
+        settingKey === 'communication.contact_policy' ||
+        settingKey === 'geo.enabled' ||
+        settingKey.startsWith('verification.required.')
+
+      if (superAdminOnlySetting) {
+        const roleCheck = await client.query(
+          `SELECT EXISTS (
+             SELECT 1
+             FROM public.marketplace_user_roles ur
+             INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+             WHERE ur.user_id = $1 AND r.role_key = 'super_admin'
+           ) AS allowed`,
+          [actorUserId],
+        )
+        if (!roleCheck.rows[0]?.allowed) {
+          res.status(403).json({
+            error: 'This security-sensitive setting can only be changed by a Super Admin.',
+          })
+          return
+        }
+      }
+
       await client.query('BEGIN')
 
       const existing = await client.query<SettingRow>(
