@@ -89,10 +89,6 @@ router.put('/configuration', async (req, res) => {
       res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
       return
     }
-    if (enabled && mode === 'live' && !current.rows[0]?.webhook_secret_ciphertext) {
-      res.status(409).json({ error: 'Configure the encrypted webhook secret before enabling live payments.' })
-      return
-    }
     if (transactionSettings.transactionExpiryMinutes < 5 || transactionSettings.transactionExpiryMinutes > 1440 ||
         transactionSettings.minimumAmount < 1 || transactionSettings.maximumAmount <= transactionSettings.minimumAmount ||
         feeSettings.platformFeeValue < 0 || feeSettings.agentCommissionValue < 0 ||
