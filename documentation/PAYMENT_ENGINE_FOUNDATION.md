@@ -33,3 +33,12 @@ The adapter rejects disabled gateways, missing or mismatched credentials, invali
 No public payment initialization route is enabled in this milestone. Before one is added, each payment purpose must have a server-owned payable record or calculation. Examples include a listing fee attached to a listing draft, an order calculated from a server-side cart, a service booking, or an inspection booking. Do not accept a client-supplied amount as authoritative.
 
 Live mode must remain disabled until callback verification, webhook signature verification, idempotency, amount/currency matching, and fulfillment rules are implemented and tested.
+
+## Super Admin listing-fee policy
+
+The payment configuration now includes `listing_fee_settings` with:
+
+- `enabled`: whether listing publication is intended to require a fee.
+- `propertyFee`, `productFee`, and `serviceFee`: integer amounts in the configured payment currency's major unit.
+
+These values are editable only through the Super Admin payment configuration endpoint, which validates them server-side and records the configuration change in the audit log. This is currently a policy/configuration control only. It does not charge users or block listing publication until the listing checkout and publication workflow is implemented.
