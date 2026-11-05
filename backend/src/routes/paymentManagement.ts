@@ -66,7 +66,8 @@ router.put('/configuration', async (req, res) => {
   if (!['test', 'live'].includes(mode) || typeof enabled !== 'boolean' ||
       !/^[A-Z]{3}$/.test(currencyCode) ||
       !Array.isArray(paymentChannels) ||
-      paymentChannels.length === 0 ||\n      !paymentChannels.every((v: unknown) => typeof v === 'string' && ['card','bank','ussd','mobile_money','bank_transfer'].includes(v)) ||
+      paymentChannels.length === 0 ||
+      !paymentChannels.every((v: unknown) => typeof v === 'string' && ['card','bank','ussd','mobile_money','bank_transfer'].includes(v)) ||
       ![transactionSettings, feeSettings, escrowSettings, inspectionSettings].every(v => v && typeof v === 'object' && !Array.isArray(v))) {
     res.status(400).json({ error: 'Payment configuration contains invalid values.' })
     return
