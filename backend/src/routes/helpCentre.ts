@@ -4,7 +4,7 @@ import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession
 import { requirePermission } from '../auth/requirePermission'
 import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, hashIntentFeatures, type BigmazIntent, type IntentWeight } from '../intelligence/bigmazEngine'
 import { resolveGeographicLocation } from '../geography/geocoding'
-import { generateBigmazReply, type BigmazAccountSnapshot, type BigmazConversationTurn } from '../intelligence/bigmazAssistant'
+import { generateBigmazReply, interpretBigmazMessage, type BigmazAccountSnapshot, type BigmazConversationTurn } from '../intelligence/bigmazAssistant'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
@@ -1595,7 +1595,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       [conversationId, message, JSON.stringify(suggestionOfMessageId ? { selectedSuggestionOfMessageId: suggestionOfMessageId } : {})],
     )
 
-    const answer = await answerMessage(effectiveMessage, context, assignedRoles, preferredRole)
+    let answer = await answerMessage(effectiveMessage, context, assignedRoles, preferredRole)
     const ownedListingSummary = await client.query<{
       category: string
       status: string
@@ -1648,7 +1648,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       ['help.ai.model_enabled'],
     )
     const modelEnabled = modelSetting.rows[0]?.setting_value === true
-    const prediction = await predictIntent(effectiveMessage)
+    let prediction = await predictIntent(effectiveMessage)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)
@@ -1690,10 +1690,75 @@ router.post('/chat', async (req: Request, res: Response) => {
     )
     await client.query('COMMIT')
 
+    let interpretedRequest: string | null = null
+    if (
+      modelEnabled
+      && prediction.intent === 'general'
+      && !answer.matches?.length
+      && !answer.actions?.length
+    ) {
+      const candidate = await interpretBigmazMessage({
+        message: effectiveMessage,
+        conversation: recentConversation,
+        account: accountSnapshot,
+        workflowContext: answer.context || {},
+      })
+      if (candidate && normalize(candidate) !== normalize(effectiveMessage)) {
+        const interpretedAnswer = await answerMessage(
+          candidate,
+          answer.context || context,
+          assignedRoles,
+          preferredRole,
+        )
+        const wasGenericFallback = answer.text.startsWith('I can help you find properties, products and services')
+        if (wasGenericFallback && interpretedAnswer.text !== answer.text) {
+          interpretedRequest = candidate
+          answer = interpretedAnswer
+          prediction = await predictIntent(candidate)
+          accountSnapshot.activeRole = typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null
+          try {
+            await getDatabasePool().query(
+              `UPDATE public.marketplace_help_messages
+               SET message_text = $1, metadata = $2::jsonb
+               WHERE message_id = $3 AND conversation_id = $4 AND sender_type = 'assistant'`,
+              [answer.text, JSON.stringify({
+                suggestions: answer.suggestions || [],
+                actions: answer.actions || [],
+                matches: answer.matches || [],
+                guide: answer.guide || null,
+                intent: prediction.intent,
+                modelVersion: prediction.modelVersion,
+                reasoningMode: 'guided_fallback',
+              }), assistantMessage.rows[0].id, conversationId],
+            )
+            await getDatabasePool().query(
+              `UPDATE public.marketplace_help_conversations
+               SET context = $2::jsonb, updated_at = NOW()
+               WHERE conversation_id = $1 AND user_id = $3`,
+              [conversationId, JSON.stringify(answer.context || {}), userId],
+            )
+            await getDatabasePool().query(
+              `UPDATE public.marketplace_ai_learning_events
+               SET intent_key = $2, confidence = $3, meaningful_token_count = $4,
+                   model_version = $5, feature_hashes = $6::jsonb
+               WHERE assistant_message_id = $1`,
+              [assistantMessage.rows[0].id, prediction.intent, prediction.confidence,
+                countMeaningfulTokens(candidate), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(candidate))],
+            )
+          } catch {
+            // The original committed answer remains valid if enrichment cannot
+            // be persisted. No marketplace action is performed by this step.
+            interpretedRequest = null
+          }
+        }
+      }
+    }
+
     let modelReply: string | null = null
     if (modelEnabled) {
       const generatedReply = await generateBigmazReply({
         message: effectiveMessage,
+        interpretedRequest: interpretedRequest || undefined,
         deterministicReply: answer.text,
         suggestions: answer.suggestions || [],
         actions: answer.actions || [],
