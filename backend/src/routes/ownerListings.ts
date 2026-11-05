@@ -103,18 +103,27 @@ async function readAndValidateRequest(req: Request, res: Response) {
     return null
   }
 
-  const title = (details.values.title ?? '').trim().slice(0, 180)
+  const title = (details.values.title ?? '').trim()
   const description = (details.values.description ?? '').trim()
-  const location = (details.values.location ?? '').trim().slice(0, 250)
+  const location = (details.values.location ?? '').trim()
+  const priceUnit = (details.values.priceUnit ?? '').trim()
   const priceText = (details.values.price ?? '').trim()
   const price = priceText === '' ? 0 : Number(priceText)
 
-  if (!Number.isFinite(price) || price < 0 || price > 999999999999.99) {
-    res.status(400).json({ error: 'Enter a valid listing price.' })
+  if (title.length > 180) {
+    res.status(400).json({ error: 'The listing title must not exceed 180 characters.' })
     return null
   }
   if (description.length > 5000) {
     res.status(400).json({ error: 'The listing description must not exceed 5,000 characters.' })
+    return null
+  }
+  if (location.length > 250 || priceUnit.length > 80) {
+    res.status(400).json({ error: 'The location or price basis is too long.' })
+    return null
+  }
+  if (!Number.isFinite(price) || price < 0 || price > 999999999999.99) {
+    res.status(400).json({ error: 'Enter a valid listing price.' })
     return null
   }
 
@@ -126,7 +135,7 @@ async function readAndValidateRequest(req: Request, res: Response) {
     description,
     location,
     price,
-    priceUnit: (details.values.priceUnit ?? '').trim().slice(0, 80),
+    priceUnit,
   }
 }
 
