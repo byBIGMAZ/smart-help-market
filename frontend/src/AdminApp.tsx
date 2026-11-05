@@ -143,6 +143,7 @@ function AdminApp() {
     { label: 'Role Management', path: 'roles', permission: 'roles.view', superAdminOnly: false },
     { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false },
     { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false },
+    { label: 'Help Support Inbox', path: 'help-support', permission: '', superAdminOnly: true },
     { label: 'Profile Approvals', path: 'profile-approvals', permission: '', superAdminOnly: true },
   ]
 
@@ -563,7 +564,13 @@ useEffect(() => {
 
   // Navigation
   function navigateAdminSection(nextSection: AdminSection) {
-    if (nextSection === section) return
+    const navigationItem = adminNavigation.find((item) => item.path === nextSection)
+    const hasAccess = navigationItem && (
+      navigationItem.superAdminOnly
+        ? Boolean(user?.roles.includes('super_admin'))
+        : Boolean(navigationItem.permission && user?.permissions.includes(navigationItem.permission))
+    )
+    if (!hasAccess || nextSection === section) return
     setSectionHistory((current) => [...current, section])
     setSection(nextSection)
   }
@@ -1200,15 +1207,17 @@ function openAutomationMonitoring() {
             <span /> Administrator
           </span>
 
-          <button
-            type="button"
-            className={`admin-nav-button ${section === 'help-support' ? 'is-active' : ''}`}
-            aria-current={section === 'help-support' ? 'page' : undefined}
-            onClick={openHelpSupport}
-          >
-            <span aria-hidden="true">✦</span>
-            Help Support Inbox
-          </button>
+          {user?.roles.includes('super_admin') && (
+            <button
+              type="button"
+              className={`admin-nav-button ${section === 'help-support' ? 'is-active' : ''}`}
+              aria-current={section === 'help-support' ? 'page' : undefined}
+              onClick={openHelpSupport}
+            >
+              <span aria-hidden="true">✦</span>
+              Help Support Inbox
+            </button>
+          )}
 
           {user?.permissions.includes('notifications.view') && (
   <button
