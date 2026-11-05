@@ -48,7 +48,7 @@ router.get('/configuration', async (_req, res) => {
               currency_code AS "currencyCode", payment_channels AS "paymentChannels",
               transaction_settings AS "transactionSettings", fee_settings AS "feeSettings",
               escrow_settings AS "escrowSettings", inspection_settings AS "inspectionSettings",
-              updated_at AS "updatedAt"
+              listing_fee_settings AS "listingFeeSettings", updated_at AS "updatedAt"
        FROM public.marketplace_payment_configuration WHERE configuration_id = 1`,
     )
     res.status(200).json({ status: 'ok', configuration: result.rows[0] ?? null })
@@ -68,13 +68,14 @@ router.put('/configuration', async (req, res) => {
   const feeSettings = req.body?.feeSettings
   const escrowSettings = req.body?.escrowSettings
   const inspectionSettings = req.body?.inspectionSettings
+  const listingFeeSettings = req.body?.listingFeeSettings
 
   if (!['test', 'live'].includes(mode) || typeof enabled !== 'boolean' ||
       !/^[A-Z]{3}$/.test(currencyCode) ||
       !Array.isArray(paymentChannels) ||
       paymentChannels.length === 0 ||
       !paymentChannels.every((v: unknown) => typeof v === 'string' && ['card','bank','ussd','mobile_money','bank_transfer'].includes(v)) ||
-      ![transactionSettings, feeSettings, escrowSettings, inspectionSettings].every(v => v && typeof v === 'object' && !Array.isArray(v))) {
+      ![transactionSettings, feeSettings, escrowSettings, inspectionSettings, listingFeeSettings].every(v => v && typeof v === 'object' && !Array.isArray(v))) {
     res.status(400).json({ error: 'Payment configuration contains invalid values.' })
     return
   }
@@ -110,7 +111,11 @@ router.put('/configuration', async (req, res) => {
         (feeSettings.platformFeeType === 'percentage' && feeSettings.platformFeeValue > 100) ||
         (feeSettings.agentCommissionType === 'percentage' && feeSettings.agentCommissionValue > 100) ||
         escrowSettings.holdingPeriodHours < 1 || escrowSettings.holdingPeriodHours > 8760 ||
-        inspectionSettings.bookingExpiryHours < 1 || inspectionSettings.bookingExpiryHours > 720) {
+        inspectionSettings.bookingExpiryHours < 1 || inspectionSettings.bookingExpiryHours > 720 ||
+        typeof listingFeeSettings.enabled !== 'boolean' ||
+        !Number.isSafeInteger(listingFeeSettings.propertyFee) || !Number.isSafeInteger(listingFeeSettings.productFee) || !Number.isSafeInteger(listingFeeSettings.serviceFee) ||
+        listingFeeSettings.propertyFee < 0 || listingFeeSettings.productFee < 0 || listingFeeSettings.serviceFee < 0 ||
+        listingFeeSettings.propertyFee > 100000000 || listingFeeSettings.productFee > 100000000 || listingFeeSettings.serviceFee > 100000000) {
       res.status(400).json({ error: 'One or more payment limits, fees or policy values are outside the allowed range.' })
       return
     }
@@ -120,7 +125,8 @@ router.put('/configuration', async (req, res) => {
            currency_code = $4, payment_channels = $5::jsonb,
            transaction_settings = $6::jsonb, fee_settings = $7::jsonb,
            escrow_settings = $8::jsonb, inspection_settings = $9::jsonb,
-           updated_by = $10, updated_at = NOW()
+           listing_fee_settings = $10::jsonb,
+           updated_by = $11, updated_at = NOW()
        WHERE configuration_id = 1
        RETURNING enabled, mode, public_key AS "publicKey",
          (secret_key_ciphertext IS NOT NULL) AS "secretKeyConfigured",
@@ -128,10 +134,10 @@ router.put('/configuration', async (req, res) => {
          currency_code AS "currencyCode", payment_channels AS "paymentChannels",
          transaction_settings AS "transactionSettings", fee_settings AS "feeSettings",
          escrow_settings AS "escrowSettings", inspection_settings AS "inspectionSettings",
-         updated_at AS "updatedAt"`,
+         listing_fee_settings AS "listingFeeSettings", updated_at AS "updatedAt"`,
       [enabled, mode, publicKey, currencyCode, JSON.stringify(paymentChannels),
        JSON.stringify(transactionSettings), JSON.stringify(feeSettings),
-       JSON.stringify(escrowSettings), JSON.stringify(inspectionSettings),
+       JSON.stringify(escrowSettings), JSON.stringify(inspectionSettings), JSON.stringify(listingFeeSettings),
        res.locals.superAdminUserId],
     )
     await getDatabasePool().query(
