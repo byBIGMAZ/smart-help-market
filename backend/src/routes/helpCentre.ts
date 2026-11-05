@@ -160,7 +160,7 @@ function routeForRequest(message: string, roles: string[], activeRole: Workspace
   ]
   const match = routes.find((item) => {
     const roleScopedPath = /^\/(buyer|landlord|seller|provider|agent)\//.test(item.path)
-    const roleIsClear = activeRole !== null || availableRoles.length <= 1
+    const roleIsClear = activeRole !== null || availableRoles.length === 1
     return (!item.roles || item.roles.includes(role))
       && (roleIsClear || !roleScopedPath)
       && item.terms.some((term) => text.includes(term))
@@ -250,6 +250,16 @@ function expandSuggestionSelection(
     }
   }
 
+  const workspaceChoice = selected.match(/^as a (buyer|landlord|agent|seller|service provider)$/)
+  if (workspaceChoice) {
+    const chosenRole = canonicalWorkspaceRole(workspaceChoice[1] === 'service provider' ? 'service_provider' : workspaceChoice[1])
+    if (chosenRole && available.has(chosenRole)) {
+      nextContext.activeRole = chosenRole
+      delete nextContext.awaiting
+      return { message: `Help me navigate my ${chosenRole === 'service_provider' ? 'service provider' : chosenRole} workspace.`, context: nextContext }
+    }
+  }
+
   const listingTroubleshooting = prior.includes('troubleshoot your landlord property listing')
     || prior.includes('agent listing workflow')
     || prior.includes('listing studio')
@@ -268,12 +278,14 @@ function expandSuggestionSelection(
   const generalPrompts: Record<string, string> = {
     'find a property to rent': 'I want to find a property to rent. Please start a property search and ask me for my preferred location.',
     'find accommodation': 'I am looking for accommodation to rent. Please start a property search and ask me for my preferred location.',
+    'find a roommate': 'I am looking for a roommate or flatmate. Help me find compatible shared-accommodation options.',
     'find a product': 'I want to find a product to buy. Help me search the marketplace for products.',
     'find a service': 'I need to find a service provider. Help me search published services.',
     'help me navigate the website': 'I need help navigating SMART HELP MARKET. Show me the features and pages available in my assigned workspace.',
     'what else can you help me with': 'Show me the useful things you can help me do in my active workspace.',
     'find something in the marketplace': 'Take me to marketplace discovery and help me choose what to explore.',
     'view my saved items': 'Open my saved items in my buyer workspace.',
+    'explain how escrow works': 'Explain how escrow works in a marketplace transaction, including the buyer, seller, payment provider, release conditions and dispute process.',
     'explain the buyer protection steps': 'Explain how buyer protection and escrow are intended to work, and clearly distinguish any live marketplace features from educational information.',
     'what happens if there is a dispute': 'Explain the marketplace dispute process and what the buyer and seller should do if a transaction problem occurs.',
     'how do i inspect a property': 'Explain how to arrange and prepare for a property inspection through the marketplace.',
@@ -335,6 +347,11 @@ function expandSuggestionSelection(
     'another button': 'Another button on the listing page does not respond when I click it.',
     'what should a roommate agreement include': 'Explain what a practical roommate agreement should include, including rent, bills, deposits, house rules and ending the arrangement.',
     'what should i check during inspection': 'Give me a detailed checklist of what to inspect when viewing a property.',
+    'review my listing before submission': 'Help me review my listing before submission, checking completeness, accuracy, unit details, prices, location and listing terms.',
+    'i need to edit the draft': 'I need to reopen and edit my existing saved listing draft without creating a duplicate.',
+    'i am ready to submit': 'I have completed my listing draft and want to understand the submission steps and checks before publishing.',
+    'explain what i should do next': 'Explain the next practical step based on the current task and my active workspace.',
+    'i need more specific help': 'Ask me a focused follow-up question about the problem I am trying to solve.',
     'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
   }
   const mapped = generalPrompts[selected]
