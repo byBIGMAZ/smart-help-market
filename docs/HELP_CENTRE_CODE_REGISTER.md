@@ -101,7 +101,7 @@ The proprietary intent classifier remains the deterministic fallback. When the m
 
 - `BIGMAZ_AI_API_KEY`: required secret for the selected provider.
 - `BIGMAZ_AI_BASE_URL`: optional endpoint, defaults to `https://api.openai.com/v1/chat/completions`.
-- `BIGMAZ_AI_MODEL`: optional model name, defaults to `gpt-4.1-mini`.
+- `BIGMAZ_AI_MODEL`: required model identifier supported by the selected provider.
 
 The private platform setting `help.ai.model_enabled` controls whether the adapter is called. Without a key, or if the provider times out or returns an invalid response, the existing deterministic assistant continues. The adapter has a seven-second timeout. It receives the current task, recent conversation, verified role/permission snapshot, owned-listing status counts, deterministic guidance and published matches relevant to the current answer. It may improve the natural-language reply, but it cannot generate navigation actions or alter server-side workflow state. The backend remains authoritative for access control and all marketplace writes.
 
