@@ -176,6 +176,122 @@ async function verifyCategory(categoryKey: string): Promise<boolean> {
   return result.rows.length > 0
 }
 
+
+interface OwnerListingRow {
+  listing_id: string
+  listing_key: string
+  category_key: string
+  category_name: string
+  title: string
+  description: string | null
+  price: string | null
+  price_unit: string | null
+  location_display: string | null
+  icon: string | null
+  listing_tag: string | null
+  status: string
+  is_demo: boolean
+  created_at: Date
+  property_relationship_type: 'standalone' | 'parent' | 'child'
+  parent_listing_id: string | null
+  listing_details: Record<string, unknown>
+  images: Array<{
+    id: string
+    url: string
+    width: number | null
+    height: number | null
+    format: string | null
+    altText: string | null
+    sortOrder: number
+    isCover: boolean
+  }> | null
+}
+
+router.get('/owner', requireAuthenticatedSession, async (_req, res) => {
+  const userId = String(res.locals.authenticatedUserId ?? '')
+  if (!userId) {
+    res.status(401).json({ error: 'Authentication required.' })
+    return
+  }
+
+  try {
+    const result = await getDatabasePool().query<OwnerListingRow>(
+      `SELECT
+         l.listing_id::text AS listing_id,
+         l.listing_key,
+         l.category_key,
+         c.category_name,
+         l.title,
+         l.description,
+         l.price::text AS price,
+         l.price_unit,
+         l.location_display,
+         l.icon,
+         l.listing_tag,
+         l.status,
+         l.is_demo,
+         l.created_at,
+         l.property_relationship_type,
+         l.parent_listing_id::text AS parent_listing_id,
+         l.listing_details,
+         COALESCE(gallery.images, '[]'::json) AS images
+       FROM public.marketplace_listings AS l
+       INNER JOIN public.marketplace_categories AS c
+         ON c.category_key = l.category_key
+       LEFT JOIN LATERAL (
+         SELECT json_agg(
+           json_build_object(
+             'id', image.image_id::text,
+             'url', image.secure_url,
+             'width', image.width,
+             'height', image.height,
+             'format', image.format,
+             'altText', image.alt_text,
+             'sortOrder', image.sort_order,
+             'isCover', image.is_cover
+           )
+           ORDER BY image.sort_order ASC, image.image_id ASC
+         ) AS images
+         FROM public.marketplace_listing_images AS image
+         WHERE image.listing_id = l.listing_id
+       ) AS gallery ON TRUE
+       WHERE l.owner_user_id = $1
+       ORDER BY l.updated_at DESC NULLS LAST, l.created_at DESC, l.listing_id DESC`,
+      [userId],
+    )
+
+    res.status(200).json({
+      status: 'ok',
+      listings: result.rows.map((row) => ({
+        id: row.listing_id,
+        key: row.listing_key,
+        categoryKey: row.category_key,
+        category: row.category_name,
+        title: row.title,
+        description: row.description,
+        price: row.price,
+        priceUnit: row.price_unit,
+        location: row.location_display,
+        icon: row.icon,
+        tag: row.listing_tag,
+        status: row.status,
+        isDemo: row.is_demo,
+        createdAt: row.created_at,
+        propertyRelationshipType: row.property_relationship_type,
+        parentListingId: row.parent_listing_id,
+        images: Array.isArray(row.images) ? row.images : [],
+        details: row.listing_details,
+      })),
+    })
+  } catch (error: unknown) {
+    console.error(
+      'Owner listings query failed:',
+      error instanceof Error ? error.message : 'Unknown error',
+    )
+    res.status(503).json({ error: 'Your marketplace listings are temporarily unavailable.' })
+  }
+})
+
 router.post('/owner', requireAuthenticatedSession, async (req, res) => {
   const userId = String(res.locals.authenticatedUserId ?? '')
   if (!userId) {
