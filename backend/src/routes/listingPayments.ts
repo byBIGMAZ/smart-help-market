@@ -49,14 +49,16 @@ function getCurrencyExponent(currency: string): number | null {
   return null
 }
 
-function getMajorFee(config: PaymentConfiguration, kind: ListingKind): number {
+function getMajorFee(config: PaymentConfiguration, kind: ListingKind): number | null {
+  if (!config.listingFeeSettings || typeof config.listingFeeSettings.enabled !== 'boolean') return null
   if (!config.listingFeeSettings.enabled) return 0
   const amount = kind === 'properties'
     ? config.listingFeeSettings.propertyFee
     : kind === 'products'
       ? config.listingFeeSettings.productFee
       : config.listingFeeSettings.serviceFee
-  return Number.isSafeInteger(amount) && amount > 0 ? amount : 0
+  if (!Number.isSafeInteger(amount) || amount < 0) return null
+  return amount
 }
 
 function getFrontendOrigin(): string {
@@ -166,6 +168,11 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
     )
     const config = configResult.rows[0] as PaymentConfiguration | undefined
     const fee = config ? getMajorFee(config, listing.kind) : 0
+    if (fee === null) {
+      await client.query('ROLLBACK')
+      res.status(409).json({ error: 'The configured listing fee policy is invalid. Please contact marketplace support.' })
+      return
+    }
 
     if (listing.listing_fee_paid_at) {
       await client.query(
@@ -267,19 +274,18 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
          RETURNING transaction_id::text AS id`,
         [
           reference, userId, config.mode, listingId, minorAmount,
-          config.currencyCode, listing.email, `listing-fee:${listingId}`,
+          config.currencyCode, listing.email, `listing-fee:${listingId}:${randomUUID()}`,
           expiresAtMinutes,
           JSON.stringify({ listingKind: listing.kind, feeMajor: fee }),
         ],
       )
       transactionId = String(inserted.rows[0].id)
+      amountMinor = minorAmount
+      currencyCode = config.currencyCode
+      customerEmail = listing.email
+      paymentChannels = Array.isArray(config.paymentChannels) ? config.paymentChannels : []
+      callbackUrl = `${getFrontendOrigin()}/owner/listings?payment=return&listingId=${encodeURIComponent(listingId)}`
     }
-
-    amountMinor = minorAmount
-    currencyCode = config.currencyCode
-    customerEmail = listing.email
-    paymentChannels = Array.isArray(config.paymentChannels) ? config.paymentChannels : []
-    callbackUrl = `${getFrontendOrigin()}/owner/listings?payment=return&listingId=${encodeURIComponent(listingId)}`
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined)
