@@ -116,11 +116,17 @@ export default function AdminOverviewPanel({
             <MetricCard label="Total listings" value={overview.listings.total} detail={`${overview.listings.liveTotal.toLocaleString()} non-demo listings`} icon="⌂" tone="violet" onClick={can('listings.view') ? onOpenListings : undefined} />
             <MetricCard label="Published listings" value={overview.listings.published} detail="Currently published listings" icon="◈" tone="green" onClick={can('listings.view') ? onOpenListings : undefined} />
             <MetricCard label="Awaiting review" value={overview.listings.pendingReview} detail="Live listings pending moderation" icon="◷" tone="amber" onClick={can('listings.view') ? onOpenListings : undefined} />
-            <MetricCard label="Administrator accounts" value={overview.administrators.total} detail={`${overview.administrators.superAdmins.toLocaleString()} Super Admin accounts`} icon="♧" tone="blue" onClick={can('users.view') ? onOpenUsers : undefined} />
+            {isSuperAdmin && overview.administrators && (
+              <MetricCard label="Administrator accounts" value={overview.administrators.total} detail={`${overview.administrators.superAdmins.toLocaleString()} Super Admin accounts`} icon="♧" tone="blue" onClick={can('users.view') ? onOpenUsers : undefined} />
+            )}
             <MetricCard label="Categories" value={overview.categories.total} detail="Configured marketplace categories" icon="▦" tone="amber" onClick={can('categories.view') ? onOpenCategories : undefined} />
             <MetricCard label="Active sessions" value={overview.activeSessions} detail="Sessions that have not expired" icon="◉" tone="blue" onClick={can('audit.view') ? onOpenAudit : undefined} />
-            <MetricCard label="Platform settings" value={overview.configuration.settingsCount} detail="Database-backed configuration records" icon="⚙" tone="violet" onClick={can('settings.view') ? onOpenSettings : undefined} />
-            <MetricCard label="Audit activity, 7 days" value={overview.activity.auditActionsLast7Days} detail="Recorded actions in the last seven days" icon="▤" tone="green" onClick={can('audit.view') ? onOpenAudit : undefined} />
+            {isSuperAdmin && overview.configuration && (
+              <MetricCard label="Platform settings" value={overview.configuration.settingsCount} detail="Database-backed configuration records" icon="⚙" tone="violet" onClick={can('settings.view') ? onOpenSettings : undefined} />
+            )}
+            {isSuperAdmin && overview.activity && (
+              <MetricCard label="Audit activity, 7 days" value={overview.activity.auditActionsLast7Days} detail="Recorded actions in the last seven days" icon="▤" tone="green" onClick={can('audit.view') ? onOpenAudit : undefined} />
+            )}
           </div>
 
           <div className="admin-overview-lower-grid">
