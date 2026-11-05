@@ -1,11 +1,10 @@
 import { Router } from 'express'
-import { createCipheriv, createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
+import { createCipheriv, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import { getDatabasePool } from '../database'
 import { requireSuperAdmin } from '../auth/requireSuperAdmin'
 
 const router = Router()
 const OTP_LIFETIME_MINUTES = 10
-const OTP_RESEND_COOLDOWN_SECONDS = 60
 
 function getEncryptionKey(): Buffer {
   const raw = process.env.PAYMENT_CREDENTIALS_ENCRYPTION_KEY
@@ -215,9 +214,15 @@ router.put('/credentials', async (req, res) => {
     res.status(400).json({ error: 'Enter the six-digit email code and at least one new credential.' })
     return
   }
-  if (secretKey && !secretKey.startsWith(req.body?.mode === 'live' ? 'sk_live_' : 'sk_test_')) {
-    res.status(400).json({ error: 'The Paystack secret key prefix does not match the selected environment.' })
-    return
+  if (secretKey) {
+    const currentMode = await getDatabasePool().query<{ mode: string }>(
+      'SELECT mode FROM public.marketplace_payment_configuration WHERE configuration_id = 1',
+    )
+    const expectedPrefix = currentMode.rows[0]?.mode === 'live' ? 'sk_live_' : 'sk_test_'
+    if (!secretKey.startsWith(expectedPrefix)) {
+      res.status(400).json({ error: 'The Paystack secret key prefix does not match the saved gateway environment.' })
+      return
+    }
   }
   try {
     const db = getDatabasePool()
