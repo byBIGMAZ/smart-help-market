@@ -25,6 +25,18 @@ adminRouter.get(
   async (_req, res) => {
     try {
       const db = getDatabasePool()
+      const authenticatedUserId = String(res.locals.authenticatedUserId ?? '')
+
+      const superAdminCheck = await db.query(
+        `SELECT EXISTS (
+           SELECT 1
+           FROM public.marketplace_user_roles ur
+           INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+           WHERE ur.user_id = $1 AND r.role_key = 'super_admin'
+         ) AS allowed`,
+        [authenticatedUserId],
+      )
+      const isSuperAdmin = Boolean(superAdminCheck.rows[0]?.allowed)
 
       const [
         usersResult,
@@ -32,9 +44,6 @@ adminRouter.get(
         categoriesResult,
         sessionsResult,
         listingStatusResult,
-        administratorResult,
-        settingsResult,
-        recentActivityResult,
       ] = await Promise.all([
         db.query(
           `SELECT
@@ -68,25 +77,30 @@ adminRouter.get(
              COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'suspended')::text AS suspended
            FROM public.marketplace_listings`,
         ),
-        db.query(
-          `SELECT
-             COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key <> 'member')::text AS total,
-             COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key = 'super_admin')::text AS "superAdmins"
-           FROM public.marketplace_user_roles ur
-           INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
-           INNER JOIN public.marketplace_users u ON u.user_id = ur.user_id
-           WHERE u.account_status = 'active'`,
-        ),
-        db.query(
-          `SELECT COUNT(*)::text AS total
-           FROM public.platform_settings`,
-        ),
-        db.query(
-          `SELECT COUNT(*)::text AS total
-           FROM public.marketplace_audit_logs
-           WHERE created_at >= NOW() - INTERVAL '7 days'`,
-        ),
       ])
+
+      const [administratorResult, settingsResult, recentActivityResult] = isSuperAdmin
+        ? await Promise.all([
+            db.query(
+              `SELECT
+                 COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key <> 'member')::text AS total,
+                 COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key = 'super_admin')::text AS "superAdmins"
+               FROM public.marketplace_user_roles ur
+               INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+               INNER JOIN public.marketplace_users u ON u.user_id = ur.user_id
+               WHERE u.account_status = 'active'`,
+            ),
+            db.query(
+              `SELECT COUNT(*)::text AS total
+               FROM public.platform_settings`,
+            ),
+            db.query(
+              `SELECT COUNT(*)::text AS total
+               FROM public.marketplace_audit_logs
+               WHERE created_at >= NOW() - INTERVAL '7 days'`,
+            ),
+          ])
+        : [null, null, null]
 
       res.status(200).json({
         status: 'ok',
@@ -109,16 +123,20 @@ adminRouter.get(
           categories: {
             total: Number(categoriesResult.rows[0]?.total ?? 0),
           },
-          administrators: {
-            total: Number(administratorResult.rows[0]?.total ?? 0),
-            superAdmins: Number(administratorResult.rows[0]?.superAdmins ?? 0),
-          },
-          configuration: {
-            settingsCount: Number(settingsResult.rows[0]?.total ?? 0),
-          },
-          activity: {
-            auditActionsLast7Days: Number(recentActivityResult.rows[0]?.total ?? 0),
-          },
+          ...(isSuperAdmin
+            ? {
+                administrators: {
+                  total: Number(administratorResult?.rows[0]?.total ?? 0),
+                  superAdmins: Number(administratorResult?.rows[0]?.superAdmins ?? 0),
+                },
+                configuration: {
+                  settingsCount: Number(settingsResult?.rows[0]?.total ?? 0),
+                },
+                activity: {
+                  auditActionsLast7Days: Number(recentActivityResult?.rows[0]?.total ?? 0),
+                },
+              }
+            : {}),
           activeSessions: Number(sessionsResult.rows[0]?.total ?? 0),
         },
         generatedAt: new Date().toISOString(),
