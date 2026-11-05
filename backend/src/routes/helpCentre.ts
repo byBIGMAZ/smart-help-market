@@ -4,6 +4,7 @@ import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession
 import { requirePermission } from '../auth/requirePermission'
 import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, hashIntentFeatures, type BigmazIntent, type IntentWeight } from '../intelligence/bigmazEngine'
 import { resolveGeographicLocation } from '../geography/geocoding'
+import { generateBigmazReply, type BigmazAccountSnapshot, type BigmazConversationTurn } from '../intelligence/bigmazAssistant'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
@@ -1528,13 +1529,33 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     let effectiveMessage = message
-    const roleResult = await client.query<{ role_key: string }>(
-      `SELECT r.role_key FROM public.marketplace_user_roles ur
-       JOIN public.marketplace_roles r ON r.role_id = ur.role_id
-       WHERE ur.user_id = $1 ORDER BY r.role_key`,
+    const accountResult = await client.query<{
+      display_name: string | null
+      account_status: string
+      roles: string[]
+      permissions: string[]
+    }>(
+      `SELECT
+         u.display_name,
+         u.account_status,
+         COALESCE(array_agg(DISTINCT r.role_key) FILTER (WHERE r.role_key IS NOT NULL), ARRAY[]::text[]) AS roles,
+         COALESCE(array_agg(DISTINCT p.permission_key) FILTER (WHERE p.permission_key IS NOT NULL), ARRAY[]::text[]) AS permissions
+       FROM public.marketplace_users u
+       LEFT JOIN public.marketplace_user_roles ur ON ur.user_id = u.user_id
+       LEFT JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+       LEFT JOIN public.marketplace_role_permissions rp ON rp.role_id = r.role_id
+       LEFT JOIN public.marketplace_permissions p ON p.permission_id = rp.permission_id
+       WHERE u.user_id = $1
+       GROUP BY u.user_id`,
       [userId],
     )
-    const assignedRoles = roleResult.rows.map((row) => row.role_key)
+    const accountRecord = accountResult.rows[0]
+    if (!accountRecord || accountRecord.account_status !== 'active') {
+      await client.query('ROLLBACK')
+      res.status(403).json({ error: 'Your marketplace account is not currently active.' })
+      return
+    }
+    const assignedRoles = accountRecord.roles || []
 
     if (suggestionOfMessageId) {
       const previousAssistant = await client.query<{ message_text: string; metadata: unknown }>(
@@ -1574,6 +1595,55 @@ router.post('/chat', async (req: Request, res: Response) => {
     )
 
     const answer = await answerMessage(effectiveMessage, context, assignedRoles, preferredRole)
+    const ownedListingSummary = await client.query<{
+      category: string
+      status: string
+      count: number
+    }>(
+      `SELECT category_key AS category, status, COUNT(*)::int AS count
+       FROM public.marketplace_listings
+       WHERE owner_user_id = $1 AND is_demo = FALSE
+       GROUP BY category_key, status
+       ORDER BY category_key, status`,
+      [userId],
+    )
+    const recentMessageResult = await client.query<{
+      sender: 'user' | 'assistant' | 'admin'
+      text: string
+    }>(
+      `SELECT sender_type AS sender, message_text AS text
+       FROM public.marketplace_help_messages
+       WHERE conversation_id = $1
+       ORDER BY message_id DESC
+       LIMIT 10`,
+      [conversationId],
+    )
+    const accountSnapshot: BigmazAccountSnapshot = {
+      displayName: accountRecord.display_name,
+      accountStatus: accountRecord.account_status,
+      assignedRoles,
+      permissions: accountRecord.permissions || [],
+      activeRole: typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null,
+      ownedListings: ownedListingSummary.rows,
+    }
+    const recentConversation: BigmazConversationTurn[] = recentMessageResult.rows.reverse()
+    const modelReply = await generateBigmazReply({
+      message: effectiveMessage,
+      deterministicReply: answer.text,
+      suggestions: answer.suggestions || [],
+      actions: answer.actions || [],
+      marketplaceMatches: (answer.matches || []).map((match) => ({
+        title: match.title,
+        category: match.category,
+        location: match.location,
+        price: match.price,
+        priceUnit: match.priceUnit,
+      })),
+      account: accountSnapshot,
+      conversation: recentConversation,
+      workflowContext: answer.context || {},
+    })
+    if (modelReply) answer.text = modelReply
     const prediction = await predictIntent(effectiveMessage)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
