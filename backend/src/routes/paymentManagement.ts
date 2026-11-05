@@ -66,7 +66,7 @@ router.put('/configuration', async (req, res) => {
   if (!['test', 'live'].includes(mode) || typeof enabled !== 'boolean' ||
       !/^[A-Z]{3}$/.test(currencyCode) ||
       !Array.isArray(paymentChannels) ||
-      !paymentChannels.every((v: unknown) => typeof v === 'string' && ['card','bank','ussd','mobile_money','bank_transfer'].includes(v)) ||
+      paymentChannels.length === 0 ||\n      !paymentChannels.every((v: unknown) => typeof v === 'string' && ['card','bank','ussd','mobile_money','bank_transfer'].includes(v)) ||
       ![transactionSettings, feeSettings, escrowSettings, inspectionSettings].every(v => v && typeof v === 'object' && !Array.isArray(v))) {
     res.status(400).json({ error: 'Payment configuration contains invalid values.' })
     return
@@ -89,7 +89,14 @@ router.put('/configuration', async (req, res) => {
       res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
       return
     }
-    if (transactionSettings.transactionExpiryMinutes < 5 || transactionSettings.transactionExpiryMinutes > 1440 ||
+    if (!Number.isFinite(transactionSettings.transactionExpiryMinutes) || !Number.isFinite(transactionSettings.minimumAmount) || !Number.isFinite(transactionSettings.maximumAmount) ||
+        !Number.isFinite(feeSettings.platformFeeValue) || !Number.isFinite(feeSettings.agentCommissionValue) ||
+        typeof feeSettings.platformFeeEnabled !== 'boolean' || typeof feeSettings.agentCommissionEnabled !== 'boolean' ||
+        !['fixed', 'percentage'].includes(feeSettings.platformFeeType) || !['fixed', 'percentage'].includes(feeSettings.agentCommissionType) ||
+        !['customer', 'platform'].includes(feeSettings.feePayer) ||
+        typeof escrowSettings.enabled !== 'boolean' || typeof escrowSettings.automaticRelease !== 'boolean' ||
+        typeof inspectionSettings.enabled !== 'boolean' || typeof inspectionSettings.requirePayment !== 'boolean' ||
+        transactionSettings.transactionExpiryMinutes < 5 || transactionSettings.transactionExpiryMinutes > 1440 ||
         transactionSettings.minimumAmount < 1 || transactionSettings.maximumAmount <= transactionSettings.minimumAmount ||
         feeSettings.platformFeeValue < 0 || feeSettings.agentCommissionValue < 0 ||
         (feeSettings.platformFeeType === 'percentage' && feeSettings.platformFeeValue > 100) ||
