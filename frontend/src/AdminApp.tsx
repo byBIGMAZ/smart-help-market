@@ -2070,7 +2070,7 @@ function openAutomationMonitoring() {
     /></Suspense>
   )}
 
-        {/* PROFILE APPROVAL CENTRE */}
+        {/* ACCOUNT VERIFICATION CENTRE */}
         {section === 'profile-approvals' && user?.permissions.includes('users.view') && (
           <Suspense fallback={<AdminModuleFallback />}><AdminProfileApprovals canManage={Boolean(user?.permissions.includes('users.manage'))} /></Suspense>
         )}
