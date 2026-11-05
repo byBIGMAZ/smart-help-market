@@ -1361,28 +1361,28 @@ function openAutomationMonitoring() {
 
             {overview ? (
               <div className="admin-stat-grid">
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openUsers}>
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openUsers} disabled={!user?.permissions.includes('users.view')}>
                   <span className="admin-stat-icon">♙</span>
                   <span className="admin-stat-label">Total users</span>
                   <strong>{overview.users.total.toLocaleString()}</strong>
                   <small>{overview.users.active} active accounts</small>
                 </button>
 
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openModeration}>
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openModeration} disabled={!user?.permissions.includes('listings.view')}>
                   <span className="admin-stat-icon">⌂</span>
                   <span className="admin-stat-label">Total listings</span>
                   <strong>{overview.listings.total.toLocaleString()}</strong>
                   <small>{overview.listings.published} published</small>
                 </button>
 
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openCategories}>
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openCategories} disabled={!user?.permissions.includes('categories.view')}>
                   <span className="admin-stat-icon">◇</span>
                   <span className="admin-stat-label">Categories</span>
                   <strong>{overview.categories.total.toLocaleString()}</strong>
                   <small>Marketplace categories</small>
                 </button>
 
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openAuditLogs}>
+                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openAuditLogs} disabled={!user?.permissions.includes('audit.view')}>
                   <span className="admin-stat-icon">◉</span>
                   <span className="admin-stat-label">Active sessions</span>
                   <strong>{overview.activeSessions.toLocaleString()}</strong>
@@ -1404,27 +1404,24 @@ function openAutomationMonitoring() {
             )}
 
             <section className="admin-next-panel">
-              <span className="admin-kicker">ADMINISTRATION ROADMAP</span>
-              <h2>Marketplace administration is growing.</h2>
+              <span className="admin-kicker">ADMINISTRATION WORKSPACE</span>
+              <h2>{user?.roles.includes('super_admin') ? 'Your central platform control room.' : 'Your assigned administration workspace.'}</h2>
               <p>
-                Core account controls, access management, listing moderation,
-                category administration and administrative activity are
-                available. Platform settings, reporting and workflow
-                automation are planned.
+                {user?.roles.includes('super_admin')
+                  ? 'Manage marketplace operations, central configuration, administrator access and platform accountability from one place.'
+                  : 'The navigation available to you is based on the permissions assigned to your administrator account.'}
               </p>
 
               <div className="admin-roadmap-list">
-                <span>✓ Protected administrator sign-in</span>
-                <span>✓ Session-aware dashboard</span>
-                <span>✓ Live database statistics</span>
-                <span>✓ User account management</span>
-                <span>✓ Role and permission directory</span>
-                <span>✓ Listing review and moderation</span>
-                <span>✓ Audit activity directory</span>
-                <span>✓ Category management</span>
-                <span>✓ Platform settings</span>
-                <span>✓ Reports and operational analytics</span>
-                <span>○ Workflow automation</span>
+                <span>✓ Secure administrator session</span>
+                <span>✓ Permission-based module access</span>
+                <span>✓ Live marketplace statistics</span>
+                <span>✓ Central platform settings</span>
+                <span>✓ User and listing administration</span>
+                <span>✓ Role and permission controls</span>
+                <span>✓ Operational reports</span>
+                <span>✓ Automation management</span>
+                <span>✓ Auditable administration activity</span>
               </div>
             </section>
           </>
