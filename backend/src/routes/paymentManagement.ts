@@ -27,6 +27,12 @@ function hashOtp(code: string): string {
   return createHmac('sha256', pepper).update(code).digest('hex')
 }
 
+function hashAuthorizationToken(token: string): string {
+  const pepper = process.env.PAYMENT_OTP_PEPPER
+  if (!pepper || pepper.length < 32) throw new Error('Payment OTP protection is not configured.')
+  return createHmac('sha256', pepper).update(`payment-credential-change:${token}`).digest('hex')
+}
+
 function cleanString(value: unknown, max = 500): string {
   return typeof value === 'string' ? value.trim().slice(0, max) : ''
 }
@@ -211,12 +217,65 @@ router.post('/credentials/request-code', async (_req, res) => {
   }
 })
 
-router.put('/credentials', async (req, res) => {
+router.post('/credentials/verify-code', async (req, res) => {
   const code = cleanString(req.body?.code, 6)
+  if (!/^\\d{6}$/.test(code)) {
+    res.status(400).json({ error: 'Enter the complete six-digit email verification code.' })
+    return
+  }
+
+  try {
+    const db = getDatabasePool()
+    const client = await db.connect()
+    try {
+      await client.query('BEGIN')
+      const otp = await client.query(
+        `SELECT otp_id, code_hash, attempts
+         FROM public.marketplace_payment_credential_otps
+         WHERE admin_user_id = $1 AND consumed_at IS NULL AND expires_at > NOW()
+         ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+        [res.locals.superAdminUserId],
+      )
+      const record = otp.rows[0]
+      const suppliedHash = Buffer.from(hashOtp(code), 'hex')
+      const storedHash = record ? Buffer.from(record.code_hash, 'hex') : Buffer.alloc(0)
+      const matches = Boolean(record && record.attempts < 5 && storedHash.length === suppliedHash.length && timingSafeEqual(storedHash, suppliedHash))
+      if (!matches) {
+        if (record && record.attempts < 5) {
+          await client.query('UPDATE public.marketplace_payment_credential_otps SET attempts = attempts + 1 WHERE otp_id = $1', [record.otp_id])
+        }
+        await client.query('COMMIT')
+        res.status(400).json({ error: 'The code is invalid, expired or has reached its attempt limit.' })
+        return
+      }
+
+      const authorizationToken = randomBytes(32).toString('base64url')
+      await client.query(
+        `UPDATE public.marketplace_payment_credential_otps
+         SET verified_at = NOW(), credential_change_token_hash = $2
+         WHERE otp_id = $1`,
+        [record.otp_id, hashAuthorizationToken(authorizationToken)],
+      )
+      await client.query('COMMIT')
+      res.status(200).json({ status: 'ok', authorizationToken, message: 'Email code verified. You may now enter the new payment credentials.' })
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => undefined)
+      throw error
+    } finally {
+      client.release()
+    }
+  } catch (error) {
+    console.error('Payment OTP verification failed:', error instanceof Error ? error.message : 'Unknown error')
+    res.status(500).json({ error: 'The security code could not be verified.' })
+  }
+})
+
+router.put('/credentials', async (req, res) => {
+  const authorizationToken = cleanString(req.body?.authorizationToken, 200)
   const secretKey = cleanString(req.body?.secretKey, 500)
   const webhookSecret = cleanString(req.body?.webhookSecret, 500)
-  if (!/^\d{6}$/.test(code) || (!secretKey && !webhookSecret)) {
-    res.status(400).json({ error: 'Enter the six-digit email code and at least one new credential.' })
+  if (authorizationToken.length < 40 || (!secretKey && !webhookSecret)) {
+    res.status(400).json({ error: 'Complete email verification and enter at least one new credential.' })
     return
   }
   if (secretKey) {
@@ -235,17 +294,20 @@ router.put('/credentials', async (req, res) => {
     try {
       await client.query('BEGIN')
       const otp = await client.query(
-        `SELECT otp_id, code_hash, attempts
+        `SELECT otp_id
          FROM public.marketplace_payment_credential_otps
-         WHERE admin_user_id = $1 AND consumed_at IS NULL AND expires_at > NOW()
+         WHERE admin_user_id = $1
+           AND credential_change_token_hash = $2
+           AND verified_at IS NOT NULL
+           AND consumed_at IS NULL
+           AND expires_at > NOW()
          ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
-        [res.locals.superAdminUserId],
+        [res.locals.superAdminUserId, hashAuthorizationToken(authorizationToken)],
       )
       const record = otp.rows[0]
-      if (!record || record.attempts >= 5 || !timingSafeEqual(Buffer.from(record.code_hash, 'hex'), Buffer.from(hashOtp(code), 'hex'))) {
-        if (record && record.attempts < 5) await client.query('UPDATE public.marketplace_payment_credential_otps SET attempts = attempts + 1 WHERE otp_id = $1', [record.otp_id])
-        await client.query('COMMIT')
-        res.status(400).json({ error: 'The code is invalid, expired or has reached its attempt limit.' })
+      if (!record) {
+        await client.query('ROLLBACK')
+        res.status(401).json({ error: 'Your verification has expired or has already been used. Request a new code.' })
         return
       }
       const encryptedSecret = secretKey ? encryptCredential(secretKey) : null
@@ -259,7 +321,7 @@ router.put('/credentials', async (req, res) => {
          WHERE configuration_id = 1`,
         [encryptedSecret, encryptedWebhook, res.locals.superAdminUserId],
       )
-      await client.query('UPDATE public.marketplace_payment_credential_otps SET consumed_at = NOW() WHERE otp_id = $1', [record.otp_id])
+      await client.query('UPDATE public.marketplace_payment_credential_otps SET consumed_at = NOW(), credential_change_token_hash = NULL WHERE otp_id = $1', [record.otp_id])
       await client.query(
         `INSERT INTO public.marketplace_audit_logs (actor_user_id, action_key, target_type, target_id, details)
          VALUES ($1, 'payment.credentials.rotated', 'payment_configuration', '1', $2::jsonb)`,
