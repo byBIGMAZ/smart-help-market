@@ -610,16 +610,21 @@ useEffect(() => {
     if (window.history.length > 1) window.history.back()
   }
   function openUsers() {
-    setPeopleView('accounts')
+    const canViewAccounts = Boolean(user?.permissions.includes('users.view'))
+    setPeopleView(canViewAccounts ? 'accounts' : 'roles')
     navigateAdminSection('users')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
     setNotice('')
-    setUserSearch('')
-    setUserStatus('all')
-    setUserOffset(0)
-    void loadUsers('', 'all', 0)
+    if (canViewAccounts) {
+      setUserSearch('')
+      setUserStatus('all')
+      setUserOffset(0)
+      void loadUsers('', 'all', 0)
+    } else if (user?.permissions.includes('roles.view')) {
+      void loadRoles()
+    }
   }
 
   function openOverview() {
