@@ -63,3 +63,28 @@
 @media(max-width:1000px){.admin-overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-overview-lower-grid{grid-template-columns:1fr}}
 @media(max-width:620px){.admin-overview-panel{gap:15px;margin-top:26px}.admin-overview-heading{align-items:flex-start;flex-direction:column}.admin-overview-heading-actions{width:100%;justify-content:space-between}.admin-overview-metrics{gap:10px}.admin-overview-metric{min-height:145px;padding:14px}.admin-overview-card{padding:16px}.admin-overview-quick-grid{grid-template-columns:1fr}.admin-overview-unavailable{align-items:flex-start;flex-wrap:wrap}.admin-overview-unavailable>div{min-width:calc(100% - 50px)}}
 @media(prefers-reduced-motion:reduce){.admin-overview-metric.is-action,.admin-overview-progress-track span,.admin-overview-quick-action{transition:none}}
+
+/* Extended operational overview */
+.admin-overview-metrics{grid-template-columns:repeat(5,minmax(0,1fr))}
+.admin-overview-status-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.admin-overview-status-count{display:flex;min-width:0;align-items:center;justify-content:space-between;gap:8px;padding:12px;border:1px solid #2b3930;border-radius:10px;background:#0d1410}
+.admin-overview-status-count span{color:#a4b1a9;font-size:10px;line-height:1.4}
+.admin-overview-status-count strong{font-size:15px;font-weight:800}
+.admin-overview-status-count.status-warning strong{color:#f3c76b}
+.admin-overview-status-count.status-neutral strong{color:#c4cec7}
+.admin-overview-status-count.status-info strong{color:#83c7ff}
+.admin-overview-status-count.status-danger strong{color:#f28b82}
+.admin-overview-status-count.status-success strong{color:#a6ed69}
+.admin-overview-text-link{padding:5px 0;border:0;background:transparent;color:#a6ed69;font-size:10px;font-weight:750;white-space:nowrap;cursor:pointer}
+:root[data-theme="light"] .admin-overview-status-count{border-color:#e1e9df;background:#f8faf7}
+:root[data-theme="light"] .admin-overview-status-count span{color:#647267}
+:root[data-theme="light"] .admin-overview-status-count.status-warning strong{color:#9a6500}
+:root[data-theme="light"] .admin-overview-status-count.status-neutral strong{color:#526055}
+:root[data-theme="light"] .admin-overview-status-count.status-info strong{color:#176aa8}
+:root[data-theme="light"] .admin-overview-status-count.status-danger strong{color:#b53d35}
+:root[data-theme="light"] .admin-overview-status-count.status-success strong{color:#347a32}
+:root[data-theme="light"] .admin-overview-text-link{color:#397a2d}
+@media(max-width:1250px){.admin-overview-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:1000px){.admin-overview-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:620px){.admin-overview-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-overview-status-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-overview-status-count{padding:10px}.admin-overview-status-count span{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.admin-overview-status-count{transition:none}}
