@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { Router } from 'express'
+import type { PoolClient } from 'pg'
 import { getDatabasePool } from '../database'
 import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession'
 import {
@@ -68,7 +69,7 @@ function getFrontendOrigin(): string {
   return url.origin
 }
 
-async function readOwnedDraft(listingId: string, userId: string, client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: any[] }> }): Promise<ListingPaymentRow | null> {
+async function readOwnedDraft(listingId: string, userId: string, client: PoolClient): Promise<ListingPaymentRow | null> {
   const result = await client.query(
     `SELECT
        l.listing_id::text AS listing_id,
@@ -275,7 +276,7 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
     currencyCode = config.currencyCode
     customerEmail = listing.email
     paymentChannels = Array.isArray(config.paymentChannels) ? config.paymentChannels : []
-    callbackUrl = `${getFrontendOrigin()}/owner/listings?payment=return&listingId=${encodeURIComponent(listingId)}&reference=${encodeURIComponent(reference)}`
+    callbackUrl = `${getFrontendOrigin()}/owner/listings?payment=return&listingId=${encodeURIComponent(listingId)}`
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined)
