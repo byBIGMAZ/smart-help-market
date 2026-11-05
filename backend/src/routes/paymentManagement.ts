@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { createCipheriv, createHash, createHmac, randomBytes } from 'node:crypto'
+import { createCipheriv, createHash, createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import { getDatabasePool } from '../database'
 import { requireSuperAdmin } from '../auth/requireSuperAdmin'
 
@@ -146,7 +146,7 @@ router.post('/credentials/request-code', async (_req, res) => {
       return
     }
 
-    const code = randomBytes(4).readUInt32BE(0).toString().padStart(10, '0').slice(0, 6)
+    const code = randomInt(0, 1000000).toString().padStart(6, '0')
     const codeHash = hashOtp(code)
     await db.query(
       `UPDATE public.marketplace_payment_credential_otps
@@ -211,7 +211,7 @@ router.put('/credentials', async (req, res) => {
         [res.locals.superAdminUserId],
       )
       const record = otp.rows[0]
-      if (!record || record.attempts >= 5 || record.code_hash !== hashOtp(code)) {
+      if (!record || record.attempts >= 5 || !timingSafeEqual(Buffer.from(record.code_hash, 'hex'), Buffer.from(hashOtp(code), 'hex'))) {
         if (record) await client.query('UPDATE public.marketplace_payment_credential_otps SET attempts = attempts + 1 WHERE otp_id = $1', [record.otp_id])
         await client.query('COMMIT')
         res.status(400).json({ error: 'The code is invalid, expired or has reached its attempt limit.' })
