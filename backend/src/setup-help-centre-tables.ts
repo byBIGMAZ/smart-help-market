@@ -131,7 +131,7 @@ async function setupHelpCentreTables() {
       )
     }
     await db.query("DELETE FROM public.platform_settings WHERE setting_key IN ('help.ai.model_enabled', 'help.messages.paid_enabled', 'help.messages.pack_size', 'help.messages.pack_price_ngn')")
-    await db.query("UPDATE public.platform_settings SET setting_value = '0'::jsonb, description = 'Monthly assistant message limit per user. Zero means unlimited free use.' WHERE setting_key = 'help.messages.free_limit'")
+    await db.query("UPDATE public.platform_settings SET setting_value = '0'::jsonb, description = 'Monthly assistant message limit per user. Zero means unlimited free use.' WHERE setting_key = 'help.messages.free_limit' AND setting_value = '30'::jsonb")
     await db.query('COMMIT')
     const result = await db.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables
