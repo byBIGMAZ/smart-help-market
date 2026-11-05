@@ -348,8 +348,8 @@ function expandSuggestionSelection(
     'what should a roommate agreement include': 'Explain what a practical roommate agreement should include, including rent, bills, deposits, house rules and ending the arrangement.',
     'what should i check during inspection': 'Give me a detailed checklist of what to inspect when viewing a property.',
     'review my listing before submission': 'Help me review my listing before submission, checking completeness, accuracy, unit details, prices, location and listing terms.',
-    'i need to edit the draft': 'I need to reopen and edit my existing saved listing draft without creating a duplicate.',
-    'i am ready to submit': 'I have completed my listing draft and want to understand the submission steps and checks before publishing.',
+    'i need to edit the draft': 'I need to edit the draft I already saved without creating a duplicate.',
+    'i am ready to submit': 'I am ready to submit my listing. Explain the submission steps and checks before publishing.',
     'explain what i should do next': 'Explain the next practical step based on the current task and my active workspace.',
     'i need more specific help': 'Ask me a focused follow-up question about the problem I am trying to solve.',
     'i need help with property units': 'Explain how to configure the available property units, names, unit-level details and unit-specific prices.',
@@ -437,6 +437,49 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       text: 'Thanks. Please copy the exact error text if one appears, or describe what you see on the screen. I can then narrow the cause instead of guessing. If you cannot continue, I can help you send the details to support.',
       suggestions: ['There is an error on the page', 'It opens now', 'Speak to an administrator'],
       context: { ...nextContext, awaiting: 'listing_studio_detail' },
+    }
+  }
+
+  if ((activeRole === 'landlord' || activeRole === 'agent') && (message.includes('property units') || message.includes('unit details') || message.includes('configure the available units'))) {
+    return {
+      text: 'For a property with multiple rentable or saleable units, set the available unit count first. Then open each unit and give it a clear name or number, its own description and facilities, and the correct price where the form requests one. For apartments, duplexes and houses, add the bedroom and bathroom counts for each unit. For single rooms, hostels and commercial spaces, complete the fields relevant to that property type. Check that the number of units matches the actual available spaces and that no unit is duplicated.',
+      suggestions: ['I need help with pricing', 'The unit count is incorrect', 'Review my listing before submission'],
+      context: nextContext,
+    }
+  }
+
+  if ((activeRole === 'landlord' || activeRole === 'agent') && (message.includes('pricing') || message.includes('set the correct asking price') || message.includes('unit-level prices'))) {
+    return {
+      text: 'Choose the price structure that matches the listing purpose. For rent or shortlet, the form lets you enter a separate amount for each unit or enable the shared-amount option when every unit has the same rate. The parent listing does not carry a combined rental amount when unit pricing is being used. For sale, follow the asking-price and unit selling-price fields shown by the form, and make sure the amounts do not contradict one another. State the currency and payment period clearly, and never combine different unit prices into one misleading figure.',
+      suggestions: ['It is for rent', 'It is for sale', 'It is a shortlet', 'Review my listing before submission'],
+      context: nextContext,
+    }
+  }
+
+  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('review my listing before submission')) {
+    return {
+      text: 'Review the listing in a fixed order: title and property type; purpose (rent, sale or shortlet); location and description; available unit count; each unit name, price, bedrooms, bathrooms and facilities where applicable; land size, dimensions and permitted use if the listing is land; and contact or representation details. Check spelling, price periods and whether the listing accurately describes what is available. Save the latest draft. A saved draft is not automatically a published listing.',
+      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
+      suggestions: ['I need to edit the draft', 'I am ready to submit', 'I need help with pricing'],
+      context: nextContext,
+    }
+  }
+
+  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('i need to edit the draft')) {
+    return {
+      text: 'Open your own workspace listing page, find the existing draft and select Edit draft. Continue in that record and save your changes. Do not select New listing unless you deliberately want a separate listing. This avoids accidental duplicate drafts.',
+      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
+      suggestions: ['I found the draft', 'It is still missing', 'Review my listing before submission'],
+      context: nextContext,
+    }
+  }
+
+  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('i am ready to submit')) {
+    return {
+      text: 'Before submitting, confirm that the latest draft is saved and all information is accurate. Then check whether the listing page provides a Submit or Publish control and read any confirmation or terms it displays. Do not assume that Save draft publishes the listing. If no submission control is available, tell me the status and buttons shown on your listing page so I can guide you without guessing.',
+      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
+      suggestions: ['I cannot see a submit button', 'Review my listing before submission', 'Speak to an administrator'],
+      context: nextContext,
     }
   }
 
@@ -565,49 +608,6 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       text: 'Tell me what the save process shows after you click Save draft. The exact message or change on the screen will help me narrow down the problem.',
       suggestions: ['It says validation error', 'It says unauthorized', 'It says network error', 'The draft saved successfully'],
       context: { ...nextContext, awaiting: 'listing_save_detail' },
-    }
-  }
-
-  if ((activeRole === 'landlord' || activeRole === 'agent') && (message.includes('property units') || message.includes('unit details') || message.includes('configure the available units'))) {
-    return {
-      text: 'For a property with multiple rentable or saleable units, set the available unit count first. Then open each unit and give it a clear name or number, its own description and facilities, and the correct price where the form requests one. For apartments, duplexes and houses, add the bedroom and bathroom counts for each unit. For single rooms, hostels and commercial spaces, complete the fields relevant to that property type. Check that the number of units matches the actual available spaces and that no unit is duplicated.',
-      suggestions: ['I need help with pricing', 'The unit count is incorrect', 'Review my listing before submission'],
-      context: nextContext,
-    }
-  }
-
-  if ((activeRole === 'landlord' || activeRole === 'agent') && (message.includes('pricing') || message.includes('set the correct asking price') || message.includes('unit-level prices'))) {
-    return {
-      text: 'Choose the price structure that matches the listing purpose. For rent or shortlet, the form lets you enter a separate amount for each unit or enable the shared-amount option when every unit has the same rate. The parent listing does not carry a combined rental amount when unit pricing is being used. For sale, follow the asking-price and unit selling-price fields shown by the form, and make sure the amounts do not contradict one another. State the currency and payment period clearly, and never combine different unit prices into one misleading figure.',
-      suggestions: ['It is for rent', 'It is for sale', 'It is a shortlet', 'Review my listing before submission'],
-      context: nextContext,
-    }
-  }
-
-  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('review my listing before submission')) {
-    return {
-      text: 'Review the listing in a fixed order: title and property type; purpose (rent, sale or shortlet); location and description; available unit count; each unit name, price, bedrooms, bathrooms and facilities where applicable; land size, dimensions and permitted use if the listing is land; and contact or representation details. Check spelling, price periods and whether the listing accurately describes what is available. Save the latest draft. A saved draft is not automatically a published listing.',
-      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
-      suggestions: ['I need to edit the draft', 'I am ready to submit', 'I need help with pricing'],
-      context: nextContext,
-    }
-  }
-
-  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('i need to edit the draft')) {
-    return {
-      text: 'Open your own workspace listing page, find the existing draft and select Edit draft. Continue in that record and save your changes. Do not select New listing unless you deliberately want a separate listing. This avoids accidental duplicate drafts.',
-      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
-      suggestions: ['I found the draft', 'It is still missing', 'Review my listing before submission'],
-      context: nextContext,
-    }
-  }
-
-  if ((activeRole === 'landlord' || activeRole === 'agent') && message.includes('i am ready to submit')) {
-    return {
-      text: 'Before submitting, confirm that the latest draft is saved and all information is accurate. Then check whether the listing page provides a Submit or Publish control and read any confirmation or terms it displays. Do not assume that Save draft publishes the listing. If no submission control is available, tell me the status and buttons shown on your listing page so I can guide you without guessing.',
-      actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
-      suggestions: ['I cannot see a submit button', 'Review my listing before submission', 'Speak to an administrator'],
-      context: nextContext,
     }
   }
 
