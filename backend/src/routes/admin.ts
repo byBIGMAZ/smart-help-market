@@ -31,6 +31,10 @@ adminRouter.get(
         listingsResult,
         categoriesResult,
         sessionsResult,
+        listingStatusResult,
+        administratorResult,
+        settingsResult,
+        recentActivityResult,
       ] = await Promise.all([
         db.query(
           `SELECT
@@ -53,6 +57,34 @@ adminRouter.get(
            FROM public.marketplace_sessions
            WHERE expires_at > NOW()`,
         ),
+        db.query(
+          `SELECT
+             COUNT(*) FILTER (WHERE is_demo = FALSE)::text AS "liveTotal",
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'pending_review')::text AS "pendingReview",
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'draft')::text AS drafts,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'paused')::text AS paused,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'rejected')::text AS rejected,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'suspended')::text AS suspended
+           FROM public.marketplace_listings`,
+        ),
+        db.query(
+          `SELECT
+             COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key <> 'member')::text AS total,
+             COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key = 'super_admin')::text AS "superAdmins"
+           FROM public.marketplace_user_roles ur
+           INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+           INNER JOIN public.marketplace_users u ON u.user_id = ur.user_id
+           WHERE u.account_status = 'active'`,
+        ),
+        db.query(
+          `SELECT COUNT(*)::text AS total
+           FROM public.platform_settings`,
+        ),
+        db.query(
+          `SELECT COUNT(*)::text AS total
+           FROM public.marketplace_audit_logs
+           WHERE created_at >= NOW() - INTERVAL '7 days'`,
+        ),
       ])
 
       res.status(200).json({
@@ -65,9 +97,25 @@ adminRouter.get(
           listings: {
             total: Number(listingsResult.rows[0]?.total ?? 0),
             published: Number(listingsResult.rows[0]?.published ?? 0),
+            liveTotal: Number(listingStatusResult.rows[0]?.liveTotal ?? 0),
+            pendingReview: Number(listingStatusResult.rows[0]?.pendingReview ?? 0),
+            drafts: Number(listingStatusResult.rows[0]?.drafts ?? 0),
+            paused: Number(listingStatusResult.rows[0]?.paused ?? 0),
+            rejected: Number(listingStatusResult.rows[0]?.rejected ?? 0),
+            suspended: Number(listingStatusResult.rows[0]?.suspended ?? 0),
           },
           categories: {
             total: Number(categoriesResult.rows[0]?.total ?? 0),
+          },
+          administrators: {
+            total: Number(administratorResult.rows[0]?.total ?? 0),
+            superAdmins: Number(administratorResult.rows[0]?.superAdmins ?? 0),
+          },
+          configuration: {
+            settingsCount: Number(settingsResult.rows[0]?.total ?? 0),
+          },
+          activity: {
+            auditActionsLast7Days: Number(recentActivityResult.rows[0]?.total ?? 0),
           },
           activeSessions: Number(sessionsResult.rows[0]?.total ?? 0),
         },
