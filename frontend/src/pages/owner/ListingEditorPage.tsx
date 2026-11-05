@@ -551,7 +551,7 @@ export default function ListingEditorPage() {
           kind,
           values,
           units: kind === 'properties'
-            ? units.map(({ photos, videoUrl, ...unit }) => unit)
+            ? (isLand ? [] : units.map(({ photos, videoUrl, ...unit }) => unit))
             : [],
         },
       }
