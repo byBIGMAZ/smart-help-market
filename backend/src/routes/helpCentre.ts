@@ -113,16 +113,15 @@ function resolveAssistantRole(
   return null
 }
 
-function routeForRequest(message: string, roles: string[], preferredRole?: string): SuggestedAction[] {
+function routeForRequest(message: string, roles: string[], activeRole: WorkspaceRole | null): SuggestedAction[] {
   const text = normalize(message)
-  const role = canonicalWorkspaceRole(preferredRole)
-    && roles.map((item) => canonicalWorkspaceRole(item)).includes(canonicalWorkspaceRole(preferredRole))
-    ? canonicalWorkspaceRole(preferredRole)
-    : (['buyer', 'landlord', 'seller', 'service_provider', 'agent'] as WorkspaceRole[])
-        .find((item) => roles.map((assigned) => canonicalWorkspaceRole(assigned)).includes(item)) || 'buyer'
+  const availableRoles = roles
+    .map((item) => canonicalWorkspaceRole(item))
+    .filter((item): item is WorkspaceRole => item !== null)
+  const role = activeRole || (availableRoles.length === 1 ? availableRoles[0] : 'buyer')
   const rolePath = workspacePathRole(role)
   const roleListingPath = role === 'landlord' ? '/landlord/properties' : role === 'seller' ? '/seller/products' : role === 'service_provider' ? '/provider/services' : role === 'agent' ? '/agent/listings' : '/buyer/saved'
-  const routes: Array<{ terms: string[]; label: string; path: string }> = [
+  const routes: Array<{ terms: string[]; label: string; path: string; roles?: WorkspaceRole[] }> = [
     { terms: ['create community post', 'publish a post', 'new community post'], label: 'Create a community post', path: `/${rolePath}/community/new` },
     { terms: ['neighbourhood', 'neighborhood', 'neighboarhood', 'community space', 'community'], label: 'Open neighbourhood space', path: `/${rolePath}/community` },
     { terms: ['saved', 'favourite', 'favorite', 'wishlist'], label: 'Open saved items', path: '/buyer/saved' },
@@ -135,29 +134,30 @@ function routeForRequest(message: string, roles: string[], preferredRole?: strin
     { terms: ['enquiry', 'enquiries', 'my enquiries'], label: 'Open enquiries', path: `/${rolePath}/enquiries` },
     { terms: ['transaction', 'transactions', 'purchase history'], label: 'Open transactions', path: '/buyer/transactions' },
     { terms: ['roommate', 'room mate', 'shared accommodation'], label: 'Open roommate matching', path: '/buyer/roommates' },
-    { terms: ['tenant', 'tenants'], label: 'Open tenant management', path: '/landlord/tenants' },
-    { terms: ['complaint', 'complaints'], label: 'Open complaints', path: '/landlord/complaints' },
-    { terms: ['notice', 'notices', 'warning'], label: 'Open notices and warnings', path: '/landlord/notices' },
-    { terms: ['review', 'reviews', 'dispute', 'disputes'], label: 'Open reviews and disputes', path: '/landlord/reviews' },
-    { terms: ['rent payment', 'rent and renewal', 'renewal', 'arrears'], label: 'Open rent and renewals', path: '/landlord/rent' },
-    { terms: ['maintenance', 'repair'], label: 'Open maintenance', path: '/landlord/maintenance' },
-    { terms: ['my properties', 'manage properties', 'property portfolio'], label: 'Manage properties', path: '/landlord/properties' },
-    { terms: ['add property', 'list property', 'post property'], label: 'Create a property listing', path: '/landlord/properties/new' },
-    { terms: ['my products', 'manage products', 'inventory'], label: 'Open products and inventory', path: '/seller/products' },
-    { terms: ['add product', 'list product'], label: 'Add a product', path: '/seller/products/new' },
-    { terms: ['orders', 'my sales'], label: 'Open orders', path: '/seller/orders' },
-    { terms: ['bookings', 'my services'], label: 'Open bookings and services', path: '/provider/bookings' },
-    { terms: ['availability', 'working hours', 'schedule'], label: 'Manage service availability', path: '/provider/availability' },
-    { terms: ['add service', 'list service'], label: 'Add a service', path: '/provider/services/new' },
+    { terms: ['tenant', 'tenants'], label: 'Open tenant management', path: '/landlord/tenants', roles: ['landlord'] },
+    { terms: ['complaint', 'complaints'], label: 'Open complaints', path: '/landlord/complaints', roles: ['landlord'] },
+    { terms: ['notice', 'notices', 'warning'], label: 'Open notices and warnings', path: '/landlord/notices', roles: ['landlord'] },
+    { terms: ['review', 'reviews', 'dispute', 'disputes'], label: 'Open reviews and disputes', path: '/landlord/reviews', roles: ['landlord'] },
+    { terms: ['rent payment', 'rent and renewal', 'renewal', 'arrears'], label: 'Open rent and renewals', path: '/landlord/rent', roles: ['landlord'] },
+    { terms: ['maintenance', 'repair'], label: 'Open maintenance', path: '/landlord/maintenance', roles: ['landlord'] },
+    { terms: ['my properties', 'manage properties', 'property portfolio'], label: 'Manage properties', path: '/landlord/properties', roles: ['landlord'] },
+    { terms: ['add property', 'list property', 'post property'], label: 'Create a property listing', path: '/landlord/properties/new', roles: ['landlord'] },
+    { terms: ['agent listing', 'represented property', 'list property for a client'], label: 'Create an agent listing', path: '/agent/listings/new', roles: ['agent'] },
+    { terms: ['my products', 'manage products', 'inventory'], label: 'Open products and inventory', path: '/seller/products', roles: ['seller'] },
+    { terms: ['add product', 'list product'], label: 'Add a product', path: '/seller/products/new', roles: ['seller'] },
+    { terms: ['orders', 'my sales'], label: 'Open orders', path: '/seller/orders', roles: ['seller'] },
+    { terms: ['bookings', 'my services'], label: 'Open bookings and services', path: '/provider/bookings', roles: ['service_provider'] },
+    { terms: ['availability', 'working hours', 'schedule'], label: 'Manage service availability', path: '/provider/availability', roles: ['service_provider'] },
+    { terms: ['add service', 'list service'], label: 'Add a service', path: '/provider/services/new', roles: ['service_provider'] },
     { terms: ['my listings', 'manage listings'], label: 'Open my listings', path: roleListingPath },
-    { terms: ['clients'], label: 'Open clients', path: '/agent/clients' },
-    { terms: ['commission', 'commissions', 'earnings'], label: 'Open commissions and earnings', path: '/agent/commissions' },
+    { terms: ['clients'], label: 'Open clients', path: '/agent/clients', roles: ['agent'] },
+    { terms: ['commission', 'commissions', 'earnings'], label: 'Open commissions and earnings', path: '/agent/commissions', roles: ['agent'] },
     { terms: ['dashboard', 'overview'], label: 'Open dashboard', path: `/${rolePath}/dashboard` },
     { terms: ['browse', 'explore marketplace', 'marketplace'], label: 'Explore marketplace', path: '/explore' },
     { terms: ['category', 'categories'], label: 'Browse categories', path: '/categories' },
     { terms: ['help centre', 'help center', 'support'], label: 'Open Help Centre', path: '/help' },
   ]
-  const match = routes.find((item) => item.terms.some((term) => text.includes(term)))
+  const match = routes.find((item) => (!item.roles || item.roles.includes(role)) && item.terms.some((term) => text.includes(term)))
   return match ? [{ label: match.label, path: match.path }] : []
 }
 
@@ -350,7 +350,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   const searchMessage = normalize(searchText)
-  const actions = routeForRequest(rawMessage, roles, preferredRole)
+  const actions = routeForRequest(rawMessage, roles, activeRole)
   if (actions.length) {
     return {
       text: 'I found the right place for that. Use the shortcut below and I will take you directly there.',
@@ -423,14 +423,24 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
               : null
 
   if (!category && (message.includes('how do i') || message.includes('where can i') || message.includes('how can i'))) {
-    const role = roles.find((item) => ['buyer', 'landlord', 'seller', 'provider', 'agent'].includes(item)) || 'buyer'
+    const availableRoles = roles
+      .map((role) => canonicalWorkspaceRole(role))
+      .filter((role): role is WorkspaceRole => role !== null)
+    if (!activeRole && availableRoles.length > 1) {
+      return {
+        text: 'I can guide you through the correct workspace. Which part of your marketplace account are you asking about?',
+        suggestions: availableRoles.map((role) => `As a ${role === 'service_provider' ? 'service provider' : role}`),
+        context: nextContext,
+      }
+    }
+    const rolePath = activeRole ? workspacePathRole(activeRole) : 'buyer'
     return {
-      text: 'I can guide you around the marketplace. Tell me the feature you want to use, or choose one of these destinations.',
+      text: 'I can guide you around the marketplace using the workspace assigned to your account. Tell me the feature you want to use, or choose one of these destinations.',
       actions: [
-        { label: 'My dashboard', path: `/${rolePath}/dashboard` },
+        ...(activeRole ? [{ label: 'My dashboard', path: `/${rolePath}/dashboard` }] : []),
         { label: 'Explore marketplace', path: '/explore' },
-        { label: 'My messages', path: `/${rolePath}/messages` },
-        { label: 'Neighbourhood space', path: `/${rolePath}/community` },
+        ...(activeRole ? [{ label: 'My messages', path: `/${rolePath}/messages` }] : []),
+        ...(activeRole ? [{ label: 'Neighbourhood space', path: `/${rolePath}/community` }] : []),
       ],
       suggestions: ['How do I save a listing?', 'How do I contact a landlord?', 'How do I create a listing?'],
       context: nextContext,
