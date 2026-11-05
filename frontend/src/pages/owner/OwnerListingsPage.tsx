@@ -123,7 +123,7 @@ export default function OwnerListingsPage() {
           <Link to="/landlord/properties/new">＋ Create a property listing</Link>
           <Link to="/explore">Explore the marketplace</Link>
           <small>
-            New listing drafts are currently saved locally for frontend testing.
+            Your saved drafts and listings are retrieved securely from your marketplace account.
           </small>
         </section>
       ) : (
