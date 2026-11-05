@@ -310,18 +310,28 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
       channels: paymentChannels,
       metadata: { purpose: 'listing_fee', listingId, transactionId },
     })
-    await db.query(
-      `UPDATE public.marketplace_payment_transactions
-       SET status = 'pending', authorization_url = $1, access_code = $2, updated_at = NOW()
-       WHERE transaction_id = $3 AND user_id = $4 AND status = 'initialized'`,
-      [checkout.authorizationUrl, checkout.accessCode, transactionId, userId],
-    )
-    await db.query(
-      `INSERT INTO public.marketplace_payment_transaction_events
-         (transaction_id, event_type, event_source, payload)
-       VALUES ($1, 'checkout.initialized', 'api', $2::jsonb)`,
-      [transactionId, JSON.stringify({ reference, amountMinor, currencyCode })],
-    )
+    const eventClient = await db.connect()
+    try {
+      await eventClient.query('BEGIN')
+      await eventClient.query(
+        `UPDATE public.marketplace_payment_transactions
+         SET status = 'pending', authorization_url = $1, access_code = $2, updated_at = NOW()
+         WHERE transaction_id = $3 AND user_id = $4 AND status = 'initialized'`,
+        [checkout.authorizationUrl, checkout.accessCode, transactionId, userId],
+      )
+      await eventClient.query(
+        `INSERT INTO public.marketplace_payment_transaction_events
+           (transaction_id, event_type, event_source, payload)
+         VALUES ($1, 'checkout.initialized', 'api', $2::jsonb)`,
+        [transactionId, JSON.stringify({ reference, amountMinor, currencyCode })],
+      )
+      await eventClient.query('COMMIT')
+    } catch (error) {
+      await eventClient.query('ROLLBACK').catch(() => undefined)
+      throw error
+    } finally {
+      eventClient.release()
+    }
     res.status(200).json({
       status: 'ok',
       paymentRequired: true,
