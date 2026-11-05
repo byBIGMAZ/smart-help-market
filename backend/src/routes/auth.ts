@@ -74,8 +74,29 @@ authRouter.post('/register', async (req, res) => {
     return
   }
 
-  const verificationStatus =
-    accountType === 'buyer' ? 'not_required' : 'pending'
+  let verificationStatus: 'not_required' | 'pending' = 'not_required'
+  if (accountType !== 'buyer') {
+    try {
+      const verificationSetting = await getDatabasePool().query<{ setting_value: unknown }>(
+        'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
+        [`verification.required.${accountType}`],
+      )
+      // Missing settings default to requiring verification. Only an explicit
+      // boolean false disables this business verification requirement.
+      verificationStatus = verificationSetting.rows[0]?.setting_value === false
+        ? 'not_required'
+        : 'pending'
+    } catch (error) {
+      console.error(
+        'Account verification policy lookup failed:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+      res.status(503).json({
+        error: 'Account registration is temporarily unavailable because verification policy could not be checked.',
+      })
+      return
+    }
+  }
 
   try {
     const passwordHash = await argon2.hash(password, {
