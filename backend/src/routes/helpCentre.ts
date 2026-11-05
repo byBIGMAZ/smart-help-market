@@ -584,7 +584,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   if (awaiting === 'seller_listing_issue' || awaiting === 'seller_listing_save_issue') {
     nextContext.awaiting = 'seller_listing_detail'
     return {
-      text: 'Let's diagnose the product listing issue in your Seller workspace. Check that the product form is being opened from Seller Products and that you are signed in to the correct seller account. If the form opens but will not save, the important fields include product title, category, condition, price, stock and delivery information. What is happening?',
+      text: 'Let\'s diagnose the product listing issue in your Seller workspace. Check that the product form is being opened from Seller Products and that you are signed in to the correct seller account. If the form opens but will not save, the important fields include product title, category, condition, price, stock and delivery information. What is happening?',
       actions: [{ label: 'Open Seller Products', path: '/seller/products' }, { label: 'Add a product', path: '/seller/products/new' }],
       suggestions: ['Product details are missing', 'Price or stock is rejected', 'The button does nothing', 'I see an error message'],
       context: nextContext,
@@ -623,7 +623,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   if (awaiting === 'provider_listing_issue' || awaiting === 'provider_listing_save_issue') {
     nextContext.awaiting = 'provider_listing_detail'
     return {
-      text: 'Let's diagnose the service listing issue in your Service Provider workspace. Open the form from your Services area and confirm that you are signed in to the correct provider account. Check the service type, experience, service area, delivery mode and availability information. What exactly happens when you try to create or save the service?',
+      text: 'Let\'s diagnose the service listing issue in your Service Provider workspace. Open the form from your Services area and confirm that you are signed in to the correct provider account. Check the service type, experience, service area, delivery mode and availability information. What exactly happens when you try to create or save the service?',
       actions: [{ label: 'Open my services', path: '/provider/services' }, { label: 'Add a service', path: '/provider/services/new' }],
       suggestions: ['Service details are missing', 'My service area is not accepted', 'The button does nothing', 'I see an error message'],
       context: nextContext,
