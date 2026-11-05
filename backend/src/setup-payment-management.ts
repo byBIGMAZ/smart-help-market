@@ -29,6 +29,7 @@ async function setupPaymentManagement(): Promise<void> {
       )
     `)
     await pool.query(`ALTER TABLE public.marketplace_payment_configuration ADD COLUMN IF NOT EXISTS secret_key_mode TEXT CHECK (secret_key_mode IS NULL OR secret_key_mode IN ('test','live'))`)
+    await pool.query(`ALTER TABLE public.marketplace_payment_configuration ADD COLUMN IF NOT EXISTS listing_fee_settings JSONB NOT NULL DEFAULT '{"enabled":false,"propertyFee":0,"productFee":0,"serviceFee":0}'::jsonb`)
     await pool.query(`
       CREATE TABLE IF NOT EXISTS public.marketplace_payment_credential_otps (
         otp_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
