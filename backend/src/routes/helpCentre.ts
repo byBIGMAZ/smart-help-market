@@ -1379,7 +1379,7 @@ router.get('/status', async (_req, res) => {
   try {
     const userId = userIdFrom(res)
     const [limitValue, enabledValue, usage] = await Promise.all([
-      getSetting('help.messages.free_limit', 30),
+      getSetting('help.messages.free_limit', 0),
       getSetting('help.assistant.enabled', true),
       getDatabasePool().query<{ messages_used: number; period_start: string }>(
         `SELECT messages_used, period_start::text
@@ -1388,9 +1388,9 @@ router.get('/status', async (_req, res) => {
         [userId],
       ),
     ])
-    const limit = readNumber(limitValue, 30)
+    const limit = readNumber(limitValue, 0)
     const used = Number(usage.rows[0]?.messages_used ?? 0)
-    res.json({ enabled: enabledValue !== false, used, limit, remaining: Math.max(0, limit - used), period: 'monthly' })
+    res.json({ enabled: enabledValue !== false, used, limit, remaining: limit === 0 ? 0 : Math.max(0, limit - used), unlimited: limit === 0, period: 'monthly' })
   } catch {
     res.status(503).json({ error: 'Help Centre usage could not be loaded.' })
   }
@@ -1477,7 +1477,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1',
       ['help.messages.free_limit'],
     )
-    const limit = readNumber(limitResult.rows[0]?.setting_value, 30)
+    const limit = readNumber(limitResult.rows[0]?.setting_value, 0)
     await client.query(
       `INSERT INTO public.marketplace_help_usage (user_id, period_start)
        VALUES ($1, date_trunc('month', CURRENT_DATE)::date)
@@ -1491,13 +1491,13 @@ router.post('/chat', async (req: Request, res: Response) => {
       [userId],
     )
     const used = Number(usage.rows[0]?.messages_used ?? 0)
-    if (used >= limit) {
+    if (limit > 0 && used >= limit) {
       await client.query('ROLLBACK')
       res.status(429).json({
         error: 'You have used your included Help Centre messages for this month.',
         usage: { used, limit, remaining: 0 },
-        paidPackagesAvailable: false,
-        message: 'Additional paid messages will be available when secure payment integration is enabled.',
+        unlimited: false,
+        message: 'Your included monthly messages have been used. Your allowance will reset at the start of next month.',
       })
       return
     }
@@ -1640,7 +1640,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       actions: answer.actions || [],
       matches: answer.matches || [],
       guide: answer.guide || null,
-      usage: { used: used + 1, limit, remaining: Math.max(0, limit - used - 1) },
+      usage: { used: used + 1, limit, remaining: limit === 0 ? 0 : Math.max(0, limit - used - 1), unlimited: limit === 0 },
       needsAdmin: answer.needsAdmin === true,
     })
   } catch (error) {
