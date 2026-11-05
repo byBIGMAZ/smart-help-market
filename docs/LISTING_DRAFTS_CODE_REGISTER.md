@@ -18,8 +18,9 @@ This phase connects Listing Studio draft saving to the authenticated marketplace
 - `GET /api/listings/owner` retrieves only the authenticated user's listings, including unpublished drafts, with structured details and image galleries.
 - `POST /api/listings/owner` creates an owner-linked draft.
 - `PATCH /api/listings/owner/:listingId` updates only an existing draft owned by the authenticated user.
-- Both endpoints require a valid session, an active account, an active marketplace category, and an account type permitted for that listing kind.
-- Property drafts are restricted to landlord and agent accounts, product drafts to seller accounts, and service drafts to service-provider accounts.
+- Both endpoints require a valid session, an active account, an active marketplace category, and an authorised account type or matching explicitly assigned workspace role.
+- Property drafts are restricted to landlord and agent account types/roles, product drafts to seller account types/roles, and service drafts to service-provider account types/roles. The development demo account uses its explicit workspace-role assignments because it has no single account_type.
+- `backend/src/repair-marketplace-demo-account-roles.ts` and `npm run repair:demo-account-roles` safely repair workspace-role assignments for the existing `demo@smarthelpmarket.ng` account without creating a replacement account or granting administrative roles.
 - All new records are created with status `draft`, `is_demo = false`, and the authenticated `owner_user_id`.
 - SQL uses bound parameters. Listing create/update and audit logging run in a database transaction.
 - Draft updates cannot change a published, pending-review, rejected, suspended, or demonstration listing.
