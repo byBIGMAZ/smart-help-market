@@ -83,9 +83,9 @@ router.put('/configuration', async (req, res) => {
 
   try {
     const current = await getDatabasePool().query(
-      `SELECT secret_key_ciphertext, webhook_secret_ciphertext FROM public.marketplace_payment_configuration WHERE configuration_id = 1`,
+      `SELECT secret_key_ciphertext, secret_key_mode, webhook_secret_ciphertext FROM public.marketplace_payment_configuration WHERE configuration_id = 1`,
     )
-    if (enabled && (!publicKey || !current.rows[0]?.secret_key_ciphertext)) {
+    if (enabled && (!publicKey || !current.rows[0]?.secret_key_ciphertext || current.rows[0]?.secret_key_mode !== mode)) {
       res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
       return
     }
