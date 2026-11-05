@@ -748,7 +748,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     const listingRoles = listingWorkspaceRoles.filter((role): role is 'landlord' | 'agent' => role === 'landlord' || role === 'agent')
     const listingRole = activeRole || (listingWorkspaceRoles.length === 1 ? listingWorkspaceRoles[0] : null)
 
-    if (!listingRole && listingWorkspaceRoles.length === 2 && listingRoles.length === 2) {
+    if (!listingRole && listingRoles.length === 2 && (awaiting === 'listing_role' || listingWorkspaceRoles.length === 2)) {
       return {
         text: 'I can help with that. Your account has both Landlord and Agent access. Are you creating this listing as a landlord for your own property, or as an agent for a property you represent?',
         suggestions: ['As a landlord', 'As an agent'],
@@ -756,7 +756,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       }
     }
 
-    if (!listingRole && listingWorkspaceRoles.length > 1) {
+    if (!listingRole && listingWorkspaceRoles.length > 1 && awaiting !== 'listing_role') {
       const categorySuggestions = [
         ...(listingWorkspaceRoles.some((role) => role === 'landlord' || role === 'agent') ? ['Property listing'] : []),
         ...(listingWorkspaceRoles.includes('seller') ? ['Product listing'] : []),
