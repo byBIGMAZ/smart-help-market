@@ -14,6 +14,7 @@ export interface AdminOverview {
     total: number
     published: number
     liveTotal: number
+    publishedLive: number
     pendingReview: number
     drafts: number
     paused: number
