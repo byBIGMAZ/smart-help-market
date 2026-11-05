@@ -60,6 +60,7 @@ adminRouter.get(
         db.query(
           `SELECT
              COUNT(*) FILTER (WHERE is_demo = FALSE)::text AS "liveTotal",
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'published')::text AS "publishedLive",
              COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'pending_review')::text AS "pendingReview",
              COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'draft')::text AS drafts,
              COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'paused')::text AS paused,
@@ -98,6 +99,7 @@ adminRouter.get(
             total: Number(listingsResult.rows[0]?.total ?? 0),
             published: Number(listingsResult.rows[0]?.published ?? 0),
             liveTotal: Number(listingStatusResult.rows[0]?.liveTotal ?? 0),
+            publishedLive: Number(listingStatusResult.rows[0]?.publishedLive ?? 0),
             pendingReview: Number(listingStatusResult.rows[0]?.pendingReview ?? 0),
             drafts: Number(listingStatusResult.rows[0]?.drafts ?? 0),
             paused: Number(listingStatusResult.rows[0]?.paused ?? 0),
