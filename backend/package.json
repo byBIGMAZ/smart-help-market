@@ -13,7 +13,8 @@
     "setup:help-centre": "tsx src/setup-help-centre-tables.ts",
     "setup:geography": "tsx src/setup-geographic-intelligence.ts",
     "setup:listing-drafts": "tsx src/migrate-listing-details.ts",
-    "repair:demo-account-roles": "tsx src/repair-marketplace-demo-account-roles.ts"
+    "repair:demo-account-roles": "tsx src/repair-marketplace-demo-account-roles.ts",
+    "setup:payments": "tsx src/setup-payment-management.ts"
   },
   "keywords": [],
   "author": "",
