@@ -521,8 +521,12 @@ export default function ListingEditorPage() {
     setNotice('')
     setError('')
 
+    const savedValues = kind === 'properties' && !isLand && values.purpose !== 'For sale'
+      ? { ...values, price: '' }
+      : values
+
     const draft: Draft = {
-      values,
+      values: savedValues,
       units: units.map(({ photos, videoUrl, ...unit }) => unit),
       categoryKey,
       serverListingId,
@@ -549,7 +553,7 @@ export default function ListingEditorPage() {
         details: {
           version: 1 as const,
           kind,
-          values,
+          values: savedValues,
           units: kind === 'properties'
             ? (isLand ? [] : units.map(({ photos, videoUrl, ...unit }) => unit))
             : [],
@@ -624,7 +628,14 @@ export default function ListingEditorPage() {
 
       <label className="listing-editor-field">
         Listing purpose
-        <select value={values.purpose} onChange={(event) => updateField('purpose', event.target.value)}>
+        <select
+          value={values.purpose}
+          onChange={(event) => {
+            const purpose = event.target.value
+            updateField('purpose', purpose)
+            if (purpose !== 'For sale' && !isLand) updateField('price', '')
+          }}
+        >
           <option>For rent</option>
           <option>For sale</option>
           <option>Shortlet</option>
