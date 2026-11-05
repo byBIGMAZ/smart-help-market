@@ -883,12 +883,17 @@ router.get('/conversations/:conversationId/messages', async (req, res) => {
 router.post('/chat', async (req: Request, res: Response) => {
   const message = typeof req.body?.message === 'string' ? req.body.message.trim() : ''
   const requestedConversationId = req.body?.conversationId
+  const suggestionOfMessageId = req.body?.suggestionOfMessageId
   if (!message || message.length > MAX_MESSAGE_LENGTH) {
     res.status(400).json({ error: `Enter a message between 1 and ${MAX_MESSAGE_LENGTH} characters.` })
     return
   }
   if (requestedConversationId !== undefined && (typeof requestedConversationId !== 'string' || !/^[1-9]\d*$/.test(requestedConversationId))) {
     res.status(400).json({ error: 'Invalid conversation.' })
+    return
+  }
+  if (suggestionOfMessageId !== undefined && (typeof suggestionOfMessageId !== 'string' || !/^[1-9]\d*$/.test(suggestionOfMessageId) || !requestedConversationId)) {
+    res.status(400).json({ error: 'Invalid suggestion selection.' })
     return
   }
 
@@ -960,20 +965,54 @@ router.post('/chat', async (req: Request, res: Response) => {
       conversationId = created.rows[0].id
     }
 
-    await client.query(
-      `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text)
-       VALUES ($1, 'user', $2)`,
-      [conversationId, message],
-    )
-
+    let effectiveMessage = message
     const roleResult = await client.query<{ role_key: string }>(
       `SELECT r.role_key FROM public.marketplace_user_roles ur
        JOIN public.marketplace_roles r ON r.role_id = ur.role_id
        WHERE ur.user_id = $1 ORDER BY r.role_key`,
       [userId],
     )
-    const answer = await answerMessage(message, context, roleResult.rows.map((row) => row.role_key), preferredRole)
-    const prediction = await predictIntent(message)
+    const assignedRoles = roleResult.rows.map((row) => row.role_key)
+
+    if (suggestionOfMessageId) {
+      const previousAssistant = await client.query<{ message_text: string; metadata: unknown }>(
+        `SELECT message_text, metadata
+         FROM public.marketplace_help_messages
+         WHERE message_id = $1 AND conversation_id = $2 AND sender_type = 'assistant'
+         LIMIT 1`,
+        [suggestionOfMessageId, conversationId],
+      )
+      if (!previousAssistant.rowCount) {
+        await client.query('ROLLBACK')
+        res.status(400).json({ error: 'This suggestion is no longer available. Please choose an option from the latest assistant response.' })
+        return
+      }
+      let previousMetadata = previousAssistant.rows[0].metadata
+      if (typeof previousMetadata === 'string') {
+        try { previousMetadata = JSON.parse(previousMetadata) as unknown } catch { previousMetadata = null }
+      }
+      const offeredSuggestions = typeof previousMetadata === 'object' && previousMetadata !== null
+        && 'suggestions' in previousMetadata && Array.isArray(previousMetadata.suggestions)
+        ? previousMetadata.suggestions.filter((item): item is string => typeof item === 'string')
+        : []
+      if (!offeredSuggestions.includes(message)) {
+        await client.query('ROLLBACK')
+        res.status(400).json({ error: 'That option was not part of the selected assistant response. Please choose one of the displayed suggestions.' })
+        return
+      }
+      const expanded = expandSuggestionSelection(message, previousAssistant.rows[0].message_text, context, assignedRoles)
+      effectiveMessage = expanded.message
+      context = expanded.context
+    }
+
+    await client.query(
+      `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
+       VALUES ($1, 'user', $2, $3::jsonb)`,
+      [conversationId, message, JSON.stringify(suggestionOfMessageId ? { selectedSuggestionOfMessageId: suggestionOfMessageId } : {})],
+    )
+
+    const answer = await answerMessage(effectiveMessage, context, assignedRoles, preferredRole)
+    const prediction = await predictIntent(effectiveMessage)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)
@@ -997,7 +1036,7 @@ router.post('/chat', async (req: Request, res: Response) => {
          (user_id, conversation_id, assistant_message_id, intent_key, confidence, meaningful_token_count, model_version, feature_hashes)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb)`,
         [userId, conversationId, assistantMessage.rows[0].id, prediction.intent,
-         prediction.confidence, countMeaningfulTokens(message), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(message))],
+         prediction.confidence, countMeaningfulTokens(effectiveMessage), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(effectiveMessage))],
       )
     }
     await client.query(
