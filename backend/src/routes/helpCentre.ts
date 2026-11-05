@@ -1627,7 +1627,13 @@ router.post('/chat', async (req: Request, res: Response) => {
       ownedListings: ownedListingSummary.rows,
     }
     const recentConversation: BigmazConversationTurn[] = recentMessageResult.rows.reverse()
-    const modelReply = await generateBigmazReply({
+    const modelSetting = await client.query<{ setting_value: unknown }>(
+      'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
+      ['help.ai.model_enabled'],
+    )
+    const modelReply = modelSetting.rows[0]?.setting_value === false
+      ? null
+      : await generateBigmazReply({
       message: effectiveMessage,
       deterministicReply: answer.text,
       suggestions: answer.suggestions || [],
@@ -1656,6 +1662,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         guide: answer.guide || null,
         intent: prediction.intent,
         modelVersion: prediction.modelVersion,
+        reasoningMode: modelReply ? 'model_assisted' : 'guided_fallback',
       })],
     )
     const learningEnabled = await client.query<{ setting_value: unknown }>(
@@ -1694,6 +1701,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       guide: answer.guide || null,
       usage: { used: used + 1, limit, remaining: Math.max(0, limit - used - 1) },
       needsAdmin: answer.needsAdmin === true,
+      reasoningMode: modelReply ? 'model_assisted' : 'guided_fallback',
     })
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined)
