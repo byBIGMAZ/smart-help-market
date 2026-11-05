@@ -48,6 +48,15 @@ function MetricCard({ label, value, detail, icon, tone, onClick }: MetricCardPro
   )
 }
 
+function StatusCount({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className={`admin-overview-status-count status-${tone}`}>
+      <span>{label}</span>
+      <strong>{value.toLocaleString()}</strong>
+    </div>
+  )
+}
+
 export default function AdminOverviewPanel({
   overview,
   permissions,
@@ -79,8 +88,8 @@ export default function AdminOverviewPanel({
   const activeRate = overview && overview.users.total > 0
     ? Math.min(100, Math.round((overview.users.active / overview.users.total) * 100))
     : 0
-  const publishedRate = overview && overview.listings.total > 0
-    ? Math.min(100, Math.round((overview.listings.published / overview.listings.total) * 100))
+  const publishedRate = overview && overview.listings.liveTotal > 0
+    ? Math.min(100, Math.round((overview.listings.published / overview.listings.liveTotal) * 100))
     : 0
 
   return (
@@ -89,10 +98,10 @@ export default function AdminOverviewPanel({
         <div>
           <span className="admin-kicker">PLATFORM AT A GLANCE</span>
           <h2>{isSuperAdmin ? 'Super Admin overview' : 'Administration overview'}</h2>
-          <p>Key figures currently available from the marketplace database.</p>
+          <p>Live operational figures retrieved from the marketplace database.</p>
         </div>
         <div className="admin-overview-heading-actions">
-          <span className="admin-overview-source"><i aria-hidden="true" /> Database metrics</span>
+          <span className="admin-overview-source"><i aria-hidden="true" /> Live database metrics</span>
           <button type="button" className="admin-secondary-button" onClick={onRefresh} disabled={refreshing}>
             {refreshing ? 'Refreshing…' : '↻ Refresh'}
           </button>
@@ -104,18 +113,22 @@ export default function AdminOverviewPanel({
           <div className="admin-overview-metrics">
             <MetricCard label="Registered users" value={overview.users.total} detail={`${overview.users.active.toLocaleString()} active accounts`} icon="♙" tone="green" onClick={can('users.view') ? onOpenUsers : undefined} />
             <MetricCard label="Active accounts" value={overview.users.active} detail="Accounts currently marked active" icon="✓" tone="blue" onClick={can('users.view') ? onOpenUsers : undefined} />
-            <MetricCard label="Total listings" value={overview.listings.total} detail={`${overview.listings.published.toLocaleString()} published listings`} icon="⌂" tone="violet" onClick={can('listings.view') ? onOpenListings : undefined} />
-            <MetricCard label="Published listings" value={overview.listings.published} detail="Listings visible as published" icon="◈" tone="green" onClick={can('listings.view') ? onOpenListings : undefined} />
+            <MetricCard label="Total listings" value={overview.listings.total} detail={`${overview.listings.liveTotal.toLocaleString()} non-demo listings`} icon="⌂" tone="violet" onClick={can('listings.view') ? onOpenListings : undefined} />
+            <MetricCard label="Published listings" value={overview.listings.published} detail="Currently published listings" icon="◈" tone="green" onClick={can('listings.view') ? onOpenListings : undefined} />
+            <MetricCard label="Awaiting review" value={overview.listings.pendingReview} detail="Live listings pending moderation" icon="◷" tone="amber" onClick={can('listings.view') ? onOpenListings : undefined} />
+            <MetricCard label="Administrator accounts" value={overview.administrators.total} detail={`${overview.administrators.superAdmins.toLocaleString()} Super Admin accounts`} icon="♧" tone="blue" onClick={can('users.view') ? onOpenUsers : undefined} />
             <MetricCard label="Categories" value={overview.categories.total} detail="Configured marketplace categories" icon="▦" tone="amber" onClick={can('categories.view') ? onOpenCategories : undefined} />
             <MetricCard label="Active sessions" value={overview.activeSessions} detail="Sessions that have not expired" icon="◉" tone="blue" onClick={can('audit.view') ? onOpenAudit : undefined} />
+            <MetricCard label="Platform settings" value={overview.configuration.settingsCount} detail="Database-backed configuration records" icon="⚙" tone="violet" onClick={can('settings.view') ? onOpenSettings : undefined} />
+            <MetricCard label="Audit activity, 7 days" value={overview.activity.auditActionsLast7Days} detail="Recorded actions in the last seven days" icon="▤" tone="green" onClick={can('audit.view') ? onOpenAudit : undefined} />
           </div>
 
           <div className="admin-overview-lower-grid">
             <section className="admin-overview-card admin-overview-pulse">
               <div className="admin-overview-card-heading">
                 <div>
-                  <span className="admin-kicker">DATABASE SNAPSHOT</span>
-                  <h3>Marketplace activity</h3>
+                  <span className="admin-kicker">ACCOUNT AND LISTING HEALTH</span>
+                  <h3>Marketplace snapshot</h3>
                 </div>
                 <span className="admin-overview-card-mark" aria-hidden="true">⌁</span>
               </div>
@@ -125,36 +138,55 @@ export default function AdminOverviewPanel({
                 <small>{overview.users.active.toLocaleString()} of {overview.users.total.toLocaleString()} registered users</small>
               </div>
               <div className="admin-overview-progress-item">
-                <div><span>Published listings</span><strong>{publishedRate}%</strong></div>
+                <div><span>Published listings, excluding demos</span><strong>{publishedRate}%</strong></div>
                 <div className="admin-overview-progress-track"><span style={{ width: `${publishedRate}%` }} /></div>
-                <small>{overview.listings.published.toLocaleString()} of {overview.listings.total.toLocaleString()} total listings</small>
+                <small>{overview.listings.published.toLocaleString()} of {overview.listings.liveTotal.toLocaleString()} live listings</small>
               </div>
-              <p className="admin-overview-footnote">Percentages are calculated from the live totals above. They are descriptive ratios, not performance targets.</p>
+              <p className="admin-overview-footnote">These are descriptive database ratios, not targets or ratings.</p>
             </section>
 
             <section className="admin-overview-card admin-overview-actions">
               <div className="admin-overview-card-heading">
                 <div>
-                  <span className="admin-kicker">WORKSPACE SHORTCUTS</span>
-                  <h3>Quick access</h3>
+                  <span className="admin-kicker">LISTING WORKFLOW</span>
+                  <h3>Current listing statuses</h3>
                 </div>
-                <span className="admin-overview-card-count">{quickActions.length} available</span>
+                {can('listings.view') && <button type="button" className="admin-overview-text-link" onClick={onOpenListings}>Open moderation ↗</button>}
               </div>
-              {quickActions.length > 0 ? (
-                <div className="admin-overview-quick-grid">
-                  {quickActions.map((item) => (
-                    <button type="button" className="admin-overview-quick-action" key={item.label} onClick={item.action}>
-                      <span className="admin-overview-quick-icon" aria-hidden="true">{item.icon}</span>
-                      <span><strong>{item.label}</strong><small>{item.description}</small></span>
-                      <span className="admin-overview-quick-arrow" aria-hidden="true">›</span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <p className="admin-overview-empty">No additional modules are assigned to this administrator.</p>
-              )}
+              <div className="admin-overview-status-grid">
+                <StatusCount label="Pending review" value={overview.listings.pendingReview} tone="warning" />
+                <StatusCount label="Drafts" value={overview.listings.drafts} tone="neutral" />
+                <StatusCount label="Paused" value={overview.listings.paused} tone="info" />
+                <StatusCount label="Rejected" value={overview.listings.rejected} tone="danger" />
+                <StatusCount label="Suspended" value={overview.listings.suspended} tone="danger" />
+                <StatusCount label="Published" value={overview.listings.published} tone="success" />
+              </div>
+              <p className="admin-overview-footnote">Status counts exclude demonstration listings. Other listing states, such as rented or sold, remain included in the live total.</p>
             </section>
           </div>
+
+          <section className="admin-overview-card admin-overview-actions">
+            <div className="admin-overview-card-heading">
+              <div>
+                <span className="admin-kicker">WORKSPACE SHORTCUTS</span>
+                <h3>Quick access</h3>
+              </div>
+              <span className="admin-overview-card-count">{quickActions.length} available</span>
+            </div>
+            {quickActions.length > 0 ? (
+              <div className="admin-overview-quick-grid">
+                {quickActions.map((item) => (
+                  <button type="button" className="admin-overview-quick-action" key={item.label} onClick={item.action}>
+                    <span className="admin-overview-quick-icon" aria-hidden="true">{item.icon}</span>
+                    <span><strong>{item.label}</strong><small>{item.description}</small></span>
+                    <span className="admin-overview-quick-arrow" aria-hidden="true">›</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="admin-overview-empty">No additional modules are assigned to this administrator.</p>
+            )}
+          </section>
         </>
       ) : (
         <div className="admin-overview-unavailable" role="status">
