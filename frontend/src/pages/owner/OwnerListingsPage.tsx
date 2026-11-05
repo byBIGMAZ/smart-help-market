@@ -59,6 +59,21 @@ function getListingFacts(listing: OwnerMarketplaceListing): string[] {
   return facts
 }
 
+function formatPaymentAmount(amountMinor: number, currencyCode: string): string {
+  const currency = currencyCode.toUpperCase()
+  const exponent = ['JPY', 'KRW', 'XOF', 'XAF', 'CLP', 'UGX', 'RWF'].includes(currency)
+    ? 0
+    : ['BHD', 'JOD', 'KWD', 'OMR', 'TND'].includes(currency)
+      ? 3
+      : 2
+  return new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: exponent,
+    maximumFractionDigits: exponent,
+  }).format(amountMinor / (10 ** exponent))
+}
+
 function getEditorPath(listing: OwnerMarketplaceListing): string {
   const details = listing.details as Record<string, unknown> | undefined
   const kind = details?.kind
@@ -75,6 +90,7 @@ export default function OwnerListingsPage() {
   const [listingActionBusy, setListingActionBusy] = useState(false)
   const [listingActionMessage, setListingActionMessage] = useState('')
   const [listingActionError, setListingActionError] = useState('')
+  const [pendingCheckout, setPendingCheckout] = useState<{ authorizationUrl: string; amountMinor: number; currencyCode: string } | null>(null)
 
   const loadListings = useCallback(async () => {
     setLoading(true)
@@ -164,8 +180,8 @@ export default function OwnerListingsPage() {
     setListingActionError('')
     try {
       const result = await submitOwnerListingForReview(selectedListing.id)
-      if (result.paymentRequired && result.authorizationUrl) {
-        window.location.assign(result.authorizationUrl)
+      if (result.paymentRequired && result.authorizationUrl && Number.isSafeInteger(result.amountMinor) && result.currencyCode) {
+        setPendingCheckout({ authorizationUrl: result.authorizationUrl, amountMinor: result.amountMinor as number, currencyCode: result.currencyCode })
         return
       }
       setListingActionMessage(result.message || 'Your listing has been submitted for review.')
@@ -368,6 +384,47 @@ export default function OwnerListingsPage() {
                 Select a listing to manage its photos.
               </div>
             )}
+          </section>
+        </div>
+      )}
+
+      {pendingCheckout && (
+        <div className="owner-payment-confirm-backdrop" role="presentation">
+          <section
+            className="owner-payment-confirm-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="owner-payment-confirm-title"
+          >
+            <span className="owner-payment-confirm-icon">₦</span>
+            <p className="owner-listings-eyebrow">SECURE LISTING PAYMENT</p>
+            <h2 id="owner-payment-confirm-title">Confirm listing fee</h2>
+            <p className="owner-payment-confirm-copy">
+              This is the listing fee configured by the marketplace administrator for this listing category.
+              You will review and complete the payment on Paystack.
+            </p>
+            <strong className="owner-payment-confirm-amount">
+              {formatPaymentAmount(pendingCheckout.amountMinor, pendingCheckout.currencyCode)}
+            </strong>
+            <small className="owner-payment-confirm-note">
+              Your listing will remain unpublished. After payment is verified, it will enter the moderation queue.
+            </small>
+            <div className="owner-payment-confirm-actions">
+              <button
+                type="button"
+                className="owner-payment-cancel"
+                onClick={() => setPendingCheckout(null)}
+              >
+                Not now
+              </button>
+              <button
+                type="button"
+                className="owner-payment-continue"
+                onClick={() => window.location.assign(pendingCheckout.authorizationUrl)}
+              >
+                Continue to Paystack ↗
+              </button>
+            </div>
           </section>
         </div>
       )}
