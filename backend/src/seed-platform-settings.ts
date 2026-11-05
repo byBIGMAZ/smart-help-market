@@ -17,6 +17,13 @@ const initialSettings: InitialSetting[] = [
     description: 'Controls contact-sharing restrictions for marketplace messages.',
     isPublic: false,
   },
+  ...(['landlord', 'seller', 'service_provider', 'agent'] as const).map((accountType) => ({
+    key: `verification.required.${accountType}`,
+    value: true,
+    group: 'account_verification',
+    description: `Require Super Admin or authorised administrator verification before ${accountType.replace(/_/g, ' ')} accounts can create marketplace listings.`,
+    isPublic: false,
+  })),
   {
     key: 'platform.name',
     value: 'SMART HELP MARKET BY BIGMAZ',
