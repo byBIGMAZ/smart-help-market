@@ -155,7 +155,7 @@ function AdminApp() {
     { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false, group: 'Communications & Support' },
     { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false, group: 'Insights & Security' },
     { label: 'Help Support Inbox', path: 'help-support', permission: '', superAdminOnly: true, group: 'Communications & Support' },
-    { label: 'Profile Approvals', path: 'profile-approvals', permission: '', superAdminOnly: true, group: 'Approvals & Listings' },
+    { label: 'Account Verification', path: 'profile-approvals', permission: 'users.view', superAdminOnly: false, group: 'Approvals & Listings' },
   ]
 
   const visibleAdminNavigation = adminNavigation.filter((item) =>
@@ -2071,8 +2071,8 @@ function openAutomationMonitoring() {
   )}
 
         {/* PROFILE APPROVAL CENTRE */}
-        {section === 'profile-approvals' && user?.roles.includes('super_admin') && (
-          <Suspense fallback={<AdminModuleFallback />}><AdminProfileApprovals /></Suspense>
+        {section === 'profile-approvals' && user?.permissions.includes('users.view') && (
+          <Suspense fallback={<AdminModuleFallback />}><AdminProfileApprovals canManage={Boolean(user?.permissions.includes('users.manage'))} /></Suspense>
         )}
 
         {/* AUDIT LOGS */}
