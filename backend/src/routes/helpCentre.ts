@@ -1127,9 +1127,17 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   if (prediction.intent === 'neighbourhood_question') {
+    const communityPath = activeRole ? `/${workspacePathRole(activeRole)}/community` : '/explore'
+    const electricityOrWater = message.includes('electricity') || message.includes('water supply')
+    const roadQuestion = message.includes('road condition') || message.includes('road access')
+    const neighbourhoodGuidance = electricityOrWater
+      ? 'To assess electricity and water in an area, ask current residents how many hours of public electricity they usually receive, whether outages are predictable, what backup power costs, whether the property has its own meter, and how water is supplied. For water, check the source, reliability, storage, treatment and any extra monthly cost. Ask more than one resident because supply can vary by street and season.'
+      : roadQuestion
+        ? 'To assess road conditions, ask residents about the road surface, drainage, flooding during heavy rain, access for cars and motorcycles, street lighting and whether the route becomes difficult at night or in the wet season. Check the route at the time you would normally travel, not only during a daytime visit.'
+        : 'To assess a neighbourhood, compare residents’ reports about electricity, water, road access, drainage, security, noise, transport and nearby facilities. Ask more than one person and distinguish personal experience from verified information.'
     return {
-      text: 'You want to understand the neighbourhood, not just the property. The Neighbourhood Space is where community members share local experiences and discussions. I can open it for you. I will distinguish residents’ reports from independently verified facts, and I will not claim to have checked discussions that are not yet connected to this assistant.',
-      actions: [{ label: 'Open neighbourhood space', path: '/buyer/community' }],
+      text: `${neighbourhoodGuidance} I do not currently have a live feed of local resident discussions connected to this assistant, so I will not invent current conditions for a particular street. You can review the community area for available discussions.`,
+      actions: [{ label: 'Open neighbourhood space', path: communityPath }],
       suggestions: ['Find accommodation', 'Ask about electricity and water', 'Ask about road conditions'],
       context: nextContext,
     }
