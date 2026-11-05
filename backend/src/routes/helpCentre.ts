@@ -262,9 +262,27 @@ function expandSuggestionSelection(
 
   const listingTroubleshooting = prior.includes('troubleshoot your landlord property listing')
     || prior.includes('agent listing workflow')
+    || prior.includes('seller product listing workflow')
+    || prior.includes('service provider listing workflow')
     || prior.includes('listing studio')
     || prior.includes('represented property details')
   if (listingTroubleshooting) {
+    if (selected.includes('product form')) {
+      nextContext.awaiting = 'seller_listing_issue'
+      return { message: 'I cannot open the product listing form in my Seller workspace. Help me diagnose the problem.', context: nextContext }
+    }
+    if (selected.includes('service form')) {
+      nextContext.awaiting = 'provider_listing_issue'
+      return { message: 'I cannot open the service listing form in my Service Provider workspace. Help me diagnose the problem.', context: nextContext }
+    }
+    if (selected.includes('product details will not save')) {
+      nextContext.awaiting = 'seller_listing_save_issue'
+      return { message: 'My product listing details will not save. Help me troubleshoot the save process.', context: nextContext }
+    }
+    if (selected.includes('service details will not save')) {
+      nextContext.awaiting = 'provider_listing_save_issue'
+      return { message: 'My service listing details will not save. Help me troubleshoot the save process.', context: nextContext }
+    }
     if (selected.includes('listing studio') || selected.includes('listing form')) {
       nextContext.awaiting = 'listing_studio_issue'
       return { message: `I cannot open Listing Studio in my ${currentRole === 'agent' ? 'Agent' : 'Landlord'} workspace. Help me diagnose the problem.`, context: nextContext }
@@ -312,6 +330,10 @@ function expandSuggestionSelection(
       : 'As a seller, help me review customer orders.',
     'review my sales': 'As a seller, help me review my sales.',
     'add a service': 'As a service provider, help me create a service listing.',
+    'the product form will not open': 'I cannot open the product listing form in my Seller workspace. Help me diagnose the problem.',
+    'my product details will not save': 'My product listing details will not save. Help me troubleshoot the save process.',
+    'the service form will not open': 'I cannot open the service listing form in my Service Provider workspace. Help me diagnose the problem.',
+    'my service details will not save': 'My service listing details will not save. Help me troubleshoot the save process.',
     'view bookings': 'As a service provider, help me review my service bookings.',
     'manage availability': 'As a service provider, help me manage my service availability.',
     'manage my services': 'As a service provider, help me manage my service listings.',
@@ -723,6 +745,35 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         text: 'I can help with the Agent listing workflow. Use your Agent workspace to create or manage a listing for a property you are authorised to represent. Agent tools are separate from the landlord’s property-ownership, tenant, rent and maintenance management tools. Tell me whether you are stuck opening the listing form, entering represented-property details, saving a draft, or submitting the listing.',
         actions: [{ label: 'Open agent listings', path: '/agent/listings' }, { label: 'Create an agent listing', path: '/agent/listings/new' }],
         suggestions: ['The agent listing form will not open', 'My represented property details will not save', 'I get an error when saving'],
+        context: nextContext,
+      }
+    }
+
+    if (listingRole === 'seller') {
+      delete nextContext.awaiting
+      return {
+        text: 'I can help with your Seller product-listing workflow. Use the Seller workspace to add or manage products, including product details, condition, price, stock and delivery information. Tell me whether the product form will not open, product details will not save, or you are seeing a validation or permission error.',
+        actions: [{ label: 'Open my products', path: '/seller/products' }, { label: 'Add a product', path: '/seller/products/new' }],
+        suggestions: ['The product form will not open', 'My product details will not save', 'I get an error when saving'],
+        context: nextContext,
+      }
+    }
+
+    if (listingRole === 'service_provider') {
+      delete nextContext.awaiting
+      return {
+        text: 'I can help with your Service Provider listing workflow. Use your Service Provider workspace to create and manage service offerings, including service type, experience, service area, delivery mode and availability. Tell me whether the service form will not open, service details will not save, or you are seeing a validation or permission error.',
+        actions: [{ label: 'Open my services', path: '/provider/services' }, { label: 'Add a service', path: '/provider/services/new' }],
+        suggestions: ['The service form will not open', 'My service details will not save', 'I get an error when saving'],
+        context: nextContext,
+      }
+    }
+
+    if (listingRole === 'buyer') {
+      return {
+        text: 'Your current Buyer role is for discovering properties, products and services, saving listings and sending enquiries. It does not include permission to publish marketplace listings. To publish a property, product or service, the appropriate Landlord, Agent, Seller or Service Provider role must be assigned to your account by the platform administrator.',
+        actions: [{ label: 'Explore marketplace', path: '/explore' }],
+        needsAdmin: true,
         context: nextContext,
       }
     }
