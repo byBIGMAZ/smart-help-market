@@ -5,7 +5,7 @@ import { requirePermission } from '../auth/requirePermission'
 
 const reportsRouter = Router()
 
-const REPORT_TIMEZONE = 'Africa/Lagos'
+const DEFAULT_reportTimezone = 'Africa/Lagos'
 const MAX_RANGE_DAYS = 366
 
 type Granularity = 'day' | 'week' | 'month'
@@ -29,17 +29,34 @@ function shiftDate(value: string, days: number): string {
   return date.toISOString().slice(0, 10)
 }
 
-function getTodayInLagos(): string {
+function getTodayInTimezone(timeZone: string): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: REPORT_TIMEZONE,
+    timeZone,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
   }).format(new Date())
 }
 
-function getDateRange(from?: string, to?: string) {
-  const today = getTodayInLagos()
+async function getConfiguredReportTimezone(): Promise<string> {
+  try {
+    const result = await getDatabasePool().query<{ setting_value: unknown }>(
+      'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
+      ['platform.timezone'],
+    )
+    const value = result.rows[0]?.setting_value
+    if (typeof value === 'string') {
+      new Intl.DateTimeFormat('en-US', { timeZone: value })
+      return value
+    }
+  } catch {
+    // Keep reports available with the established Lagos default.
+  }
+  return DEFAULT_reportTimezone
+}
+
+function getDateRange(from: string | undefined, to: string | undefined, timeZone: string) {
+  const today = getTodayInTimezone(timeZone)
 
   const endDate = to || today
   const startDate = from || shiftDate(endDate, -29)
@@ -118,7 +135,8 @@ reportsRouter.get(
       }
 
       const granularity = granularityValue as Granularity
-      const range = getDateRange(from, to)
+      const reportTimezone = await getConfiguredReportTimezone()
+      const range = getDateRange(from, to, reportTimezone)
 
       if (!range) {
         res.status(400).json({
@@ -185,7 +203,7 @@ reportsRouter.get(
             currentFrom,
             currentTo,
             granularity,
-            REPORT_TIMEZONE,
+            reportTimezone,
           ],
         ),
 
@@ -228,7 +246,7 @@ reportsRouter.get(
             currentFrom,
             currentTo,
             granularity,
-            REPORT_TIMEZONE,
+            reportTimezone,
           ],
         ),
 
@@ -269,7 +287,7 @@ db.query(
      c.display_order
 
    ORDER BY c.display_order, c.category_name`,
-  [currentFrom, currentTo, REPORT_TIMEZONE],
+  [currentFrom, currentTo, reportTimezone],
 ),
 
         // Current period compared with the preceding equal period.
@@ -346,7 +364,7 @@ db.query(
           [
             currentFrom,
             currentTo,
-            REPORT_TIMEZONE,
+            reportTimezone,
             previousFrom,
             previousTo,
           ],
@@ -432,7 +450,7 @@ db.query(
           previousFrom: range.previousFrom,
           previousTo: range.previousTo,
           granularity,
-          timezone: REPORT_TIMEZONE,
+          timezone: reportTimezone,
         },
         comparison: {
           usersRegistered: {
