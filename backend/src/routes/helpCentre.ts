@@ -451,7 +451,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  if (message.includes('navigate the website') || message.includes('navigate smart help market') || message.includes('navigating smart help market') || message.includes('help me navigate') || message.includes('help navigating')) {
+  if (message.includes('navigate the website') || message.includes('navigate smart help market') || message.includes('navigating smart help market') || message.includes('help me navigate') || message.includes('help navigating') || message.includes('what else can you help me with') || message.includes('show me the useful things')) {
     const workspaceMenus: Record<WorkspaceRole, string[]> = {
       buyer: ['Find a property to rent', 'Find a product', 'Find a service', 'View my saved items'],
       landlord: ['Create a property listing', 'Manage my tenants', 'Track rent and renewals', 'Manage maintenance'],
@@ -653,6 +653,23 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
+  if (message.includes('what happens if there is a dispute') || message.includes('marketplace dispute process')) {
+    return {
+      text: 'If a transaction dispute occurs, stop making additional payments and keep the listing details, messages, receipts, delivery evidence and any agreed terms. Contact the other party through the marketplace and use the available dispute or support channel. The outcome should follow the published transaction terms and any authorised payment provider’s process. Do not assume funds are held in escrow unless the live transaction explicitly confirms an authorised escrow arrangement.',
+      suggestions: ['Explain how escrow works', 'Speak to an administrator', 'How do I inspect a property?'],
+      context: nextContext,
+    }
+  }
+
+  if (message.includes('how do i inspect a property') || message.includes('arrange a property inspection')) {
+    return {
+      text: 'To prepare for a property inspection, first review the listing and contact the landlord or authorised agent through the marketplace. Agree on a date, time and who will meet you. Confirm the property address and inspection instructions through the authorised process, and do not rely on an unverified location pin. During the visit, check access, water, electricity, drainage, visible defects, security and the exact unit being offered. Ask about rent, deposits, fees, tenancy terms and what is included. Do not pay a deposit solely because you attended an inspection.',
+      actions: [{ label: 'Open my inspections', path: '/buyer/inspections' }],
+      suggestions: ['Find a property to rent', 'What should I check during inspection?', 'Speak to an administrator'],
+      context: nextContext,
+    }
+  }
+
   if (prediction.intent === 'escrow_explanation') {
     return {
       text: 'Escrow is a transaction arrangement where an authorised independent provider holds a payment until the agreed conditions are met. Let me walk you through a typical example.',
@@ -668,6 +685,14 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         disclaimer: 'Educational example only. This does not mean SMART HELP MARKET currently holds or protects funds through a live escrow service. Check the active payment and transaction terms before paying.',
       },
       suggestions: ['Explain the buyer protection steps', 'What happens if there is a dispute?', 'How do I inspect a property?'],
+      context: nextContext,
+    }
+  }
+
+  if (prediction.intent === 'roommate_search' && (message.includes('advice') || message.includes('consider') || message.includes('compatible roommate'))) {
+    return {
+      text: 'Before sharing accommodation, compare more than rent. Discuss each person’s budget and payment dates, preferred location, cleanliness, visitors, noise, smoking, cooking, work or study schedules, shared bills, security expectations and how disagreements will be handled. Agree in writing on deposits, utilities, notice periods and responsibility for damage before moving in. Meet safely, verify the accommodation and avoid sending money before confirming the arrangement.',
+      suggestions: ['Find a roommate', 'Find a property to rent', 'What should a roommate agreement include?'],
       context: nextContext,
     }
   }
