@@ -26,7 +26,7 @@ export type IntentPrediction = {
   modelVersion: string
 }
 
-const MODEL_VERSION = 'BIE-INTENT-1.0.0'
+const MODEL_VERSION = 'BIE-INTENT-1.1.0'
 
 const STOP_WORDS = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'can', 'do', 'for', 'from',
