@@ -433,3 +433,96 @@
   font-size: 11px;
   line-height: 1.4;
 }
+
+
+.owner-selected-actions button.owner-submit-listing {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid var(--brand-primary);
+  border-radius: 9px;
+  background: var(--brand-primary);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.owner-selected-actions button.owner-submit-listing:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.owner-selected-actions button.owner-submit-listing:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.owner-selected-actions button.owner-submit-listing:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+.owner-listing-action-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  margin: 0 0 20px;
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+
+.owner-listing-action-feedback > span {
+  display: grid;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  place-items: center;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.owner-listing-action-feedback p {
+  flex: 1;
+  margin: 1px 0 0;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.owner-listing-action-feedback small {
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.owner-listing-action-feedback.is-error {
+  border-color: color-mix(in srgb, #c74646 40%, var(--border));
+  background: color-mix(in srgb, #c74646 8%, var(--surface));
+}
+
+@media (max-width: 560px) {
+  .owner-listing-action-feedback {
+    flex-wrap: wrap;
+  }
+
+  .owner-listing-action-feedback small {
+    width: 100%;
+    margin-left: 34px;
+  }
+
+  .owner-selected-actions {
+    width: 100%;
+  }
+
+  .owner-selected-actions > * {
+    flex: 1 1 auto;
+  }
+}
