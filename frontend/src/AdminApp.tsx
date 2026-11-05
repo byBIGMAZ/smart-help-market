@@ -94,6 +94,15 @@ type AdminSection =
   | 'profile-approvals'
   | 'help-support'
 
+type AdminNavigationItem = {
+  label: string
+  path: AdminSection
+  permission: string
+  secondaryPermission?: string
+  superAdminOnly: boolean
+  group: string
+}
+
 type UserStatusFilter = 'all' | AccountStatus
 
 const USER_PAGE_SIZE = 25
@@ -135,7 +144,7 @@ function AdminApp() {
 
   // One permission-aware navigation catalogue drives both admin navigation surfaces.
   // Server routes remain the final authority for every operation.
-  const adminNavigation = [
+  const adminNavigation: AdminNavigationItem[] = [
     { label: 'Overview', path: 'overview', permission: 'dashboard.view', superAdminOnly: false, group: 'Overview' },
     { label: 'Users & Access', path: 'users', permission: 'users.view', secondaryPermission: 'roles.view', superAdminOnly: false, group: 'People & Access' },
     { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false, group: 'Approvals & Listings' },
