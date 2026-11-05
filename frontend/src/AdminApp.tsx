@@ -128,6 +128,24 @@ function AdminApp() {
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [dashboardTime, setDashboardTime] = useState(() => new Date())
 
+  // One permission-aware navigation catalogue drives both admin navigation surfaces.
+  // Server routes remain the final authority for every operation.
+  const adminNavigation = [
+    { label: 'Overview', path: 'overview', permission: 'dashboard.view' },
+    { label: 'User Management', path: 'users', permission: 'users.view' },
+    { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view' },
+    { label: 'Categories', path: 'categories', permission: 'categories.view' },
+    { label: 'Platform Settings', path: 'settings', permission: 'settings.view' },
+    { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view' },
+    { label: 'Automation Control', path: 'automation', permission: 'automation.view' },
+    { label: 'Automation Rules', path: 'automation-rules', permission: 'automation.manage' },
+    { label: 'Automation Monitoring', path: 'automation-monitoring', permission: 'automation.view' },
+    { label: 'Role Management', path: 'roles', permission: 'roles.view' },
+    { label: 'Notifications', path: 'notifications', permission: 'notifications.view' },
+    { label: 'Audit Logs', path: 'audit', permission: 'audit.view' },
+    { label: 'Profile Approvals', path: 'profile-approvals', superAdminOnly: true },
+  ]
+
   useEffect(() => {
     const timer = window.setInterval(() => setDashboardTime(new Date()), 60000)
     return () => window.clearInterval(timer)
@@ -440,7 +458,7 @@ useEffect(() => {
 
         if (
           !currentUser ||
-          !currentUser.roles.includes('super_admin')
+          !currentUser.permissions.includes('dashboard.view')
         ) {
           setScreen('login')
           return
@@ -480,9 +498,9 @@ useEffect(() => {
     try {
       const loggedInUser = await adminLogin(email.trim(), password)
 
-      if (!loggedInUser.roles.includes('super_admin')) {
+      if (!loggedInUser.permissions.includes('dashboard.view')) {
         await adminLogout()
-        throw new Error('This account does not have Super Admin access.')
+        throw new Error('This account does not have administrator dashboard access.')
       }
 
       setUser(loggedInUser)
@@ -723,6 +741,15 @@ function openAutomationMonitoring() {
 }
 
   function handleAdminSidebarNavigation(path: string) {
+    const allowed = adminNavigation.some((item) =>
+      item.path === path && (
+        item.superAdminOnly
+          ? Boolean(user?.roles.includes('super_admin'))
+          : Boolean(item.permission && user?.permissions.includes(item.permission))
+      ),
+    )
+    if (!allowed) return
+
     switch (path as AdminSection) {
       case 'overview': openOverview(); break
       case 'users': openUsers(); break
@@ -1095,9 +1122,9 @@ function openAutomationMonitoring() {
 
           <form className="admin-login-card" onSubmit={handleLogin}>
             <span className="admin-kicker">RESTRICTED ACCESS</span>
-            <h2>Super Admin</h2>
+            <h2>Administrator Access</h2>
             <p className="admin-muted">
-              Sign in using your provisioned administrator account.
+              Sign in using your authorised administrator account.
             </p>
 
             {error && (
@@ -1164,7 +1191,7 @@ function openAutomationMonitoring() {
           <span className="admin-brand-mark">SH</span>
           <span>
             <strong>SMART HELP MARKET</strong>
-            <small>SUPER ADMIN CONSOLE</small>
+            <small>{user?.roles.includes('super_admin') ? 'SUPER ADMIN CONSOLE' : 'ADMIN WORKSPACE'}</small>
           </span>
         </a>
 
@@ -1219,22 +1246,11 @@ function openAutomationMonitoring() {
       </header>
 
       <WorkspaceFloatingSidebar
-        links={[
-          { label: 'Overview', path: 'overview' },
-          { label: 'User Management', path: 'users' },
-          { label: 'Listing Moderation', path: 'moderation' },
-          { label: 'Categories', path: 'categories' },
-          { label: 'Platform Settings', path: 'settings' },
-          { label: 'Reports & Analytics', path: 'reports' },
-          { label: 'Automation Control', path: 'automation' },
-          { label: 'Automation Rules', path: 'automation-rules' },
-          { label: 'Automation Monitoring', path: 'automation-monitoring' },
-          { label: 'Role Management', path: 'roles' },
-          ...(user?.permissions.includes('notifications.view') ? [{ label: 'Notifications', path: 'notifications' }] : []),
-          ...(user?.roles.includes('super_admin') ? [{ label: 'Profile Approvals', path: 'profile-approvals' }] : []),
-          { label: 'Audit Logs', path: 'audit' },
-          { label: 'Help Support Inbox', path: 'help-support' },
-        ]}
+        links={adminNavigation
+          .filter((item) => item.superAdminOnly
+            ? user?.roles.includes('super_admin')
+            : Boolean(item.permission && user?.permissions.includes(item.permission)))
+          .map(({ label, path }) => ({ label, path }))}
         onNavigate={handleAdminSidebarNavigation}
         activePath={section}
       />
@@ -1252,7 +1268,7 @@ function openAutomationMonitoring() {
         </nav>
         <div className="admin-page-heading">
           <div>
-            <span className="admin-kicker">PLATFORM CONTROL CENTRE</span>
+            <span className="admin-kicker">{user?.roles.includes('super_admin') ? 'PLATFORM CONTROL CENTRE' : 'ADMINISTRATION WORKSPACE'}</span>
             <h1>
               Good to see you, {user?.displayName || 'Administrator'}.
             </h1>
@@ -1284,172 +1300,22 @@ function openAutomationMonitoring() {
 
         {/* MAIN NAVIGATION */}
         <nav className="admin-section-nav" aria-label="Admin sections">
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'overview' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'overview' ? 'page' : undefined}
-            onClick={openOverview}
-          >
-            <span aria-hidden="true">▦</span>
-            Overview
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'users' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'users' ? 'page' : undefined}
-            onClick={openUsers}
-          >
-            <span aria-hidden="true">♙</span>
-            User Management
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'moderation' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'moderation' ? 'page' : undefined}
-            onClick={openModeration}
-          >
-            <span aria-hidden="true">◈</span>
-            Listing Moderation
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'categories' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'categories' ? 'page' : undefined}
-            onClick={openCategories}
-          >
-            <span aria-hidden="true">◇</span>
-            Categories
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-            section === 'settings' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'settings' ? 'page' : undefined}
-            onClick={openSettings}
-          >
-            <span className="admin-animated-gear" aria-hidden="true">⚙</span>
-            Platform Settings
-          </button>
-
-          <button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'reports' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'reports' ? 'page' : undefined}
-  onClick={openReports}
->
-  <span aria-hidden="true">▥</span>
-  Reports &amp; Analytics
-</button>
-
-<button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'automation' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'automation' ? 'page' : undefined}
-  onClick={openAutomation}
->
-  <span aria-hidden="true">⚡</span>
-  Automation Control
-</button>
-
-<button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'automation-rules' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'automation-rules' ? 'page' : undefined}
-  onClick={openAutomationRules}
->
-  <span aria-hidden="true">⚙</span>
-  Automation Rules
-</button>
-
-<button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'automation-monitoring' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'automation-monitoring' ? 'page' : undefined}
-  onClick={openAutomationMonitoring}
->
-  <span aria-hidden="true">📊</span>
-  Automation Monitoring
-</button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'roles' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'roles' ? 'page' : undefined}
-            onClick={openRoles}
-          >
-            <span aria-hidden="true">🛡</span>
-            Role Management
-          </button>
-
-          {user?.permissions.includes('notifications.view') && (
-  <button
-    type="button"
-    className={`admin-nav-button ${
-      section === 'notifications' ? 'is-active' : ''
-    }`}
-    aria-current={
-      section === 'notifications' ? 'page' : undefined
-    }
-    onClick={openNotifications}
-  >
-    <span aria-hidden="true">♧</span>
-    Notifications
-    {notificationUnreadCount > 0 && (
-      <span className="admin-notification-nav-count">
-        {notificationUnreadCount > 99
-          ? '99+'
-          : notificationUnreadCount}
-      </span>
-    )}
-  </button>
-)}
-
-          {user?.roles.includes('super_admin') && (
-            <button
-              type="button"
-              className={`admin-nav-button ${section === 'profile-approvals' ? 'is-active' : ''}`}
-              aria-current={section === 'profile-approvals' ? 'page' : undefined}
-              onClick={openProfileApprovals}
-            >
-              <span aria-hidden="true">✓</span>
-              Profile Approvals
-            </button>
-          )}
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'audit' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'audit' ? 'page' : undefined}
-            onClick={openAuditLogs}
-          >
-            <span aria-hidden="true">▤</span>
-            Audit Logs
-          </button>
+          {adminNavigation
+            .filter((item) => item.superAdminOnly
+              ? user?.roles.includes('super_admin')
+              : Boolean(item.permission && user?.permissions.includes(item.permission)))
+            .map((item) => (
+              <button
+                key={item.path}
+                type="button"
+                className={`admin-nav-button ${section === item.path ? 'is-active' : ''}`}
+                aria-current={section === item.path ? 'page' : undefined}
+                onClick={() => handleAdminSidebarNavigation(item.path)}
+              >
+                <span aria-hidden="true">{item.path === 'overview' ? '▦' : item.path === 'settings' ? '⚙' : item.path === 'audit' ? '▤' : '◇'}</span>
+                {item.label}
+              </button>
+            ))}
         </nav>
 
         {/* OVERVIEW */}
