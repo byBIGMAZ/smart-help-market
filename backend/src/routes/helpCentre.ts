@@ -96,7 +96,7 @@ function resolveAssistantRole(
   if (sellerTask && available.has('seller')) return 'seller'
   if (providerTask && available.has('service_provider')) return 'service_provider'
 
-  const listingCreationIssue = ['create listing', 'creating listing', 'post listing', 'posting listing', 'add property', 'new property', 'listing will not save', 'listing wont save', 'listing error'].some((cue) => text.includes(cue))
+  const listingCreationIssue = ['create listing', 'creating listing', 'creating my listing', 'create my listing', 'post listing', 'posting listing', 'add property', 'add my property', 'new property', 'listing will not save', 'listing wont save', 'listing error', 'having issues creating my listing', 'trouble creating my listing'].some((cue) => text.includes(cue))
   if (listingCreationIssue) {
     const listingRoles = (['landlord', 'agent'] as const).filter((role) => available.has(role))
     if (listingRoles.length === 1) return listingRoles[0]
@@ -225,8 +225,9 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     const listingRoles = roles
       .map((role) => canonicalWorkspaceRole(role))
       .filter((role): role is WorkspaceRole => role === 'landlord' || role === 'agent')
+    const listingRole = activeRole || (listingRoles.length === 1 ? listingRoles[0] : null)
 
-    if (!activeRole && listingRoles.length > 1) {
+    if (!listingRole && listingRoles.length > 1) {
       return {
         text: 'I can help with that. Your account has both Landlord and Agent access. Are you creating this listing as a landlord for your own property, or as an agent for a property you represent?',
         suggestions: ['As a landlord', 'As an agent'],
@@ -234,7 +235,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       }
     }
 
-    if (activeRole === 'landlord') {
+    if (listingRole === 'landlord') {
       return {
         text: 'I can help you troubleshoot your landlord property listing. Start from your Landlord workspace and open Add a property. Tell me exactly where you get stuck: opening Listing Studio, entering property details, adding unit information, saving the draft, or submitting the listing. I will guide you through the landlord workflow.',
         actions: [{ label: 'Open landlord property listings', path: '/landlord/properties' }, { label: 'Create a property listing', path: '/landlord/properties/new' }],
@@ -243,7 +244,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       }
     }
 
-    if (activeRole === 'agent') {
+    if (listingRole === 'agent') {
       return {
         text: 'I can help with the Agent listing workflow. Use your Agent workspace to create or manage a listing for a property you are authorised to represent. Agent tools are separate from the landlord’s property-ownership, tenant, rent and maintenance management tools. Tell me whether you are stuck opening the listing form, entering represented-property details, saving a draft, or submitting the listing.',
         actions: [{ label: 'Open agent listings', path: '/agent/listings' }, { label: 'Create an agent listing', path: '/agent/listings/new' }],
@@ -268,7 +269,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   const landlordOnlyRequest = ['manage tenants', 'tenant management', 'collect rent', 'rent arrears', 'property maintenance', 'manage occupancy'].some((cue) => message.includes(cue))
-  if (landlordOnlyRequest && activeRole === 'agent' && !roles.includes('landlord')) {
+  if (landlordOnlyRequest && activeRole === 'agent') {
     return {
       text: 'Those are Landlord property-management responsibilities. Your current Agent workspace is for properties you are authorised to represent, client enquiries and agent activity. It does not grant access to the landlord’s tenant, rent or maintenance management. You can ask the property owner to handle that action or contact support if your account role is incorrect.',
       actions: [{ label: 'Open agent workspace', path: '/agent/dashboard' }],
