@@ -83,6 +83,27 @@ router.put('/configuration', async (req, res) => {
   }
 
   try {
+    const current = await getDatabasePool().query(
+      `SELECT secret_key_ciphertext, webhook_secret_ciphertext FROM public.marketplace_payment_configuration WHERE configuration_id = 1`,
+    )
+    if (enabled && (!publicKey || !current.rows[0]?.secret_key_ciphertext)) {
+      res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
+      return
+    }
+    if (enabled && mode === 'live' && !current.rows[0]?.webhook_secret_ciphertext) {
+      res.status(409).json({ error: 'Configure the encrypted webhook secret before enabling live payments.' })
+      return
+    }
+    if (transactionSettings.transactionExpiryMinutes < 5 || transactionSettings.transactionExpiryMinutes > 1440 ||
+        transactionSettings.minimumAmount < 1 || transactionSettings.maximumAmount <= transactionSettings.minimumAmount ||
+        feeSettings.platformFeeValue < 0 || feeSettings.agentCommissionValue < 0 ||
+        (feeSettings.platformFeeType === 'percentage' && feeSettings.platformFeeValue > 100) ||
+        (feeSettings.agentCommissionType === 'percentage' && feeSettings.agentCommissionValue > 100) ||
+        escrowSettings.holdingPeriodHours < 1 || escrowSettings.holdingPeriodHours > 8760 ||
+        inspectionSettings.bookingExpiryHours < 1 || inspectionSettings.bookingExpiryHours > 720) {
+      res.status(400).json({ error: 'One or more payment limits, fees or policy values are outside the allowed range.' })
+      return
+    }
     const result = await getDatabasePool().query(
       `UPDATE public.marketplace_payment_configuration
        SET enabled = $1, mode = $2, public_key = NULLIF($3, ''),
