@@ -7,7 +7,6 @@ const initialSettings = [
   ['help.messages.pack_size', 50, 'help_centre', 'Number of additional assistant messages in one paid package.', false],
   ['help.messages.pack_price_ngn', 500, 'help_centre', 'Price in NGN for one additional assistant message package.', false],
   ['help.ai.engine_name', 'BIGMAZ Intelligence Engine', 'help_centre', 'Name of the proprietary marketplace intelligence engine.', false],
-  ['help.ai.model_enabled', false, 'help_centre', 'Allow the optional server-side language model to improve assistant replies when a provider key is configured and privacy disclosure is in place.', false],
   ['help.ai.learning_enabled', true, 'help_centre', 'Allow privacy-conscious learning signals and reviewed model improvements.', false],
   ['help.ai.feedback_enabled', true, 'help_centre', 'Allow users to rate assistant responses.', false],
 ] as const
