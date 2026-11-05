@@ -75,10 +75,8 @@ function readDraftDetails(value: unknown, expectedKind: ListingKind): DraftDetai
   return result
 }
 
-function getKind(categoryKey: unknown): ListingKind | null {
-  return categoryKey === 'properties' || categoryKey === 'products' || categoryKey === 'services'
-    ? categoryKey
-    : null
+function isListingKind(value: unknown): value is ListingKind {
+  return value === 'properties' || value === 'products' || value === 'services'
 }
 
 function getListingId(req: Request): string {
@@ -90,9 +88,11 @@ async function readAndValidateRequest(req: Request, res: Response) {
   const categoryKey = typeof req.body?.categoryKey === 'string'
     ? req.body.categoryKey.trim()
     : ''
-  const kind = getKind(categoryKey)
-  if (!kind) {
-    res.status(400).json({ error: 'Choose a valid marketplace category.' })
+  const kind = isRecord(req.body?.details) && isListingKind(req.body.details.kind)
+    ? req.body.details.kind
+    : null
+  if (!categoryKey || categoryKey.length > 60 || !/^[a-z0-9-]+$/.test(categoryKey) || !kind) {
+    res.status(400).json({ error: 'Choose a valid marketplace category and listing type.' })
     return null
   }
 
