@@ -1230,3 +1230,114 @@
     font-size: 8px;
   }
 }
+
+
+/* Administration theme preference control, shared with the marketplace ThemeProvider. */
+.admin-theme-selector {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #34443a;
+  border-radius: 999px;
+  background: #0b100e;
+}
+
+.admin-theme-selector button {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #b9c6bd;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+
+.admin-theme-selector button:hover {
+  border-color: #50634f;
+  color: #f3f5f4;
+}
+
+.admin-theme-selector button.is-active {
+  border-color: #a6ed6955;
+  background: #a6ed691c;
+  color: #c5f59f;
+}
+
+.admin-theme-selector button:focus-visible {
+  outline: 2px solid #a6ed69;
+  outline-offset: 2px;
+}
+
+.admin-theme-selector-floating {
+  position: fixed;
+  z-index: 50;
+  top: 18px;
+  right: 20px;
+}
+
+:root[data-theme="light"] .admin-theme-selector {
+  border-color: #d1ddcf;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(28, 54, 32, 0.08);
+}
+
+:root[data-theme="light"] .admin-theme-selector button {
+  color: #526157;
+}
+
+:root[data-theme="light"] .admin-theme-selector button:hover {
+  border-color: #c2d7bd;
+  color: #285d20;
+}
+
+:root[data-theme="light"] .admin-theme-selector button.is-active {
+  border-color: #b9d4b2;
+  background: #eaf4e6;
+  color: #285d20;
+}
+
+@media (max-width: 760px) {
+  .admin-theme-selector-floating {
+    top: 12px;
+    right: 12px;
+  }
+
+  .admin-theme-selector button {
+    min-height: 30px;
+    padding: 0 8px;
+    font-size: 10px;
+  }
+
+  .admin-topbar-actions .admin-theme-selector {
+    order: -1;
+  }
+}
+
+@media (max-width: 420px) {
+  .admin-theme-selector button {
+    gap: 4px;
+    padding: 0 7px;
+  }
+
+  .admin-theme-selector-floating {
+    position: absolute;
+  }
+
+  .admin-shell:has(.admin-login-layout) .admin-login-layout {
+    padding-top: 76px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-theme-selector button {
+    transition: none;
+  }
+}
