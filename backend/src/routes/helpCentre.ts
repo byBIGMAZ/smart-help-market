@@ -350,9 +350,9 @@ function expandSuggestionSelection(
     'how do i contact a landlord': 'As a buyer, explain how to send an enquiry to a property landlord through the marketplace.',
     'search another category': 'Help me choose a different marketplace category to search.',
     'create a property listing': currentRole === 'agent'
-      ? 'As an agent, help me create a listing for a property I am authorised to represent.'
+      ? 'As an agent, I need to create an agent listing for a property I am authorised to represent.'
       : 'As a landlord, help me create a property listing for my own property.',
-    'create an agent listing': 'As an agent, help me create a listing for a property I am authorised to represent.',
+    'create an agent listing': 'As an agent, I need to create an agent listing for a property I am authorised to represent.',
     'manage my tenants': 'As a landlord, I need help managing my tenants.',
     'track rent and renewals': 'As a landlord, I need help tracking rent payments, arrears and tenancy renewals.',
     'manage maintenance': 'As a landlord, I need help managing property maintenance requests.',
