@@ -223,7 +223,8 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
     }
 
     const existing = await client.query(
-      `SELECT transaction_id::text AS id, reference, authorization_url
+      `SELECT transaction_id::text AS id, reference, authorization_url,
+              amount_minor::text AS amount_minor, currency_code
        FROM public.marketplace_payment_transactions
        WHERE user_id = $1
          AND purpose_key = 'listing_fee'
@@ -243,6 +244,8 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
       existingAuthorizationUrl = typeof existing.rows[0].authorization_url === 'string'
         ? existing.rows[0].authorization_url
         : null
+      amountMinor = Number(existing.rows[0].amount_minor)
+      currencyCode = String(existing.rows[0].currency_code).trim()
       if (!existingAuthorizationUrl) {
         await client.query('ROLLBACK')
         res.status(409).json({ error: 'Your checkout is being prepared. Please wait a moment and try again.' })
