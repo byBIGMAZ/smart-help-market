@@ -113,8 +113,8 @@ export default function AdminOverviewPanel({
           <div className="admin-overview-metrics">
             <MetricCard label="Registered users" value={overview.users.total} detail={`${overview.users.active.toLocaleString()} active accounts`} icon="♙" tone="green" onClick={can('users.view') ? onOpenUsers : undefined} />
             <MetricCard label="Active accounts" value={overview.users.active} detail="Accounts currently marked active" icon="✓" tone="blue" onClick={can('users.view') ? onOpenUsers : undefined} />
-            <MetricCard label="Total listings" value={overview.listings.total} detail={`${overview.listings.liveTotal.toLocaleString()} non-demo listings`} icon="⌂" tone="violet" onClick={can('listings.view') ? onOpenListings : undefined} />
-            <MetricCard label="Published listings" value={overview.listings.published} detail="Currently published listings" icon="◈" tone="green" onClick={can('listings.view') ? onOpenListings : undefined} />
+            <MetricCard label="Total listings" value={overview.listings.total} detail="Live marketplace listings, excluding demos" icon="⌂" tone="violet" onClick={can('listings.view') ? onOpenListings : undefined} />
+            <MetricCard label="Published listings" value={overview.listings.published} detail="Live listings currently published" icon="◈" tone="green" onClick={can('listings.view') ? onOpenListings : undefined} />
             <MetricCard label="Awaiting review" value={overview.listings.pendingReview} detail="Live listings pending moderation" icon="◷" tone="amber" onClick={can('listings.view') ? onOpenListings : undefined} />
             {isSuperAdmin && overview.administrators && (
               <MetricCard label="Administrator accounts" value={overview.administrators.total} detail={`${overview.administrators.superAdmins.toLocaleString()} Super Admin accounts`} icon="♧" tone="blue" onClick={can('users.view') ? onOpenUsers : undefined} />
