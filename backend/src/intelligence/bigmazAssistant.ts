@@ -25,7 +25,7 @@ export type BigmazAssistantInput = {
     title: string
     category: string
     location: string
-    price: string
+    price: string | null
     priceUnit: string
   }>
   account: BigmazAccountSnapshot
