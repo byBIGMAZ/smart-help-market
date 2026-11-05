@@ -24,6 +24,7 @@ export type BigmazAccountSnapshot = {
 
 export type BigmazAssistantInput = {
   message: string
+  interpretedRequest?: string
   deterministicReply: string
   suggestions: string[]
   actions: Array<{ label: string; path: string }>
@@ -106,6 +107,7 @@ export async function generateBigmazReply(input: BigmazAssistantInput): Promise<
 
   const userPayload = {
     currentMessage: input.message,
+    interpretedRequest: input.interpretedRequest || null,
     deterministicGuidance: input.deterministicReply,
     offeredSuggestions: input.suggestions,
     permittedNavigationActions: input.actions,
@@ -141,6 +143,85 @@ export async function generateBigmazReply(input: BigmazAssistantInput): Promise<
   } catch {
     // The deterministic assistant must remain available if the AI provider
     // is not configured, times out, or returns an invalid response.
+    return null
+  }
+}
+
+
+export type BigmazInterpretationInput = {
+  message: string
+  conversation: BigmazConversationTurn[]
+  account: BigmazAccountSnapshot
+  workflowContext: Record<string, unknown>
+}
+
+/**
+ * Converts an unclear or informal message into a conservative task statement
+ * for the existing deterministic marketplace workflows. It does not answer
+ * the user or perform an action.
+ */
+export async function interpretBigmazMessage(input: BigmazInterpretationInput): Promise<string | null> {
+  const apiKey = process.env.BIGMAZ_AI_API_KEY?.trim()
+  const model = process.env.BIGMAZ_AI_MODEL?.trim() || ''
+  const baseUrl = (process.env.BIGMAZ_AI_BASE_URL || 'https://api.openai.com/v1/chat/completions').trim()
+  if (!apiKey || !model || model.length > 120 || apiKey.length > 500) return null
+
+  let endpoint: URL
+  try {
+    endpoint = new URL(baseUrl)
+  } catch {
+    return null
+  }
+  if (endpoint.protocol !== 'https:' && endpoint.hostname !== 'localhost' && endpoint.hostname !== '127.0.0.1') return null
+
+  const systemPrompt = [
+    'You are the intent understanding layer for SMART HELP MARKET.',
+    'Convert the current user message into one concise, natural task statement that can be routed by an existing deterministic marketplace assistant.',
+    'Understand informal language, indirect descriptions, spelling errors and unusual expressions. Use the recent conversation to resolve references such as it, that listing, the page, or the same problem.',
+    'Do not answer the user. Do not create actions, change data, or decide permissions.',
+    'Do not invent a location, budget, price, property purpose, product detail, service detail, error message, payment state or account capability.',
+    'Only identify a workspace role if it appears in the verified assigned roles. Never elevate a buyer to landlord, agent, seller or service provider.',
+    'Preserve the exact meaning and all explicit facts. If the request is already clear or cannot safely be interpreted, return the original message unchanged.',
+    'Return only valid JSON with exactly one property: {"normalizedRequest":"..."} and no markdown fences.',
+  ].join(' ')
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        max_tokens: 180,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: systemPrompt },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              message: input.message,
+              recentConversation: input.conversation,
+              verifiedAccount: input.account,
+              workflowState: input.workflowContext,
+            }),
+          },
+        ],
+      }),
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!response.ok) return null
+    const payload = await response.json() as ChatCompletionResponse
+    const content = payload.choices?.[0]?.message?.content
+    if (typeof content !== 'string') return null
+    const parsed = JSON.parse(content) as { normalizedRequest?: unknown }
+    if (typeof parsed.normalizedRequest !== 'string') return null
+    const normalizedRequest = parsed.normalizedRequest.trim()
+    if (!normalizedRequest || normalizedRequest.length > 1200) return null
+    return normalizedRequest
+  } catch {
     return null
   }
 }
