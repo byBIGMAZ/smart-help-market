@@ -23,7 +23,7 @@ export interface MarketplaceListing {
   category: string
   title: string
   description: string
-  price: number
+  price: number | null
   priceUnit: string
   location: string
   icon: string
@@ -99,9 +99,10 @@ function isMarketplaceListing(
     typeof item.category === 'string' &&
     typeof item.title === 'string' &&
     typeof item.description === 'string' &&
-    typeof item.price === 'number' &&
-    Number.isFinite(item.price) &&
-    item.price >= 0 &&
+    (item.price === null ||
+      (typeof item.price === 'number' &&
+        Number.isFinite(item.price) &&
+        item.price >= 0)) &&
     typeof item.priceUnit === 'string' &&
     typeof item.location === 'string' &&
     typeof item.icon === 'string' &&
