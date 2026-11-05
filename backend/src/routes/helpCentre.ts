@@ -159,7 +159,7 @@ function routeForRequest(message: string, roles: string[], activeRole: Workspace
     { terms: ['help centre', 'help center', 'support'], label: 'Open Help Centre', path: '/help' },
   ]
   const match = routes.find((item) => {
-    const roleScopedPath = /^\\/(buyer|landlord|seller|provider|agent)\\//.test(item.path)
+    const roleScopedPath = /^\/(buyer|landlord|seller|provider|agent)\//.test(item.path)
     const roleIsClear = activeRole !== null || availableRoles.length <= 1
     return (!item.roles || item.roles.includes(role))
       && (roleIsClear || !roleScopedPath)
