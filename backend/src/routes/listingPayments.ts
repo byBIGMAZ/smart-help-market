@@ -43,9 +43,9 @@ function isListingKind(value: unknown): value is ListingKind {
 
 function getCurrencyExponent(currency: string): number | null {
   const code = currency.toUpperCase()
-  if (['JPY', 'KRW', 'XOF', 'XAF', 'CLP'].includes(code)) return 0
+  if (['JPY', 'KRW', 'XOF', 'XAF', 'CLP', 'UGX', 'RWF'].includes(code)) return 0
   if (['BHD', 'JOD', 'KWD', 'OMR', 'TND'].includes(code)) return 3
-  if (/^[A-Z]{3}$/.test(code)) return 2
+  if (['NGN', 'GHS', 'ZAR', 'KES', 'USD', 'GBP', 'EUR', 'CAD', 'AUD'].includes(code)) return 2
   return null
 }
 
