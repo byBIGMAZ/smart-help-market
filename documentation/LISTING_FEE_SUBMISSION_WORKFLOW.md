@@ -89,7 +89,7 @@ The Paystack secret key remains encrypted in the database. The frontend never re
 - `getCurrencyExponent`: maps supported currencies to their minor-unit exponent.
 - `getMajorFee`: reads and validates the server-side fee for the listing kind.
 - `readOwnedDraft`: locks and validates the owner's draft and account email.
-- `readPaymentConfiguration`: loads the saved gateway configuration.
+- `getFrontendOrigin`: validates the configured frontend origin used for Paystack's return URL.
 - `initializePaystackTransaction`: initializes a Paystack checkout using the encrypted server credential.
 - `verifyPaystackTransaction`: obtains authoritative transaction details from Paystack.
 - `submitOwnerListingForReview`: frontend API client for the owner submission endpoint.
