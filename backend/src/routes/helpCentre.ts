@@ -336,7 +336,6 @@ function expandSuggestionSelection(
     'what should a roommate agreement include': 'Explain what a practical roommate agreement should include, including rent, bills, deposits, house rules and ending the arrangement.',
     'what should i check during inspection': 'Give me a detailed checklist of what to inspect when viewing a property.',
     'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
-    'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
   }
   const mapped = generalPrompts[selected]
   if (mapped) return { message: mapped, context: nextContext }
@@ -1117,7 +1116,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       )
       if (!previousAssistant.rowCount) {
         await client.query('ROLLBACK')
-        res.status(400).json({ error: 'This suggestion is no longer available. Please choose an option from the latest assistant response.' })
+        res.status(400).json({ error: 'This suggestion is no longer available in that response. Please choose an option from the relevant assistant message.' })
         return
       }
       let previousMetadata = previousAssistant.rows[0].metadata
