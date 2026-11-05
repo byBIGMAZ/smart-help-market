@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './AdminPaymentManagement.css'
 
 type PaymentConfiguration = {
@@ -45,11 +45,19 @@ export default function AdminPaymentManagement() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [requestingCode, setRequestingCode] = useState(false)
-  const [code, setCode] = useState('')
+  const [verifyingCode, setVerifyingCode] = useState(false)
+  const [credentialModalOpen, setCredentialModalOpen] = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
+  const [otpDigits, setOtpDigits] = useState<string[]>(Array(6).fill(''))
+  const [authorizationToken, setAuthorizationToken] = useState('')
+  const [verified, setVerified] = useState(false)
   const [secretKey, setSecretKey] = useState('')
   const [webhookSecret, setWebhookSecret] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [credentialError, setCredentialError] = useState('')
+  const [credentialMessage, setCredentialMessage] = useState('')
+  const otpInputRefs = useRef<Array<HTMLInputElement | null>>([])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -82,23 +90,86 @@ export default function AdminPaymentManagement() {
     finally { setSaving(false) }
   }
 
+  const resetCredentialDialog = () => {
+    setCredentialModalOpen(false)
+    setCodeSent(false)
+    setOtpDigits(Array(6).fill(''))
+    setAuthorizationToken('')
+    setVerified(false)
+    setSecretKey('')
+    setWebhookSecret('')
+    setCredentialError('')
+    setCredentialMessage('')
+  }
+
+  const openCredentialDialog = () => {
+    setCodeSent(false)
+    setOtpDigits(Array(6).fill(''))
+    setAuthorizationToken('')
+    setVerified(false)
+    setSecretKey('')
+    setWebhookSecret('')
+    setCredentialError('')
+    setCredentialMessage('')
+    setCredentialModalOpen(true)
+  }
+
   const requestCode = async () => {
-    setRequestingCode(true); setError(''); setMessage('')
+    setRequestingCode(true); setCredentialError(''); setCredentialMessage('')
     try {
       const result = await api<{ message: string }>('/api/admin/payments/credentials/request-code', 'POST', {})
-      setMessage(result.message)
-    } catch (err) { setError(err instanceof Error ? err.message : 'Unable to send verification code.') }
+      setCodeSent(true)
+      setCredentialMessage(result.message)
+      window.setTimeout(() => otpInputRefs.current[0]?.focus(), 50)
+    } catch (err) { setCredentialError(err instanceof Error ? err.message : 'Unable to send verification code.') }
     finally { setRequestingCode(false) }
   }
 
-  const saveCredentials = async () => {
-    setSaving(true); setError(''); setMessage('')
+  const verifyCode = async (completeCode: string) => {
+    if (verifyingCode || completeCode.length !== 6) return
+    setVerifyingCode(true); setCredentialError(''); setCredentialMessage('')
     try {
-      const result = await api<{ message: string }>('/api/admin/payments/credentials', 'PUT', { code, secretKey, webhookSecret })
-      setMessage(result.message)
-      setCode(''); setSecretKey(''); setWebhookSecret('')
+      const result = await api<{ authorizationToken: string; message: string }>('/api/admin/payments/credentials/verify-code', 'POST', { code: completeCode })
+      setAuthorizationToken(result.authorizationToken)
+      setVerified(true)
+      setOtpDigits(Array(6).fill(''))
+      setCredentialMessage(result.message)
+    } catch (err) {
+      setOtpDigits(Array(6).fill(''))
+      setCredentialError(err instanceof Error ? err.message : 'The security code could not be verified.')
+      window.setTimeout(() => otpInputRefs.current[0]?.focus(), 50)
+    } finally { setVerifyingCode(false) }
+  }
+
+  const updateOtpDigit = (index: number, rawValue: string) => {
+    const digit = rawValue.replace(/\\D/g, '').slice(-1)
+    const next = [...otpDigits]
+    next[index] = digit
+    setOtpDigits(next)
+    if (digit && index < 5) otpInputRefs.current[index + 1]?.focus()
+    if (next.every(value => value !== '')) void verifyCode(next.join(''))
+  }
+
+  const handleOtpPaste = (event: React.ClipboardEvent<HTMLInputElement>) => {
+    event.preventDefault()
+    const pasted = event.clipboardData.getData('text').replace(/\\D/g, '').slice(0, 6)
+    if (!pasted) return
+    const next = Array(6).fill('')
+    pasted.split('').forEach((digit, index) => { next[index] = digit })
+    setOtpDigits(next)
+    otpInputRefs.current[Math.min(pasted.length, 5)]?.focus()
+    if (pasted.length === 6) void verifyCode(pasted)
+  }
+
+  const saveCredentials = async () => {
+    if (!authorizationToken || (!secretKey.trim() && !webhookSecret.trim())) return
+    setSaving(true); setCredentialError('')
+    try {
+      const result = await api<{ message: string }>('/api/admin/payments/credentials', 'PUT', { authorizationToken, secretKey, webhookSecret })
+      resetCredentialDialog()
       await load()
-    } catch (err) { setError(err instanceof Error ? err.message : 'Unable to update credentials.') }
+      setMessage(result.message)
+    } catch (err) { setCredentialError(err instanceof Error ? err.message : 'Unable to update credentials.') }
     finally { setSaving(false) }
   }
 
@@ -121,13 +192,11 @@ export default function AdminPaymentManagement() {
           <label className="payment-field">Default currency<input value={config.currencyCode} maxLength={3} onChange={e => update('currencyCode', e.target.value.toUpperCase())} /></label>
           <label className="payment-field payment-field-wide">Paystack public key<input value={config.publicKey || ''} autoComplete="off" placeholder={config.mode === 'test' ? 'pk_test_...' : 'pk_live_...'} onChange={e => update('publicKey', e.target.value)} /></label>
         </div>
-        <div className="payment-credential-status"><span>{config.secretKeyConfigured ? '✓ Secret key is encrypted and stored' : '⚠ Secret key has not been configured'}</span><span>{config.webhookSecretConfigured ? '✓ Webhook secret is encrypted and stored' : 'Webhook secret not configured'}</span></div>
-        <div className="payment-security-note"><strong>Protected credential change</strong><p>Secret values are never returned by the API or shown after saving. Paystack webhook signatures are verified using the Paystack secret key. Request a one-time code to the registered Super Admin email, then enter the new credentials. Codes expire after 10 minutes and are single-use.</p></div>
-        <div className="payment-credential-form">
-          <label className="payment-field">New Paystack secret key<input type="password" autoComplete="new-password" value={secretKey} placeholder="Paste secret key. It will not be shown again." onChange={e => setSecretKey(e.target.value)} /></label>
-          <label className="payment-field">Additional webhook signing secret (optional)<input type="password" autoComplete="new-password" value={webhookSecret} placeholder="Optional additional signing secret" onChange={e => setWebhookSecret(e.target.value)} /></label>
-          <div className="payment-otp-row"><label className="payment-field">Email verification code<input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} placeholder="6-digit code" onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} /></label><button className="admin-secondary-button" type="button" disabled={requestingCode} onClick={() => void requestCode()}>{requestingCode ? 'Sending...' : 'Email me a code'}</button></div>
-          <button className="admin-primary-button" type="button" disabled={saving || code.length !== 6 || (!secretKey.trim() && !webhookSecret.trim())} onClick={() => void saveCredentials()}>{saving ? 'Securing credentials...' : 'Verify code & save credentials'}</button>
+        <div className="payment-credential-status"><span>{config.secretKeyConfigured ? '✓ Secret key is encrypted and stored' : '⚠ Secret key has not been configured'}</span><span>{config.webhookSecretConfigured ? '✓ Additional webhook secret is encrypted and stored' : 'Additional webhook secret not configured'}</span></div>
+        <div className="payment-security-note"><strong>Protected credential change</strong><p>Secret values are never returned by the API or shown after saving. Changing payment credentials requires a fresh email code, automatic six-digit verification and a short-lived, single-use authorization. The Paystack secret key is used for webhook signature verification.</p></div>
+        <div className="payment-change-credential">
+          <div><strong>Payment credentials</strong><p>To replace the Paystack secret key or optional additional webhook secret, complete the protected email verification process.</p></div>
+          <button className="admin-primary-button" type="button" onClick={openCredentialDialog}>Change Paystack Secret Key</button>
         </div>
         <label className="payment-toggle-row"><span><strong>Enable payment gateway</strong><small>Configuration switch only. Actual charges remain disabled until the complete transaction and webhook workflow is verified.</small></span><input type="checkbox" checked={config.enabled} onChange={e => update('enabled', e.target.checked)} /></label>
       </div>
@@ -166,6 +235,69 @@ export default function AdminPaymentManagement() {
         <div className="payment-grid"><NumberField label="Inspection booking expiry (hours)" value={config.inspectionSettings.bookingExpiryHours} min={1} max={720} onChange={v => updateNested('inspectionSettings','bookingExpiryHours',v)} /></div>
       </div>
       <div className="payment-save-bar"><span>Changes to payment preferences are saved together.</span><button className="admin-primary-button" type="button" disabled={saving} onClick={() => void saveConfiguration()}>{saving ? 'Saving...' : 'Save payment configuration'}</button></div>
+
+      {credentialModalOpen && (
+        <div className="payment-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !saving && !verifyingCode) resetCredentialDialog() }}>
+          <section className="payment-credential-modal" role="dialog" aria-modal="true" aria-labelledby="payment-credential-modal-title">
+            <div className="payment-modal-heading">
+              <div><span className="payment-modal-kicker">SUPER ADMIN SECURITY CHECK</span><h3 id="payment-credential-modal-title">Change Paystack Secret Key</h3></div>
+              <button type="button" className="payment-modal-close" aria-label="Close dialog" disabled={saving || verifyingCode} onClick={resetCredentialDialog}>×</button>
+            </div>
+            <div className="payment-danger-warning" role="alert">
+              <strong>Security warning: sensitive payment credentials</strong>
+              <p>You are about to change credentials that control access to marketplace payments. Never share your Paystack secret key or email verification code. Only continue if you initiated this change.</p>
+            </div>
+
+            {!verified ? (
+              <div className="payment-modal-step">
+                <p className="payment-modal-instruction">We will send a one-time six-digit code to the registered Super Admin email address. The code expires after 10 minutes and can only be used once.</p>
+                {!codeSent ? (
+                  <button className="admin-primary-button payment-send-code-button" type="button" disabled={requestingCode} onClick={() => void requestCode()}>{requestingCode ? 'Sending secure code...' : 'Send verification code to my email'}</button>
+                ) : (
+                  <>
+                    <label className="payment-otp-label">Enter the six-digit security code</label>
+                    <div className="payment-otp-boxes" aria-label="Six-digit email verification code">
+                      {otpDigits.map((digit, index) => (
+                        <input
+                          key={index}
+                          ref={element => { otpInputRefs.current[index] = element }}
+                          type="text"
+                          inputMode="numeric"
+                          autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                          pattern="[0-9]*"
+                          maxLength={1}
+                          aria-label={`Verification digit ${index + 1}`}
+                          value={digit}
+                          disabled={verifyingCode}
+                          onChange={event => updateOtpDigit(index, event.target.value)}
+                          onPaste={handleOtpPaste}
+                          onKeyDown={event => {
+                            if (event.key === 'Backspace' && !otpDigits[index] && index > 0) otpInputRefs.current[index - 1]?.focus()
+                            if (event.key === 'ArrowLeft' && index > 0) otpInputRefs.current[index - 1]?.focus()
+                            if (event.key === 'ArrowRight' && index < 5) otpInputRefs.current[index + 1]?.focus()
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <p className="payment-otp-hint">{verifyingCode ? 'Verifying code securely...' : 'Verification starts automatically when the sixth digit is entered. You can also paste the complete code.'}</p>
+                    <button className="payment-resend-code" type="button" disabled={requestingCode} onClick={() => void requestCode()}>{requestingCode ? 'Sending...' : 'Resend code'}</button>
+                  </>
+                )}
+              </div>
+            ) : (
+              <div className="payment-modal-step">
+                <div className="payment-verified-banner"><span>✓</span><div><strong>Email verification successful</strong><small>Your one-time code has been cleared. Enter the new credentials below.</small></div></div>
+                <label className="payment-field">New Paystack secret key<input type="password" autoComplete="new-password" value={secretKey} placeholder={config.mode === 'test' ? 'sk_test_...' : 'sk_live_...'} onChange={event => setSecretKey(event.target.value)} /></label>
+                <label className="payment-field">Additional webhook signing secret (optional)<input type="password" autoComplete="new-password" value={webhookSecret} placeholder="Optional additional signing secret" onChange={event => setWebhookSecret(event.target.value)} /></label>
+                <p className="payment-modal-instruction">The new values are encrypted before storage. They will never be displayed or returned by the backend.</p>
+                <button className="admin-primary-button payment-save-credentials-button" type="button" disabled={saving || (!secretKey.trim() && !webhookSecret.trim())} onClick={() => void saveCredentials()}>{saving ? 'Encrypting and saving...' : 'Save new payment credentials'}</button>
+              </div>
+            )}
+            {credentialError && <div className="payment-modal-error" role="alert">{credentialError}</div>}
+            {credentialMessage && <div className="payment-modal-message" role="status">{credentialMessage}</div>}
+          </section>
+        </div>
+      )}
     </section>
   )
 }
