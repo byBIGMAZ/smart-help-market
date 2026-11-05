@@ -142,14 +142,14 @@ function routeForRequest(message: string, roles: string[], activeRole: Workspace
     { terms: ['rent payment', 'rent and renewal', 'renewal', 'arrears'], label: 'Open rent and renewals', path: '/landlord/rent', roles: ['landlord'] },
     { terms: ['maintenance', 'repair'], label: 'Open maintenance', path: '/landlord/maintenance', roles: ['landlord'] },
     { terms: ['my properties', 'manage properties', 'property portfolio'], label: 'Manage properties', path: '/landlord/properties', roles: ['landlord'] },
-    { terms: ['add property', 'list property', 'post property'], label: 'Create a property listing', path: '/landlord/properties/new', roles: ['landlord'] },
+    { terms: ['add property', 'list property', 'post property', 'create a property listing', 'create property listing', 'create listing'], label: 'Create a property listing', path: '/landlord/properties/new', roles: ['landlord'] },
     { terms: ['agent listing', 'represented property', 'list property for a client'], label: 'Create an agent listing', path: '/agent/listings/new', roles: ['agent'] },
     { terms: ['my products', 'manage products', 'inventory'], label: 'Open products and inventory', path: '/seller/products', roles: ['seller'] },
-    { terms: ['add product', 'list product'], label: 'Add a product', path: '/seller/products/new', roles: ['seller'] },
+    { terms: ['add product', 'add a product', 'list product'], label: 'Add a product', path: '/seller/products/new', roles: ['seller'] },
     { terms: ['orders', 'my sales'], label: 'Open orders', path: '/seller/orders', roles: ['seller'] },
     { terms: ['bookings', 'my services'], label: 'Open bookings and services', path: '/provider/bookings', roles: ['service_provider'] },
     { terms: ['availability', 'working hours', 'schedule'], label: 'Manage service availability', path: '/provider/availability', roles: ['service_provider'] },
-    { terms: ['add service', 'list service'], label: 'Add a service', path: '/provider/services/new', roles: ['service_provider'] },
+    { terms: ['add service', 'add a service', 'list service'], label: 'Add a service', path: '/provider/services/new', roles: ['service_provider'] },
     { terms: ['my listings', 'manage listings'], label: 'Open my listings', path: roleListingPath },
     { terms: ['clients'], label: 'Open clients', path: '/agent/clients', roles: ['agent'] },
     { terms: ['commission', 'commissions', 'earnings'], label: 'Open commissions and earnings', path: '/agent/commissions', roles: ['agent'] },
@@ -318,6 +318,128 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
 
   if (activeRole) nextContext.activeRole = activeRole
+
+  if (awaiting === 'listing_studio_issue') {
+    nextContext.awaiting = 'listing_studio_detail'
+    const workspace = activeRole === 'agent' ? 'Agent' : 'Landlord'
+    const listingPath = activeRole === 'agent' ? '/agent/listings/new' : '/landlord/properties/new'
+    return {
+      text: `Let's isolate why Listing Studio is not opening in your ${workspace} workspace. First, confirm that you are signed in to the correct account and open the listing form from your own workspace. Then refresh the page once and try again. Do not switch to another role's dashboard to bypass an access restriction. What exactly happens when you open it?`,
+      actions: [{ label: `Open ${workspace.toLowerCase()} listing form`, path: listingPath }],
+      suggestions: ['The page is blank', 'I see access denied', 'It keeps loading', 'The button does nothing'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'listing_studio_detail') {
+    const listingPath = activeRole === 'agent' ? '/agent/listings/new' : '/landlord/properties/new'
+    if (message.includes('access denied')) {
+      return {
+        text: activeRole === 'agent'
+          ? 'An access-denied message usually means the current session or listing permission did not authorise that page. Confirm that you are signed in to the correct Agent account, then open the form from Agent Listings. Agent access does not grant landlord-only tools. If the Agent listing page still denies access, send the exact message to support so the account role and server permission can be checked.'
+          : 'An access-denied message usually means the current session or listing permission did not authorise that page. Confirm that you are signed in to the correct Landlord account, then open Add a property from the Landlord workspace. If the page still denies access, send the exact message to support so the account role and server permission can be checked.',
+        actions: [{ label: 'Open my listing form', path: listingPath }],
+        suggestions: ['I still see access denied', 'It opens now', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_studio_detail' },
+      }
+    }
+    if (message.includes('blank')) {
+      return {
+        text: 'If the listing page is blank, try a hard refresh, then open the page in a private/incognito window. Check whether other marketplace pages load. If only Listing Studio is blank, tell me your browser, device and whether the page shows an error. Do not clear saved drafts or browser data as a first step.',
+        suggestions: ['It is still blank', 'I can see the form now', 'There is an error on the page'],
+        context: { ...nextContext, awaiting: 'listing_studio_detail' },
+      }
+    }
+    if (message.includes('loading')) {
+      return {
+        text: 'If Listing Studio keeps loading, check that your internet connection is stable and wait briefly before refreshing once. Then reopen it from your correct workspace. If it continues, tell me whether the rest of SMART HELP MARKET loads normally and approximately how long the spinner remains visible.',
+        suggestions: ['Other pages work normally', 'The whole website is slow', 'It opened after refreshing'],
+        context: { ...nextContext, awaiting: 'listing_studio_detail' },
+      }
+    }
+    if (message.includes('button does nothing')) {
+      return {
+        text: 'If the button does nothing, check whether the page has finished loading, then try once more. If you are on mobile, try rotating the device or opening the site in an updated browser. Please tell me the exact button label and whether anything changes when you click it.',
+        suggestions: ['The Add property button', 'The Save draft button', 'Another button'],
+        context: { ...nextContext, awaiting: 'listing_studio_detail' },
+      }
+    }
+    return {
+      text: 'Thanks. Please copy the exact error text if one appears, or describe what you see on the screen. I can then narrow the cause instead of guessing. If you cannot continue, I can help you send the details to support.',
+      suggestions: ['There is an error on the page', 'It opens now', 'Speak to an administrator'],
+      context: { ...nextContext, awaiting: 'listing_studio_detail' },
+    }
+  }
+
+  if (awaiting === 'listing_save_issue') {
+    nextContext.awaiting = 'listing_save_detail'
+    return {
+      text: `Let's check the save process in your ${activeRole === 'agent' ? 'Agent' : 'Landlord'} listing workflow. First, make sure the required listing fields are complete. Use Save draft if you are not ready to publish. Wait for the save confirmation before leaving the page. When editing an existing draft, reopen that same draft rather than starting a second listing. What happens when you try to save?`,
+      suggestions: ['Required fields are missing', 'Save button does nothing', 'I see an error message', 'My saved draft disappeared'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'listing_save_detail') {
+    const listingPath = activeRole === 'agent' ? '/agent/listings' : '/landlord/properties'
+    if (message.includes('required fields')) {
+      return {
+        text: 'Open each section of the listing form and look for fields marked as required. Complete the property or represented-property details, location, listing purpose and any required unit information. If the form highlights a field, correct that field first, then save the draft again. Tell me the exact field name if you are unsure what to enter.',
+        actions: [{ label: 'Return to my listings', path: listingPath }],
+        suggestions: ['Which fields are compulsory?', 'The form still says fields are missing', 'The draft saved successfully'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('button does nothing')) {
+      return {
+        text: 'If Save draft does nothing, check whether all required fields are complete and whether the page is still processing. Try once, wait for a confirmation, and avoid repeated clicks that could create confusion. If there is no response, tell me whether the button becomes disabled, shows a spinner, or remains unchanged.',
+        suggestions: ['The button stays unchanged', 'A spinner appears', 'I can see a success message'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('error message') || message.includes('error')) {
+      return {
+        text: 'Please share the exact error message, including any field name or status code. Do not include passwords, session cookies or secret tokens. I will use the wording to identify whether this looks like a validation, permission, network or server-side error.',
+        suggestions: ['It says validation error', 'It says unauthorized', 'It says network error', 'Speak to an administrator'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    if (message.includes('draft disappeared')) {
+      return {
+        text: 'First, open the same workspace’s listings page and check the Drafts section. Make sure you are signed in to the same account that created the draft. Do not create a replacement yet. If it is still missing, tell me the approximate time you saved it and whether you saw a save confirmation so support can trace the correct record.',
+        actions: [{ label: 'Open my saved listings', path: listingPath }],
+        suggestions: ['I found the draft', 'It is still missing', 'I never saw a save confirmation'],
+        context: { ...nextContext, awaiting: 'listing_save_detail' },
+      }
+    }
+    return {
+      text: 'Tell me what the save process shows after you click Save draft. The exact message or change on the screen will help me narrow down the problem.',
+      suggestions: ['It says validation error', 'It says unauthorized', 'It says network error', 'The draft saved successfully'],
+      context: { ...nextContext, awaiting: 'listing_save_detail' },
+    }
+  }
+
+  if (message.includes('navigate the website') || message.includes('navigate smart help market') || message.includes('help me navigate')) {
+    const workspaceMenus: Record<WorkspaceRole, string[]> = {
+      buyer: ['Find a property to rent', 'Find a product', 'Find a service', 'View my saved items'],
+      landlord: ['Create a property listing', 'Manage my tenants', 'Track rent and renewals', 'Manage maintenance'],
+      agent: ['Manage my listings', 'View my clients', 'Check commissions', 'Create an agent listing'],
+      seller: ['Add a product', 'Manage inventory', 'View orders', 'Review my sales'],
+      service_provider: ['Add a service', 'View bookings', 'Manage availability', 'Manage my services'],
+    }
+    if (!activeRole) {
+      return {
+        text: 'I can show you the correct tools, but I need to know which workspace you want to use. Your account may have more than one assigned role.',
+        suggestions: roles.map((role) => canonicalWorkspaceRole(role)).filter((role): role is WorkspaceRole => role !== null).map((role) => `As a ${role === 'service_provider' ? 'service provider' : role}`),
+        context: nextContext,
+      }
+    }
+    return {
+      text: `You are using the ${activeRole === 'service_provider' ? 'Service Provider' : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)} workspace. Choose a task and I will guide you through it step by step. I will keep the guidance within the permissions assigned to this role.`,
+      suggestions: workspaceMenus[activeRole],
+      context: nextContext,
+    }
+  }
 
   const listingHelpRequest = [
     'issue creating listing', 'problem creating listing', 'trouble creating listing',
