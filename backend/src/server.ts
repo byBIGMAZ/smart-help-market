@@ -7,6 +7,7 @@ import publicCategoriesRouter from './routes/publicCategories'
 import publicListingsRouter from './routes/publicListings'
 import listingImagesRouter from './routes/listingImages'
 import ownerListingsRouter from './routes/ownerListings'
+import listingPaymentsRouter from './routes/listingPayments'
 import listingModerationRouter from './routes/listingModeration'
 import categoryManagementRouter from './routes/categoryManagement'
 import settingsManagementRouter from './routes/settingsManagement'
@@ -91,6 +92,7 @@ app.use('/api/listings/public', publicListingsRouter)
 
 // Authenticated owner draft management and listing image management.
 app.use('/api/listings', ownerListingsRouter)
+app.use('/api/listings', listingPaymentsRouter)
 app.use('/api/listings', listingImagesRouter)
 
 // Unknown endpoint handler.
