@@ -16,8 +16,6 @@ type EditableSettingKey =
   | 'help.ai.learning_enabled'
   | 'help.ai.feedback_enabled'
   | 'help.messages.free_limit'
-  | 'help.messages.pack_size'
-  | 'help.messages.pack_price_ngn'
 
 const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'platform.name': 'Marketplace Name',
@@ -28,9 +26,7 @@ const SETTING_LABELS: Record<EditableSettingKey, string> = {
   'help.assistant.enabled': 'Help Assistant Enabled',
   'help.ai.learning_enabled': 'Adaptive Learning Enabled',
   'help.ai.feedback_enabled': 'Response Feedback Enabled',
-  'help.messages.free_limit': 'Included Monthly Messages',
-  'help.messages.pack_size': 'Paid Package Message Quantity',
-  'help.messages.pack_price_ngn': 'Paid Package Price (NGN)',
+  'help.messages.free_limit': 'Free Monthly Messages (0 = Unlimited)',
 }
 
 const SETTING_HELP: Record<EditableSettingKey, string> = {
@@ -42,9 +38,7 @@ const SETTING_HELP: Record<EditableSettingKey, string> = {
   'help.assistant.enabled': 'Turn the SMART HELP assistant on or off for signed-in users.',
   'help.ai.learning_enabled': 'Allow the built-in BIGMAZ intent engine to improve its phrase weights from explicit user corrections. No external AI service is used.',
   'help.ai.feedback_enabled': 'Allow users to rate assistant responses and submit corrections.',
-  'help.messages.free_limit': 'Number of assistant messages each user receives per calendar month before the usage limit is reached.',
-  'help.messages.pack_size': 'Number of additional assistant messages in a future paid package.',
-  'help.messages.pack_price_ngn': 'Proposed package price in Nigerian Naira. This is configuration only until payment processing is integrated.',
+  'help.messages.free_limit': 'Number of free assistant messages per user each month. Set to 0 for unlimited free use.',
 }
 
 function getStringValue(value: unknown): string {
@@ -421,8 +415,6 @@ useEffect(() => {
           'help.ai.learning_enabled',
           'help.ai.feedback_enabled',
           'help.messages.free_limit',
-          'help.messages.pack_size',
-          'help.messages.pack_price_ngn',
         ] as EditableSettingKey[]).map((key) => {
           const setting = getSetting(key)
           if (!setting) return null
