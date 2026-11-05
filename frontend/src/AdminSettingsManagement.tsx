@@ -200,14 +200,29 @@ export default function AdminSettingsManagement() {
       setNotice('')
       return
     }
-    if (setting.key === 'help.messages.free_limit') {
+    if (typeof setting.value === 'number' || setting.key === 'help.messages.free_limit') {
       const numericValue = Number(value)
       if (!Number.isSafeInteger(numericValue) || numericValue < 0) {
-        setError('The monthly message limit must be a non-negative whole number.')
+        setError('Enter a valid non-negative whole number.')
+        setNotice('')
+        return
+      }
+      if (setting.key === 'geo.cache_ttl_hours' && (numericValue < 1 || numericValue > 8760)) {
+        setError('Geocoding cache lifetime must be between 1 and 8,760 hours.')
+        setNotice('')
+        return
+      }
+      if (setting.key === 'geo.max_results' && (numericValue < 1 || numericValue > 5)) {
+        setError('Maximum location results must be between 1 and 5.')
         setNotice('')
         return
       }
       await saveSetting(setting.key, numericValue)
+      return
+    }
+    if (setting.key === 'geo.country_code' && !/^[a-z]{2}$/i.test(value)) {
+      setError('Enter a valid two-letter country code, for example ng.')
+      setNotice('')
       return
     }
     await saveSetting(setting.key, value)
