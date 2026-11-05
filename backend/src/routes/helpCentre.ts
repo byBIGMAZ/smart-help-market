@@ -228,6 +228,13 @@ function expandSuggestionSelection(
   const available = new Set(roles.map((role) => canonicalWorkspaceRole(role)).filter((role): role is WorkspaceRole => role !== null))
   const currentRole = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
 
+  if (context.awaiting === 'location' || context.awaiting === 'budget') {
+    return { message: label, context: nextContext }
+  }
+  if (['show me more options', 'show all available options', 'try another location', 'change my location'].includes(selected)) {
+    return { message: label, context: nextContext }
+  }
+
   if (context.awaiting === 'listing_role' || prior.includes('both landlord and agent access')) {
     if (selected === 'as a landlord' && available.has('landlord')) {
       nextContext.activeRole = 'landlord'
@@ -265,6 +272,15 @@ function expandSuggestionSelection(
     'what else can you help me with': 'Show me the useful things you can help me do in my active workspace.',
     'find something in the marketplace': 'Take me to marketplace discovery and help me choose what to explore.',
     'view my saved items': 'Open my saved items in my buyer workspace.',
+    'explain the buyer protection steps': 'Explain how buyer protection and escrow are intended to work, and clearly distinguish any live marketplace features from educational information.',
+    'what happens if there is a dispute': 'Explain the marketplace dispute process and what the buyer and seller should do if a transaction problem occurs.',
+    'how do i inspect a property': 'Explain how to arrange and prepare for a property inspection through the marketplace.',
+    'what should i consider before sharing accommodation': 'Give me practical advice for choosing a compatible roommate and sharing accommodation safely.',
+    'ask about electricity and water': 'Tell me how to assess electricity and water supply in a neighbourhood, and what questions to ask residents.',
+    'ask about road conditions': 'Tell me how to assess road access and road conditions in a neighbourhood.',
+    'how do i save a listing': 'As a buyer, explain how to save a listing and find it again in my saved items.',
+    'how do i contact a landlord': 'As a buyer, explain how to send an enquiry to a property landlord through the marketplace.',
+    'search another category': 'Help me choose a different marketplace category to search.',
     'create a property listing': currentRole === 'agent'
       ? 'As an agent, help me create a listing for a property I am authorised to represent.'
       : 'As a landlord, help me create a property listing for my own property.',
@@ -298,6 +314,22 @@ function expandSuggestionSelection(
     'save button does nothing': 'The listing save button does nothing when I click it.',
     'i see an error message': 'The listing form displays an error message when I save.',
     'my saved draft disappeared': 'I cannot find a listing draft I previously saved.',
+    'the button stays unchanged': 'The Save draft button stays unchanged after I click it.',
+    'a spinner appears': 'A spinner appears after I click Save draft and does not finish.',
+    'i can see a success message': 'I can see a success message after saving my listing.',
+    'the form still says fields are missing': 'The listing form still says required fields are missing after I completed them.',
+    'the draft saved successfully': 'My listing draft saved successfully. What should I do next?',
+    'i found the draft': 'I found my saved listing draft. What should I do next?',
+    'it is still missing': 'My saved listing draft is still missing.',
+    'i never saw a save confirmation': 'I never saw a confirmation after trying to save my listing.',
+    'which fields are compulsory': 'Explain which listing fields are compulsory for my current listing type.',
+    'it opens now': 'Listing Studio opens now. Guide me through the next step in my listing workflow.',
+    'i can see the form now': 'The listing form is visible now. Guide me through the next step.',
+    'it opened after refreshing': 'Listing Studio opened after refreshing. What should I do next?',
+    'other pages work normally': 'Other pages work normally, but Listing Studio has a problem. Help me narrow it down.',
+    'the whole website is slow': 'The whole marketplace website is slow, not just Listing Studio.',
+    'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
+    'there is an error on the page': 'An error appears on the listing page. Help me diagnose it.',
   }
   const mapped = generalPrompts[selected]
   if (mapped) return { message: mapped, context: nextContext }
@@ -419,7 +451,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  if (message.includes('navigate the website') || message.includes('navigate smart help market') || message.includes('help me navigate')) {
+  if (message.includes('navigate the website') || message.includes('navigate smart help market') || message.includes('navigating smart help market') || message.includes('help me navigate') || message.includes('help navigating')) {
     const workspaceMenus: Record<WorkspaceRole, string[]> = {
       buyer: ['Find a property to rent', 'Find a product', 'Find a service', 'View my saved items'],
       landlord: ['Create a property listing', 'Manage my tenants', 'Track rent and renewals', 'Manage maintenance'],
