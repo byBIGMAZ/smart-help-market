@@ -48,7 +48,7 @@ async function loadRequests(view: ApprovalView): Promise<VerificationRequest[]> 
   return Array.isArray(data.requests) ? data.requests : []
 }
 
-export default function AdminProfileApprovals() {
+export default function AdminProfileApprovals({ canManage = false }: { canManage?: boolean }) {
   const [view, setView] = useState<ApprovalView>('queue')
   const [requests, setRequests] = useState<VerificationRequest[]>([])
   const [selectedId, setSelectedId] = useState('')
@@ -182,13 +182,15 @@ export default function AdminProfileApprovals() {
               <div><span>Verification status</span><strong>{accountTypeLabel(selected.status)}</strong></div>
             </div>
             <div className="profile-request-meta"><span>{view === 'queue' ? 'Registered' : 'Reviewed'}</span><strong>{formatDate(selected.submittedAt || selected.reviewedAt)}</strong></div>
-            {view === 'queue' && selected.status === 'pending' ? <>
+            {view === 'queue' && selected.status === 'pending' && canManage ? <>
               <label className="profile-review-reason">Verification review reason <span>Required</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Record the verification checks completed and the reason for your decision..." rows={4} maxLength={500} /></label>
               <div className="profile-review-actions">
                 <button type="button" className="admin-secondary-button profile-reject-button" onClick={() => void decide('rejected')} disabled={saving || loading}>{saving ? 'Saving...' : 'Reject verification'}</button>
                 <button type="button" className="admin-primary-button" onClick={() => void decide('approved')} disabled={saving || loading}>{saving ? 'Saving...' : 'Approve verification'}</button>
               </div>
-            </> : <div className="profile-decision-record"><strong>Decision: {selected.status}</strong><span>{selected.reviewer || 'Administrator'} · {formatDate(selected.reviewedAt)}</span><p>{selected.reason || 'No additional review note was supplied.'}</p></div>}
+            </> : view === 'queue' && selected.status === 'pending' ? (
+              <div className="profile-decision-record"><strong>Review access only</strong><span>Your administrator role can view this queue but cannot issue verification decisions.</span><p>Request the users.manage permission from the Super Admin if you are responsible for verification reviews.</p></div>
+            ) : <div className="profile-decision-record"><strong>Decision: {selected.status}</strong><span>{selected.reviewer || 'Administrator'} · {formatDate(selected.reviewedAt)}</span><p>{selected.reason || 'No additional review note was supplied.'}</p></div>}
           </>}
         </div>
       </div>
