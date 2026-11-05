@@ -567,9 +567,14 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
 
   const landlordOnlyRequest = ['tenant', 'tenants', 'tenant management', 'collect rent', 'rent collection', 'rent arrears', 'property maintenance', 'maintenance request', 'manage occupancy', 'occupancy'].some((cue) => message.includes(cue))
   if (landlordOnlyRequest && activeRole === 'agent') {
+    const alsoLandlord = roles.map((role) => canonicalWorkspaceRole(role)).includes('landlord')
     return {
-      text: 'Those are Landlord property-management responsibilities. Your current Agent workspace is for properties you are authorised to represent, client enquiries and agent activity. It does not grant access to the landlord’s tenant, rent or maintenance management. You can ask the property owner to handle that action or contact support if your account role is incorrect.',
-      actions: [{ label: 'Open agent workspace', path: '/agent/dashboard' }],
+      text: alsoLandlord
+        ? 'That task belongs to your Landlord workspace, not the Agent workspace currently active. Your account also has Landlord access, so you can switch to that workspace to manage your own tenants, rent, occupancy and maintenance. The Agent role remains limited to authorised representation and agent activity.'
+        : 'Those are Landlord property-management responsibilities. Your current Agent workspace is for properties you are authorised to represent, client enquiries and agent activity. It does not grant access to the landlord’s tenant, rent or maintenance management. You can ask the property owner to handle that action or contact the platform administrator if you believe your account role is incorrect.',
+      actions: alsoLandlord
+        ? [{ label: 'Open Landlord tenant management', path: '/landlord/tenants' }, { label: 'Open Agent workspace', path: '/agent/dashboard' }]
+        : [{ label: 'Open Agent workspace', path: '/agent/dashboard' }],
       context: nextContext,
     }
   }
@@ -685,6 +690,24 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     return {
       text: welcome?.text || 'Hello! 😊 I am ready to help you explore the marketplace, find what you need or understand how SMART HELP MARKET works. What would you like to do?',
       suggestions: welcome?.suggestions || ['Find accommodation', 'Find a roommate', 'Find a product', 'Find a service'],
+      context: nextContext,
+    }
+  }
+
+  if (message.includes('how do i save a listing') || message.includes('save a listing and find it again')) {
+    return {
+      text: 'Open the listing you are interested in and use its Save or favourite control. If the site asks you to sign in, complete sign-in first so the saved item is attached to your account. You can return to it later from Saved Items. Saving a listing does not reserve the property or product and does not replace contacting the owner or seller.',
+      actions: [{ label: 'Open saved items', path: '/buyer/saved' }, { label: 'Explore listings', path: '/explore' }],
+      suggestions: ['Find a property to rent', 'Find a product', 'How do I contact a landlord?'],
+      context: nextContext,
+    }
+  }
+
+  if (message.includes('how do i contact a landlord') || message.includes('send an enquiry to a property landlord')) {
+    return {
+      text: 'Open the property listing and review its details first. Use the enquiry or contact option shown on that listing to send your question through the marketplace. Include the property or unit you mean, your preferred inspection time and any important questions. Keep communication in the marketplace where possible, and do not send deposits before verifying the property, the person authorised to offer it and the agreed terms.',
+      actions: [{ label: 'Explore properties', path: '/explore' }],
+      suggestions: ['How do I inspect a property?', 'What should I ask before renting?', 'Speak to an administrator'],
       context: nextContext,
     }
   }
