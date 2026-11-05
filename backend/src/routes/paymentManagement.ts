@@ -93,6 +93,18 @@ router.put('/configuration', async (req, res) => {
     const current = await getDatabasePool().query(
       `SELECT secret_key_ciphertext, secret_key_mode, webhook_secret_ciphertext FROM public.marketplace_payment_configuration WHERE configuration_id = 1`,
     )
+    const activeTransactions = await getDatabasePool().query<{ total: string }>(
+      `SELECT COUNT(*)::text AS total
+       FROM public.marketplace_payment_transactions
+       WHERE status IN ('initialized', 'pending')
+         AND expires_at > NOW()
+         AND gateway_mode <> $1`,
+      [mode],
+    )
+    if (Number(activeTransactions.rows[0]?.total ?? 0) > 0) {
+      res.status(409).json({ error: 'The payment environment cannot be changed while active checkout transactions are awaiting completion or verification. Wait for them to finish or expire.' })
+      return
+    }
     if (enabled && (!publicKey || !current.rows[0]?.secret_key_ciphertext || current.rows[0]?.secret_key_mode !== mode)) {
       res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
       return
