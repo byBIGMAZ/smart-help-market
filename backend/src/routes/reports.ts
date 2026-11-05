@@ -5,7 +5,7 @@ import { requirePermission } from '../auth/requirePermission'
 
 const reportsRouter = Router()
 
-const DEFAULT_reportTimezone = 'Africa/Lagos'
+const DEFAULT_REPORT_TIMEZONE = 'Africa/Lagos'
 const MAX_RANGE_DAYS = 366
 
 type Granularity = 'day' | 'week' | 'month'
@@ -52,7 +52,7 @@ async function getConfiguredReportTimezone(): Promise<string> {
   } catch {
     // Keep reports available with the established Lagos default.
   }
-  return DEFAULT_reportTimezone
+  return DEFAULT_REPORT_TIMEZONE
 }
 
 function getDateRange(from: string | undefined, to: string | undefined, timeZone: string) {
