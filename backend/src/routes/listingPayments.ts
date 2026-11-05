@@ -35,6 +35,9 @@ interface ListingPaymentRow {
   kind: ListingKind | null
   email: string
   listing_fee_paid_at: Date | null
+  title: string
+  description: string
+  category_active: boolean
 }
 
 function isListingKind(value: unknown): value is ListingKind {
@@ -79,10 +82,14 @@ async function readOwnedDraft(listingId: string, userId: string, client: PoolCli
        l.is_demo,
        l.owner_user_id::text AS owner_user_id,
        l.listing_details->>'kind' AS kind,
+       l.title,
+       l.description,
+       c.is_active AS category_active,
        u.email,
        l.listing_fee_paid_at
      FROM public.marketplace_listings l
      INNER JOIN public.marketplace_users u ON u.user_id = l.owner_user_id
+     INNER JOIN public.marketplace_categories c ON c.category_key = l.category_key
      WHERE l.listing_id = $1 AND l.owner_user_id = $2
      FOR UPDATE OF l`,
     [listingId, userId],
@@ -134,9 +141,9 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
       res.status(409).json({ error: 'Only draft listings can be submitted for review.' })
       return
     }
-    if (!listing.kind || !listing.email) {
+    if (!listing.kind || !listing.email || !listing.title.trim() || !listing.description.trim() || !listing.category_active) {
       await client.query('ROLLBACK')
-      res.status(409).json({ error: 'The listing type or account email could not be validated.' })
+      res.status(409).json({ error: 'Complete the listing title and description, confirm its category is active, and ensure your account email is available before submitting.' })
       return
     }
 
@@ -151,7 +158,12 @@ router.post('/owner/:listingId/submit', requireAuthenticatedSession, async (req,
        LIMIT 1`,
     )
     const config = configResult.rows[0] as PaymentConfiguration | undefined
-    const fee = config ? getMajorFee(config, listing.kind) : 0
+    if (!config) {
+      await client.query('ROLLBACK')
+      res.status(503).json({ error: 'Marketplace payment policy is unavailable. Please try again later.' })
+      return
+    }
+    const fee = getMajorFee(config, listing.kind)
     if (fee === null) {
       await client.query('ROLLBACK')
       res.status(409).json({ error: 'The configured listing fee policy is invalid. Please contact marketplace support.' })
