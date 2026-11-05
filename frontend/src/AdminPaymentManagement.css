@@ -27,3 +27,39 @@
 .payment-toggle-row small{color:var(--admin-text-secondary,#a4b1a9);font-size:11px;line-height:1.6}
 .payment-save-bar{position:sticky;bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;border:1px solid var(--admin-border,#34443a);border-radius:12px;background:var(--admin-surface,#111815);box-shadow:0 8px 28px #0002;color:var(--admin-text-secondary,#a4b1a9);font-size:11px}
 @media(max-width:650px){.payment-panel{padding:16px}.payment-grid{grid-template-columns:1fr}.payment-field-wide{grid-column:auto}.payment-channel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.payment-otp-row{grid-template-columns:1fr}.payment-otp-row button{width:100%}.payment-save-bar{align-items:stretch;flex-direction:column}.payment-save-bar button{width:100%}.admin-payment-workspace .admin-section-heading{align-items:flex-start;flex-direction:column}}
+
+
+.payment-change-credential{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px;border:1px solid var(--admin-border,#34443a);border-radius:10px;background:var(--admin-surface-soft,#17201b)}
+.payment-change-credential>div{display:grid;gap:5px}
+.payment-change-credential strong{font-size:13px;color:var(--admin-text,#f3f5f4)}
+.payment-change-credential p{margin:0;color:var(--admin-text-secondary,#a4b1a9);font-size:11px;line-height:1.6}
+.payment-modal-backdrop{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;overflow-y:auto;padding:20px;background:rgba(0,0,0,.72);backdrop-filter:blur(5px)}
+.payment-credential-modal{display:grid;gap:18px;width:min(100%,540px);max-height:calc(100vh - 40px);overflow-y:auto;padding:24px;border:1px solid var(--admin-border-strong,#526e43);border-radius:16px;background:var(--admin-surface,#111815);color:var(--admin-text,#f3f5f4);box-shadow:0 24px 90px #0008}
+.payment-modal-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.payment-modal-heading>div{display:grid;gap:6px}
+.payment-modal-kicker{color:var(--admin-accent,#a6ed69);font-size:10px;font-weight:900;letter-spacing:.12em}
+.payment-modal-heading h3{margin:0;color:var(--admin-text,#f3f5f4);font-size:20px}
+.payment-modal-close{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid var(--admin-border,#34443a);border-radius:9px;background:transparent;color:var(--admin-text,#f3f5f4);font-size:25px;line-height:1;cursor:pointer}
+.payment-danger-warning{padding:15px;border:1px solid #dc4545;border-left:4px solid #ef4444;border-radius:10px;background:rgba(185,28,28,.13);color:var(--admin-text,#f3f5f4)}
+.payment-danger-warning strong{display:block;color:#ff7777;font-size:13px}
+.payment-danger-warning p{margin:7px 0 0;color:var(--admin-text-secondary,#d6baba);font-size:12px;line-height:1.65}
+.payment-modal-step{display:grid;gap:15px}
+.payment-modal-instruction{margin:0;color:var(--admin-text-secondary,#a4b1a9);font-size:12px;line-height:1.7}
+.payment-send-code-button,.payment-save-credentials-button{width:100%;min-height:46px}
+.payment-otp-label{color:var(--admin-text,#f3f5f4);font-size:12px;font-weight:800}
+.payment-otp-boxes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}
+.payment-otp-boxes input{width:100%;min-width:0;height:58px;border:1px solid var(--admin-border-strong,#526e43);border-radius:10px;background:var(--admin-page-bg,#0b100e);color:var(--admin-text,#f3f5f4);font-size:24px;font-weight:800;text-align:center;caret-color:var(--admin-accent,#a6ed69)}
+.payment-otp-boxes input:focus{outline:2px solid var(--admin-accent,#a6ed69);outline-offset:2px;border-color:var(--admin-accent,#a6ed69)}
+.payment-otp-boxes input:disabled{opacity:.65}
+.payment-otp-hint{margin:0;color:var(--admin-text-secondary,#a4b1a9);font-size:11px;line-height:1.6;text-align:center}
+.payment-resend-code{justify-self:center;padding:7px 12px;border:0;background:transparent;color:var(--admin-accent,#a6ed69);font:inherit;font-size:12px;font-weight:800;cursor:pointer}
+.payment-resend-code:disabled{opacity:.5;cursor:not-allowed}
+.payment-verified-banner{display:flex;align-items:center;gap:11px;padding:13px;border:1px solid #238b5c;border-radius:10px;background:rgba(22,163,74,.12)}
+.payment-verified-banner>span{display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:#16834e;color:white;font-weight:900}
+.payment-verified-banner>div{display:grid;gap:4px}
+.payment-verified-banner strong{color:#65d99a;font-size:12px}
+.payment-verified-banner small{color:var(--admin-text-secondary,#a4b1a9);font-size:11px;line-height:1.5}
+.payment-modal-error,.payment-modal-message{padding:11px 13px;border-radius:8px;font-size:12px;line-height:1.6}
+.payment-modal-error{border:1px solid #dc4545;background:rgba(185,28,28,.13);color:#ff8585}
+.payment-modal-message{border:1px solid var(--admin-border,#34443a);background:var(--admin-surface-soft,#17201b);color:var(--admin-text-secondary,#a4b1a9)}
+@media(max-width:650px){.payment-change-credential{align-items:stretch;flex-direction:column}.payment-change-credential button{width:100%}.payment-credential-modal{padding:18px}.payment-otp-boxes{gap:6px}.payment-otp-boxes input{height:52px;font-size:21px}}
