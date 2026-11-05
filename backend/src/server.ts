@@ -18,6 +18,7 @@ import notificationsRouter from './routes/notifications'
 import messagesRouter from './routes/messages'
 import helpCentreRouter from './routes/helpCentre'
 import adminNotificationsRouter from './routes/adminNotifications'
+import paymentManagementRouter from './routes/paymentManagement'
 
 import authRouter from './routes/auth'
 import authSessionRouter from './routes/authSession'
@@ -72,6 +73,7 @@ app.use('/api/admin/automation', automationManagementRouter)
 app.use('/api/admin/automation', automationMonitoringRouter)
 app.use('/api/admin/automation', automationRulesRouter)
 app.use('/api/admin/notifications', adminNotificationsRouter)
+app.use('/api/admin/payments', paymentManagementRouter)
 
 // API health check.
 app.get('/api/health', (_req, res) => {
