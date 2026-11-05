@@ -11,7 +11,8 @@
     "seed:auth-roles": "tsx src/seed-auth-roles.ts",
     "create:demo-account": "tsx src/create-marketplace-demo-account.ts",
     "setup:help-centre": "tsx src/setup-help-centre-tables.ts",
-    "setup:geography": "tsx src/setup-geographic-intelligence.ts"
+    "setup:geography": "tsx src/setup-geographic-intelligence.ts",
+    "setup:listing-drafts": "tsx src/migrate-listing-details.ts"
   },
   "keywords": [],
   "author": "",
