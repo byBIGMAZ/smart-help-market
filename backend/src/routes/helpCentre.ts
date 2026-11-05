@@ -371,9 +371,32 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   }
 
   if (prediction.intent === 'greeting') {
+    const roleWelcome: Record<WorkspaceRole, { text: string; suggestions: string[] }> = {
+      buyer: {
+        text: 'Hello! 😊 I can help you discover properties, products and services, manage enquiries, save items and understand your buyer tools. What would you like to do?',
+        suggestions: ['Find accommodation', 'Find a product', 'Find a service', 'View my saved items'],
+      },
+      landlord: {
+        text: 'Hello! 😊 I am ready to help with your Landlord workspace, including property listings, units, tenant management, rent and renewals, and maintenance. What are you working on today?',
+        suggestions: ['Create a property listing', 'Manage my tenants', 'Track rent and renewals', 'Manage maintenance'],
+      },
+      agent: {
+        text: 'Hello! 😊 I can help with your Agent workspace, including represented property listings, clients, inspections and commissions. I will keep agent guidance separate from landlord-only property management. What do you need help with?',
+        suggestions: ['Manage my listings', 'View my clients', 'Check commissions', 'Create an agent listing'],
+      },
+      seller: {
+        text: 'Hello! 😊 I can help with your Seller workspace, including product listings, inventory, orders and sales. What would you like to work on?',
+        suggestions: ['Add a product', 'Manage inventory', 'View orders', 'Review my sales'],
+      },
+      service_provider: {
+        text: 'Hello! 😊 I can help with your Service Provider workspace, including service listings, bookings and availability. What would you like to work on?',
+        suggestions: ['Add a service', 'View bookings', 'Manage availability', 'Manage my services'],
+      },
+    }
+    const welcome = activeRole ? roleWelcome[activeRole] : null
     return {
-      text: 'Hello! 😊 I am ready to help you explore the marketplace, find what you need or understand how SMART HELP MARKET works. What would you like to do?',
-      suggestions: ['Find accommodation', 'Find a roommate', 'Find a product', 'Find a service'],
+      text: welcome?.text || 'Hello! 😊 I am ready to help you explore the marketplace, find what you need or understand how SMART HELP MARKET works. What would you like to do?',
+      suggestions: welcome?.suggestions || ['Find accommodation', 'Find a roommate', 'Find a product', 'Find a service'],
       context: nextContext,
     }
   }
