@@ -60,6 +60,8 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `POST /api/help-centre/admin/cases/:caseId/reply`: reply to the user.
 
 ## Platform settings
+- `help.ai.learning_enabled`: controls local, privacy-conscious learning from explicit user corrections. No external AI provider is called.
+- `help.ai.feedback_enabled`: controls response ratings and intent-correction feedback.
 - `help.assistant.enabled`: assistant availability.
 - `help.messages.free_limit`: included messages per user per calendar month.
 - `help.messages.paid_enabled`: reserved and seeded false. Paid usage is not active until payment integration is connected.
