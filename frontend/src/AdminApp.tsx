@@ -56,6 +56,7 @@ import ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
 import AdminOverviewPanel from './components/admin/AdminOverviewPanel'
 import WorkspaceFloatingSidebar from './components/navigation/WorkspaceFloatingSidebar'
 import HelpCentreWidget from './components/help/HelpCentreWidget'
+import { useTheme } from './hooks/useTheme'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
@@ -120,6 +121,7 @@ function formatAction(value: string): string {
 }
 
 function AdminApp() {
+  const { theme, setTheme } = useTheme()
   const [screen, setScreen] = useState<Screen>('checking')
   const [section, setSection] = useState<AdminSection>('overview')
   const [sectionHistory, setSectionHistory] = useState<AdminSection[]>([])
@@ -1096,10 +1098,25 @@ function openAutomationMonitoring() {
     )
   }
 
+  const themeSelector = (
+    <div className="admin-theme-selector" role="group" aria-label="Appearance preference">
+      <button type="button" className={theme === 'light' ? 'is-active' : ''} aria-pressed={theme === 'light'} onClick={() => setTheme('light')} title="Light theme">
+        <span aria-hidden="true">☀</span><span>Light</span>
+      </button>
+      <button type="button" className={theme === 'system' ? 'is-active' : ''} aria-pressed={theme === 'system'} onClick={() => setTheme('system')} title="Use system theme">
+        <span aria-hidden="true">◐</span><span>System</span>
+      </button>
+      <button type="button" className={theme === 'dark' ? 'is-active' : ''} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')} title="Dark theme">
+        <span aria-hidden="true">☾</span><span>Dark</span>
+      </button>
+    </div>
+  )
+
   // Login checking screen
   if (screen === 'checking') {
     return (
       <main className="admin-shell">
+        <div className="admin-theme-selector-floating">{themeSelector}</div>
         <div className="admin-loading">
           <div className="admin-brand-mark">SH</div>
           <h1>SMART HELP MARKET</h1>
@@ -1113,6 +1130,7 @@ function openAutomationMonitoring() {
   if (screen === 'login') {
     return (
       <main className="admin-shell">
+        <div className="admin-theme-selector-floating">{themeSelector}</div>
         <section className="admin-login-layout">
           <div className="admin-login-brand">
             <div className="admin-brand-mark">SH</div>
@@ -1204,6 +1222,7 @@ function openAutomationMonitoring() {
         </a>
 
         <div className="admin-topbar-actions">
+          {themeSelector}
           <span className="admin-status">
             <span /> Administrator
           </span>
