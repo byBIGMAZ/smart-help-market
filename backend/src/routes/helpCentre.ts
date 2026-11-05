@@ -308,6 +308,14 @@ function expandSuggestionSelection(
       nextContext.awaiting = 'provider_listing_save_issue'
       return { message: 'My service listing details will not save. Help me troubleshoot the save process.', context: nextContext }
     }
+    if (currentRole === 'seller' && (selected.includes('error when saving') || selected.includes('error message') || selected.includes('button does nothing'))) {
+      nextContext.awaiting = 'seller_listing_save_issue'
+      return { message: 'My product listing will not save or respond when I use the save control. Help me troubleshoot the Seller workflow.', context: nextContext }
+    }
+    if (currentRole === 'service_provider' && (selected.includes('error when saving') || selected.includes('error message') || selected.includes('button does nothing'))) {
+      nextContext.awaiting = 'provider_listing_save_issue'
+      return { message: 'My service listing will not save or respond when I use the save control. Help me troubleshoot the Service Provider workflow.', context: nextContext }
+    }
     if (selected.includes('listing studio') || selected.includes('listing form')) {
       nextContext.awaiting = 'listing_studio_issue'
       return { message: `I cannot open Listing Studio in my ${currentRole === 'agent' ? 'Agent' : 'Landlord'} workspace. Help me diagnose the problem.`, context: nextContext }
@@ -588,6 +596,13 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: nextContext,
       }
     }
+    if (message.includes('button does nothing') || message.includes('error')) {
+      return {
+        text: 'Check that all required product fields are complete, then try saving once and wait for a response. If the form displays an error, copy the exact wording and identify the field it refers to. Do not include passwords, session cookies or secret tokens in your message.',
+        suggestions: ['Product details are missing', 'Price or stock is rejected', 'Speak to an administrator'],
+        context: nextContext,
+      }
+    }
     if (message.includes('price or stock')) {
       return {
         text: 'Check that the price and stock fields contain valid numeric values and that stock is not negative. Confirm that the currency and delivery options are selected as required. If the form still rejects the values, share the exact validation message and the field name without sharing private account credentials.',
@@ -617,6 +632,13 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       return {
         text: 'Review the service title and type, description, experience, service area, delivery mode and availability. Confirm that the information explains what you offer, where you can provide it and whether delivery is on-site or remote. Complete any required fields shown by the form, then save again.',
         suggestions: ['My service area is not accepted', 'The button does nothing', 'I see an error message'],
+        context: nextContext,
+      }
+    }
+    if (message.includes('button does nothing') || message.includes('error')) {
+      return {
+        text: 'Check that the service type, description, service area, delivery mode and availability are complete. Try saving once and wait for a response. If an error appears, share the exact wording and any field name, but do not share passwords or session tokens.',
+        suggestions: ['Service details are missing', 'My service area is not accepted', 'Speak to an administrator'],
         context: nextContext,
       }
     }
