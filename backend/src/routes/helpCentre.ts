@@ -444,6 +444,9 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
   const message = normalize(rawMessage)
   const nextContext = { ...context }
   const prediction = await predictIntent(rawMessage)
+  if (!nextContext.conversationPurpose && prediction.intent !== 'greeting' && countMeaningfulTokens(rawMessage) >= 3) {
+    nextContext.conversationPurpose = rawMessage.trim().slice(0, 500)
+  }
   let searchText = rawMessage
   const awaiting = typeof context.awaiting === 'string' ? context.awaiting : ''
 
@@ -1607,6 +1610,21 @@ router.post('/chat', async (req: Request, res: Response) => {
        ORDER BY category_key, status`,
       [userId],
     )
+    const recentOwnedListingResult = await client.query<{
+      listingKey: string
+      title: string
+      category: string
+      status: string
+      updatedAt: string
+    }>(
+      `SELECT listing_key AS "listingKey", title, category_key AS category,
+              status, updated_at::text AS "updatedAt"
+       FROM public.marketplace_listings
+       WHERE owner_user_id = $1 AND is_demo = FALSE
+       ORDER BY updated_at DESC, listing_id DESC
+       LIMIT 5`,
+      [userId],
+    )
     const recentMessageResult = await client.query<{
       sender: 'user' | 'assistant' | 'admin'
       text: string
@@ -1625,6 +1643,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       permissions: accountRecord.permissions || [],
       activeRole: typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null,
       ownedListings: ownedListingSummary.rows,
+      recentOwnedListings: recentOwnedListingResult.rows,
     }
     const recentConversation: BigmazConversationTurn[] = recentMessageResult.rows.reverse()
     const modelSetting = await client.query<{ setting_value: unknown }>(
