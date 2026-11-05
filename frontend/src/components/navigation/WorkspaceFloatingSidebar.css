@@ -23,3 +23,13 @@
 @keyframes shm-workspace-panel-enter{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(max-width:600px){.shm-workspace-float-trigger{width:49px;height:49px}.shm-workspace-float-panel{border-radius:16px}.shm-workspace-float-panel nav a{min-height:41px}}
 @media(prefers-reduced-motion:reduce){.shm-workspace-float-trigger,.shm-workspace-float-trigger i,.shm-workspace-float-panel,.shm-workspace-float-panel nav a{animation:none!important;transition:none!important}}
+
+.shm-workspace-float-group {
+  padding: 13px 13px 6px;
+  color: var(--admin-muted, #929292);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.shm-workspace-float-item { display: block; }
