@@ -113,7 +113,6 @@ export default function AdminProfileApprovals({ canManage = false }: { canManage
       const result = await readResponse<{ message: string }>(response)
       setNotice(result.message || 'Verification decision saved.')
       setReason('')
-      await refresh('queue')
       setView('history')
       await refresh('history')
     } catch (err) {
