@@ -103,7 +103,9 @@ function resolveAssistantRole(
     if (listingRoles.length === 1) return listingRoles[0]
     if (listingRoles.length > 1) {
       const remembered = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
-      if (remembered && listingRoles.includes(remembered)) return remembered
+      if (remembered === 'landlord' || remembered === 'agent' || remembered === 'seller' || remembered === 'service_provider') {
+        if (listingRoles.includes(remembered)) return remembered
+      }
       return null
     }
   }
