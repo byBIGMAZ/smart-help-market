@@ -1288,7 +1288,7 @@ adminRouter.patch(
     const decision = req.body?.decision
     const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : ''
 
-    if (!/^[1-9]\\d*$/.test(targetUserId)) {
+    if (!/^[1-9]\d*$/.test(targetUserId)) {
       res.status(400).json({ error: 'Invalid marketplace account ID.' })
       return
     }
