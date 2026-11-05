@@ -50,7 +50,7 @@ app.use(
   }),
 )
 
-app.use(express.json({ limit: '100kb' }))
+app.use(express.json({ limit: '256kb' }))
 
 // Authentication routes.
 app.use('/api/auth', authRouter)
