@@ -277,7 +277,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  const landlordOnlyRequest = ['manage tenants', 'tenant management', 'collect rent', 'rent arrears', 'property maintenance', 'manage occupancy'].some((cue) => message.includes(cue))
+  const landlordOnlyRequest = ['tenant', 'tenants', 'tenant management', 'collect rent', 'rent collection', 'rent arrears', 'property maintenance', 'maintenance request', 'manage occupancy', 'occupancy'].some((cue) => message.includes(cue))
   if (landlordOnlyRequest && activeRole === 'agent') {
     return {
       text: 'Those are Landlord property-management responsibilities. Your current Agent workspace is for properties you are authorised to represent, client enquiries and agent activity. It does not grant access to the landlord’s tenant, rent or maintenance management. You can ask the property owner to handle that action or contact support if your account role is incorrect.',
