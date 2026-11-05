@@ -440,6 +440,20 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
+  if (awaiting === 'listing_type_for_fields' || message.includes('the property is for rent') || message.includes('the property is for sale') || message.includes('the property is a shortlet')) {
+    const purpose = message.includes('shortlet') ? 'shortlet' : message.includes('sale') ? 'sale' : 'rental'
+    delete nextContext.awaiting
+    return {
+      text: purpose === 'rental'
+        ? 'For a rental listing, prepare the property title and type, location, description, rent amount, payment period, required fees, availability date and the details of each rentable unit. If the property has multiple units, enter the correct unit names and prices rather than combining different rents into one misleading amount.'
+        : purpose === 'sale'
+          ? 'For a property-for-sale listing, prepare the title, property type, location, description, asking price, land or building details, bedrooms and bathrooms where applicable, and clear ownership or representation information. Make sure the asking price and property description are accurate.'
+          : 'For a shortlet listing, prepare the property type, location, description, nightly or other configured rate, available dates, guest capacity, facilities, check-in and check-out information, and any additional fees. Confirm the pricing period is clear to prospective guests.',
+      suggestions: ['I need help with property units', 'I need help with pricing', 'Review my listing before submission'],
+      context: nextContext,
+    }
+  }
+
   if ((activeRole === 'landlord' || activeRole === 'agent') && (message.includes('property units') || message.includes('unit details') || message.includes('configure the available units'))) {
     return {
       text: 'For a property with multiple rentable or saleable units, set the available unit count first. Then open each unit and give it a clear name or number, its own description and facilities, and the correct price where the form requests one. For apartments, duplexes and houses, add the bedroom and bathroom counts for each unit. For single rooms, hostels and commercial spaces, complete the fields relevant to that property type. Check that the number of units matches the actual available spaces and that no unit is duplicated.',
@@ -514,18 +528,6 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         text: 'For a property listing, the required information commonly includes the listing title, property type, purpose (rent, sale or shortlet), location, description and the price or applicable unit-pricing details. Depending on the property type, the form may also require bedrooms, bathrooms, unit details, rental period and availability. Follow the fields marked as required in Listing Studio because the exact requirements can vary by listing type. If you tell me whether it is for rent, sale or shortlet, I can guide you through the relevant sections.',
         suggestions: ['It is for rent', 'It is for sale', 'It is a shortlet'],
         context: { ...nextContext, awaiting: 'listing_type_for_fields' },
-      }
-    }
-    if (awaiting === 'listing_type_for_fields' || message.includes('it is for rent') || message.includes('it is for sale') || message.includes('it is a shortlet')) {
-      const purpose = message.includes('shortlet') ? 'shortlet' : message.includes('sale') ? 'sale' : 'rental'
-      return {
-        text: purpose === 'rental'
-          ? 'For a rental listing, prepare the property title and type, location, description, rent amount, payment period, required fees, availability date and the details of each rentable unit. If the property has multiple units, enter the correct unit names and prices rather than combining different rents into one misleading amount.'
-          : purpose === 'sale'
-            ? 'For a property-for-sale listing, prepare the title, property type, location, description, asking price, land or building details, bedrooms and bathrooms where applicable, and clear ownership or representation information. Make sure the asking price and property description are accurate.'
-            : 'For a shortlet listing, prepare the property type, location, description, nightly or other configured rate, available dates, guest capacity, facilities, check-in and check-out information, and any additional fees. Confirm the pricing period is clear to prospective guests.',
-        suggestions: ['I need help with property units', 'I need help with pricing', 'Review my listing before submission'],
-        context: nextContext,
       }
     }
     if (message.includes('validation error')) {
