@@ -798,6 +798,7 @@ function openAutomationMonitoring() {
       case 'moderation': openModeration(); break
       case 'categories': openCategories(); break
       case 'settings': openSettings(); break
+      case 'payments': openPayments(); break
       case 'reports': openReports(); break
       case 'audit': openAuditLogs(); break
       case 'automation': openAutomation(); break
