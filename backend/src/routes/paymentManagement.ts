@@ -248,6 +248,7 @@ router.put('/credentials', async (req, res) => {
       await client.query(
         `UPDATE public.marketplace_payment_configuration
          SET secret_key_ciphertext = COALESCE($1, secret_key_ciphertext),
+             secret_key_mode = CASE WHEN $1 IS NOT NULL THEN mode ELSE secret_key_mode END,
              webhook_secret_ciphertext = COALESCE($2, webhook_secret_ciphertext),
              updated_by = $3, updated_at = NOW()
          WHERE configuration_id = 1`,
