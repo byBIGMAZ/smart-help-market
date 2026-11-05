@@ -831,7 +831,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     'having issues creating my listing', 'having issues creating my product listing',
     'having issues creating my service listing', 'cannot create listing', "can't create listing",
     'unable to create listing', 'listing will not save', 'listing wont save',
-    'error creating listing', 'problem posting property', 'trouble posting property',
+    'error creating listing', 'problem posting property', 'trouble posting property', 'create a property listing', 'create an agent listing', 'create a product listing', 'create product listing', 'create a service listing', 'create service listing',
   ].some((cue) => message.includes(cue)) || awaiting === 'listing_role' || awaiting === 'listing_category'
 
   if (listingHelpRequest) {
@@ -859,6 +859,37 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         text: 'I can help. Your account has access to more than one type of listing workspace. Which kind of listing are you trying to create?',
         suggestions: categorySuggestions,
         context: { ...nextContext, awaiting: 'listing_category' },
+      }
+    }
+
+    const asksPropertyListing = message.includes('property listing') || message.includes('property listing form') || message.includes('add property')
+    const asksProductListing = message.includes('product listing') || message.includes('add a product') || message.includes('add product')
+    const asksServiceListing = message.includes('service listing') || message.includes('add a service') || message.includes('add service')
+
+    if (listingRole === 'seller' && (asksPropertyListing || asksServiceListing)) {
+      return {
+        text: asksPropertyListing
+          ? 'Your current Seller role is for product listings. Creating property listings requires the Landlord or Agent role, which is not currently active for this request. If you also have one of those roles, switch to that workspace. Otherwise, request the appropriate role from the platform administrator.'
+          : 'Your current Seller role is for product listings. Creating service listings requires the Service Provider role. Switch to that workspace if it is assigned to your account, or request the correct role from the platform administrator.',
+        actions: [{ label: 'Open Seller workspace', path: '/seller/dashboard' }],
+        context: nextContext,
+      }
+    }
+
+    if ((listingRole === 'landlord' || listingRole === 'agent') && (asksProductListing || asksServiceListing)) {
+      const availableSeller = roles.map((role) => canonicalWorkspaceRole(role)).includes('seller')
+      const availableProvider = roles.map((role) => canonicalWorkspaceRole(role)).includes('service_provider')
+      return {
+        text: asksProductListing && availableSeller
+          ? 'You are currently using a property workspace, but your account also has Seller access. Product listings belong in the Seller workspace.'
+          : asksServiceListing && availableProvider
+            ? 'You are currently using a property workspace, but your account also has Service Provider access. Service listings belong in the Service Provider workspace.'
+            : 'Your current property workspace is for property listings. Product listings require the Seller role, and service listings require the Service Provider role. Ask the platform administrator to assign the correct role if it is missing.',
+        actions: [
+          ...(availableSeller ? [{ label: 'Open Seller workspace', path: '/seller/dashboard' }] : []),
+          ...(availableProvider ? [{ label: 'Open Service Provider workspace', path: '/provider/dashboard' }] : []),
+        ],
+        context: nextContext,
       }
     }
 
