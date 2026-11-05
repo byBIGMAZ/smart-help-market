@@ -436,7 +436,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
 
           {!assistantEnabled && <div className="help-chat-error" role="status">The Help Centre assistant is temporarily disabled by the administrator.</div>}
           <div className="help-chat-composer-wrap">
-            {usage && <div className="help-chat-usage"><span>{usage.remaining} of {usage.limit} included messages remaining this month</span><span>{usage.used}/{usage.limit}</span></div>}
+            {usage && <div className="help-chat-usage">{usage.unlimited ? <span>{usage.used} messages used. Unlimited free messages.</span> : <><span>{usage.remaining} of {usage.limit} included messages remaining this month</span><span>{usage.used}/{usage.limit}</span></>}</div>}
             <form className="help-chat-composer" onSubmit={(event) => void submitMessage(event)}>
               <textarea value={input} onChange={(event) => setInput(event.target.value)} disabled={!assistantEnabled} placeholder="Ask me anything about the marketplace..." rows={1} maxLength={1200} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }}/>
               <button type="submit" disabled={!assistantEnabled || !input.trim() || sending} aria-label="Send message">↑</button>
