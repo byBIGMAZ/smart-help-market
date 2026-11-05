@@ -15,6 +15,7 @@ This phase connects Listing Studio draft saving to the authenticated marketplace
 
 - Route: `backend/src/routes/ownerListings.ts`
 - Mounted at `/api/listings` in `backend/src/server.ts`.
+- `GET /api/listings/owner` retrieves only the authenticated user's listings, including unpublished drafts, with structured details and image galleries.
 - `POST /api/listings/owner` creates an owner-linked draft.
 - `PATCH /api/listings/owner/:listingId` updates only an existing draft owned by the authenticated user.
 - Both endpoints require a valid session, an active account, an active marketplace category, and an account type permitted for that listing kind.
