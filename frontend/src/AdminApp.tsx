@@ -65,6 +65,7 @@ const AdminProfileApprovals = lazy(() => import('./AdminProfileApprovals'))
 const AdminListingModeration = lazy(() => import('./AdminListingModeration'))
 const AdminCategoryManagement = lazy(() => import('./AdminCategoryManagement'))
 const AdminSettingsManagement = lazy(() => import('./AdminSettingsManagement'))
+const AdminPaymentManagement = lazy(() => import('./AdminPaymentManagement'))
 const AdminReports = lazy(() => import('./AdminReports'))
 const AdminAutomation = lazy(() => import('./AdminAutomation'))
 const AdminAutomationRules = lazy(() => import('./AdminAutomationRules'))
@@ -85,6 +86,7 @@ type AdminSection =
   | 'moderation'
   | 'categories'
   | 'settings'
+  | 'payments'
   | 'reports'
   | 'audit'
   | 'automation'
@@ -150,6 +152,7 @@ function AdminApp() {
     { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false, group: 'Approvals & Listings' },
     { label: 'Categories', path: 'categories', permission: 'categories.view', superAdminOnly: false, group: 'Marketplace Setup' },
     { label: 'Platform Settings', path: 'settings', permission: 'settings.view', superAdminOnly: false, group: 'Marketplace Setup' },
+    { label: 'Payments & Finance', path: 'payments', permission: '', superAdminOnly: true, group: 'Finance & Transactions' },
     { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view', superAdminOnly: false, group: 'Insights & Security' },
     { label: 'Automation', path: 'automation', permission: 'automation.view', superAdminOnly: false, group: 'Automation' },
     { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false, group: 'Communications & Support' },
@@ -682,7 +685,7 @@ useEffect(() => {
   setNotice('')
 }
 
-function openReports() {
+function openPayments() {\n  navigateAdminSection('payments')\n  setSelectedRoleId(null)\n  setSelectedRoleUserId(null)\n  setUsersError('')\n  setRolesError('')\n  setAuditError('')\n  setError('')\n  setNotice('')\n}\n\nfunction openReports() {
   navigateAdminSection('reports')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
@@ -2019,7 +2022,7 @@ function openAutomationMonitoring() {
           <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement isSuperAdmin={Boolean(user?.roles.includes('super_admin'))} /></Suspense>
         )}
 
-        {/* REPORTS AND ANALYTICS */}
+        {section === 'payments' && user?.roles.includes('super_admin') && (\n          <Suspense fallback={<AdminModuleFallback />}><AdminPaymentManagement /></Suspense>\n        )}\n\n        {/* REPORTS AND ANALYTICS */}
         {section === 'reports' && (
           <Suspense fallback={<AdminModuleFallback />}><AdminReports /></Suspense>
         )}
