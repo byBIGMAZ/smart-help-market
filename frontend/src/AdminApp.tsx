@@ -53,6 +53,7 @@ import './AdminAuditLogs.css'
 import './AdminSystemTheme.css'
 import './AdminProfileApprovals.css'
 import ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
+import AdminOverviewPanel from './components/admin/AdminOverviewPanel'
 import WorkspaceFloatingSidebar from './components/navigation/WorkspaceFloatingSidebar'
 import HelpCentreWidget from './components/help/HelpCentreWidget'
 
@@ -1348,82 +1349,21 @@ function openAutomationMonitoring() {
               />
             </div>
 
-            <div className="admin-section-heading">
-              <div>
-                <span className="admin-kicker">LIVE DATABASE COUNTS</span>
-                <h2>Marketplace overview</h2>
-              </div>
-
-              <span className="admin-live-label">
-                <span /> Server data
-              </span>
-            </div>
-
-            {overview ? (
-              <div className="admin-stat-grid">
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openUsers} disabled={!user?.permissions.includes('users.view')}>
-                  <span className="admin-stat-icon">♙</span>
-                  <span className="admin-stat-label">Total users</span>
-                  <strong>{overview.users.total.toLocaleString()}</strong>
-                  <small>{overview.users.active} active accounts</small>
-                </button>
-
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openModeration} disabled={!user?.permissions.includes('listings.view')}>
-                  <span className="admin-stat-icon">⌂</span>
-                  <span className="admin-stat-label">Total listings</span>
-                  <strong>{overview.listings.total.toLocaleString()}</strong>
-                  <small>{overview.listings.published} published</small>
-                </button>
-
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openCategories} disabled={!user?.permissions.includes('categories.view')}>
-                  <span className="admin-stat-icon">◇</span>
-                  <span className="admin-stat-label">Categories</span>
-                  <strong>{overview.categories.total.toLocaleString()}</strong>
-                  <small>Marketplace categories</small>
-                </button>
-
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openAuditLogs} disabled={!user?.permissions.includes('audit.view')}>
-                  <span className="admin-stat-icon">◉</span>
-                  <span className="admin-stat-label">Active sessions</span>
-                  <strong>{overview.activeSessions.toLocaleString()}</strong>
-                  <small>Sessions not yet expired · View audit logs</small>
-                </button>
-              </div>
-            ) : (
-              <div className="admin-empty-panel">
-                <h3>Statistics are not available yet</h3>
-                <p>Refresh the dashboard to try loading them again.</p>
-                <button
-                  className="admin-secondary-button"
-                  onClick={refreshOverview}
-                  disabled={busy}
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-
-            <section className="admin-next-panel">
-              <span className="admin-kicker">ADMINISTRATION WORKSPACE</span>
-              <h2>{user?.roles.includes('super_admin') ? 'Your central platform control room.' : 'Your assigned administration workspace.'}</h2>
-              <p>
-                {user?.roles.includes('super_admin')
-                  ? 'Manage marketplace operations, central configuration, administrator access and platform accountability from one place.'
-                  : 'The navigation available to you is based on the permissions assigned to your administrator account.'}
-              </p>
-
-              <div className="admin-roadmap-list">
-                <span>✓ Secure administrator session</span>
-                <span>✓ Permission-based module access</span>
-                <span>✓ Live marketplace statistics</span>
-                <span>✓ Central platform settings</span>
-                <span>✓ User and listing administration</span>
-                <span>✓ Role and permission controls</span>
-                <span>✓ Operational reports</span>
-                <span>✓ Automation management</span>
-                <span>✓ Auditable administration activity</span>
-              </div>
-            </section>
+            <AdminOverviewPanel
+              overview={overview}
+              permissions={user?.permissions ?? []}
+              isSuperAdmin={Boolean(user?.roles.includes('super_admin'))}
+              onOpenUsers={openUsers}
+              onOpenListings={openModeration}
+              onOpenCategories={openCategories}
+              onOpenSettings={openSettings}
+              onOpenReports={openReports}
+              onOpenRoles={openRoles}
+              onOpenAudit={openAuditLogs}
+              onOpenAutomation={openAutomation}
+              onRefresh={refreshOverview}
+              refreshing={busy}
+            />
           </>
         )}
 
