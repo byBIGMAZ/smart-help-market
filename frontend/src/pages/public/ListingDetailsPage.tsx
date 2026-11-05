@@ -223,20 +223,20 @@ export default function ListingDetailsPage() {
           <aside className="details-sidebar">
             <div className="details-price-card">
               <span className="details-price-label">
-                Listed price
+                {listing.price === null ? 'Unit pricing' : 'Listed price'}
               </span>
 
               <strong className="details-price">
-                {formatCurrency(
-                  listing.price,
-                  currency,
-                  locale,
-                )}
+                {listing.price === null
+                  ? 'Pricing varies by unit'
+                  : formatCurrency(listing.price, currency, locale)}
               </strong>
 
-              <span className="details-price-unit">
-                {listing.priceUnit}
-              </span>
+              {listing.price !== null && (
+                <span className="details-price-unit">
+                  {listing.priceUnit}
+                </span>
+              )}
 
               <div className="details-divider" />
 

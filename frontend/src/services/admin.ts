@@ -1,4 +1,3 @@
-
 export interface AdminUser {
   id: string
   displayName: string
@@ -14,9 +13,26 @@ export interface AdminOverview {
   listings: {
     total: number
     published: number
+    liveTotal: number
+    publishedLive: number
+    pendingReview: number
+    drafts: number
+    paused: number
+    rejected: number
+    suspended: number
   }
   categories: {
     total: number
+  }
+  administrators?: {
+    total: number
+    superAdmins: number
+  }
+  configuration?: {
+    settingsCount: number
+  }
+  activity?: {
+    auditActionsLast7Days: number
   }
   activeSessions: number
 }

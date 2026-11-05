@@ -3,6 +3,7 @@ export interface HelpUsage {
   limit: number
   remaining: number
   period: string
+  unlimited?: boolean
 }
 
 export interface HelpGuide {
@@ -79,7 +80,7 @@ export async function getHelpConversationMessages(id: string): Promise<HelpMessa
   return data.messages
 }
 
-export async function sendHelpMessage(message: string, conversationId?: string, currentPath?: string) {
+export async function sendHelpMessage(message: string, conversationId?: string, currentPath?: string, suggestionOfMessageId?: string) {
   return readApi<{
     conversationId: string
     assistantMessageId: string
@@ -95,7 +96,7 @@ export async function sendHelpMessage(message: string, conversationId?: string, 
       method: 'POST',
       credentials: 'include',
       headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, ...(conversationId ? { conversationId } : {}), ...(currentPath ? { currentPath } : {}) }),
+      body: JSON.stringify({ message, ...(conversationId ? { conversationId } : {}), ...(currentPath ? { currentPath } : {}), ...(suggestionOfMessageId ? { suggestionOfMessageId } : {}) }),
     }),
   )
 }

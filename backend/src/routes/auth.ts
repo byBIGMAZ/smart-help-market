@@ -74,8 +74,29 @@ authRouter.post('/register', async (req, res) => {
     return
   }
 
-  const verificationStatus =
-    accountType === 'buyer' ? 'not_required' : 'pending'
+  let verificationStatus: 'not_required' | 'pending' = 'not_required'
+  if (accountType !== 'buyer') {
+    try {
+      const verificationSetting = await getDatabasePool().query<{ setting_value: unknown }>(
+        'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
+        [`verification.required.${accountType}`],
+      )
+      // Missing settings default to requiring verification. Only an explicit
+      // boolean false disables this business verification requirement.
+      verificationStatus = verificationSetting.rows[0]?.setting_value === false
+        ? 'not_required'
+        : 'pending'
+    } catch (error) {
+      console.error(
+        'Account verification policy lookup failed:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+      res.status(503).json({
+        error: 'Account registration is temporarily unavailable because verification policy could not be checked.',
+      })
+      return
+    }
+  }
 
   try {
     const passwordHash = await argon2.hash(password, {
@@ -338,6 +359,35 @@ authRouter.post('/login', async (req, res) => {
       return
     }
 
+    // Return the same effective permissions used by the current-session endpoint.
+    // Super Admin receives the complete permission catalogue; other roles receive
+    // only permissions assigned to their roles.
+    const permissionsResult = await db.query<{
+      permission_key: string
+    }>(
+      `SELECT DISTINCT p.permission_key
+       FROM public.marketplace_permissions p
+       WHERE EXISTS (
+         SELECT 1
+         FROM public.marketplace_user_roles ur
+         JOIN public.marketplace_roles r
+           ON r.role_id = ur.role_id
+         LEFT JOIN public.marketplace_role_permissions rp
+           ON rp.role_id = r.role_id
+         WHERE ur.user_id = $1
+           AND (
+             r.role_key = 'super_admin'
+             OR rp.permission_id = p.permission_id
+           )
+       )
+       ORDER BY p.permission_key`,
+      [account.user_id],
+    )
+
+    const permissions: string[] = permissionsResult.rows.map(
+      (row) => row.permission_key,
+    )
+
     const token = createSessionToken()
     const tokenHash = hashSessionToken(token)
 
@@ -364,6 +414,7 @@ authRouter.post('/login', async (req, res) => {
         id: String(account.user_id),
         displayName: account.display_name,
         roles,
+        permissions,
       },
     })
   } catch (error: unknown) {

@@ -21,7 +21,7 @@ interface ListingRow {
   category_name: string
   title: string
   description: string
-  price: string
+  price: string | null
   price_unit: string
   location_display: string
   icon: string
@@ -34,9 +34,9 @@ interface ListingRow {
 }
 
 function formatListing(row: ListingRow) {
-  const price = Number(row.price)
+  const price = row.price === null ? null : Number(row.price)
 
-  if (!Number.isFinite(price) || price < 0) {
+  if (price !== null && (!Number.isFinite(price) || price < 0)) {
     throw new Error('A listing contains an invalid price.')
   }
 
@@ -71,7 +71,17 @@ const PUBLIC_LISTING_SELECT = `
     c.category_name,
     l.title,
     l.description,
-    l.price::text AS price,
+    CASE
+      WHEN l.category_key = 'properties'
+       AND COALESCE(l.listing_details->'values'->>'purpose', '') IN ('For rent', 'Shortlet')
+       AND CASE
+         WHEN jsonb_typeof(l.listing_details->'units') = 'array'
+         THEN jsonb_array_length(l.listing_details->'units') > 0
+         ELSE FALSE
+       END
+      THEN NULL
+      ELSE l.price::text
+    END AS price,
     l.price_unit,
     l.location_display,
     l.icon,

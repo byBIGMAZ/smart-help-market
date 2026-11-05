@@ -428,14 +428,12 @@ export default function MarketplaceBrowsePage({
                         <div className="listing-footer">
                           <div>
                             <strong>
-                              {formatCurrency(
-                                listing.price,
-                                currency,
-                                locale,
-                              )}
+                              {listing.price === null
+                                ? 'Pricing varies by unit'
+                                : formatCurrency(listing.price, currency, locale)}
                             </strong>
 
-                            <span>{listing.priceUnit}</span>
+                            {listing.price !== null && <span>{listing.priceUnit}</span>}
                           </div>
 
                           <span className="details-button">

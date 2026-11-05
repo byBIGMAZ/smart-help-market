@@ -7,6 +7,65 @@ import {
 } from '../../services/ownerListings'
 import './OwnerListingsPage.css'
 
+function readDraftValues(listing: OwnerMarketplaceListing): Record<string, string> {
+  const details = listing.details
+  if (!details || typeof details !== 'object' || Array.isArray(details)) return {}
+  const values = details.values
+  if (!values || typeof values !== 'object' || Array.isArray(values)) return {}
+  return Object.fromEntries(
+    Object.entries(values).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  )
+}
+
+function formatNaira(value: string | number | null | undefined): string {
+  const amount = Number(value)
+  return Number.isFinite(amount) && amount > 0
+    ? `₦${amount.toLocaleString('en-NG')}`
+    : ''
+}
+
+function getListingFacts(listing: OwnerMarketplaceListing): string[] {
+  const values = readDraftValues(listing)
+  const details = listing.details as Record<string, unknown> | undefined
+  const kind = details?.kind
+  const facts: string[] = []
+  const purpose = values.purpose
+  const propertyType = values.propertyType
+  if (purpose) facts.push(purpose)
+  if (propertyType) facts.push(propertyType)
+
+  if (kind === 'properties' && purpose !== 'For sale') {
+    const rawUnits = Array.isArray(details?.units) ? details.units : []
+    const unitPrices = rawUnits
+      .map((unit) => unit && typeof unit === 'object' ? (unit as Record<string, unknown>).rent : '')
+      .map((value) => formatNaira(typeof value === 'string' ? value : ''))
+      .filter(Boolean)
+    const sharedPrice = formatNaira(values.sharedUnitPrice)
+    if (sharedPrice) facts.push(`All units: ${sharedPrice}`)
+    else if (unitPrices.length) {
+      const uniquePrices = [...new Set(unitPrices)]
+      facts.push(uniquePrices.length === 1
+        ? `Per unit: ${uniquePrices[0]}`
+        : `Unit prices: ${uniquePrices.slice(0, 3).join(', ')}${uniquePrices.length > 3 ? ', …' : ''}`)
+    } else {
+      facts.push('Unit pricing not set')
+    }
+  } else {
+    const price = formatNaira(listing.price)
+    if (price) facts.push(price)
+  }
+
+  return facts
+}
+
+function getEditorPath(listing: OwnerMarketplaceListing): string {
+  const details = listing.details as Record<string, unknown> | undefined
+  const kind = details?.kind
+  if (kind === 'products' || listing.categoryKey === 'products') return '/seller/products/new'
+  if (kind === 'services' || listing.categoryKey === 'services') return '/provider/services/new'
+  return '/landlord/properties/new'
+}
+
 export default function OwnerListingsPage() {
   const [listings, setListings] = useState<OwnerMarketplaceListing[]>([])
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
@@ -123,7 +182,7 @@ export default function OwnerListingsPage() {
           <Link to="/landlord/properties/new">＋ Create a property listing</Link>
           <Link to="/explore">Explore the marketplace</Link>
           <small>
-            New listing drafts are currently saved locally for frontend testing.
+            Your saved drafts and listings are retrieved securely from your marketplace account.
           </small>
         </section>
       ) : (
@@ -158,6 +217,9 @@ export default function OwnerListingsPage() {
                       <small>
                         {listing.category} · {listing.images.length} photo(s)
                       </small>
+                      <small className="owner-listing-facts">
+                        {getListingFacts(listing).join(' · ') || 'Details saved'}
+                      </small>
                       <span
                         className={`owner-listing-status status-${listing.status.toLowerCase()}`}
                       >
@@ -186,9 +248,28 @@ export default function OwnerListingsPage() {
                     </p>
                   </div>
 
-                  <Link to={`/listing/${selectedListing.key}`}>
-                    View public listing ↗
-                  </Link>
+                  <div className="owner-selected-actions">
+                    {selectedListing.status.toLowerCase() === 'draft' && (
+                      <Link
+                        className="owner-edit-draft"
+                        to={`${getEditorPath(selectedListing)}?draftId=${encodeURIComponent(selectedListing.id)}`}
+                      >
+                        Edit draft
+                      </Link>
+                    )}
+                    {selectedListing.status.toLowerCase() === 'published' && (
+                      <Link to={`/listing/${selectedListing.key}`}>
+                        View public listing ↗
+                      </Link>
+                    )}
+                  </div>
+                </div>
+
+                <div className="owner-listing-detail-facts">
+                  {getListingFacts(selectedListing).map((fact) => (
+                    <span key={fact}>{fact}</span>
+                  ))}
+                  <span>{selectedListing.images.length} photo(s) uploaded</span>
                 </div>
 
                 <ListingGalleryManager

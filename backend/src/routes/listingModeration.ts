@@ -380,6 +380,52 @@ function createModerationHandler(action: ModerationAction) {
         return
       }
 
+      // Publishing is blocked until the listing owner's required
+      // business-account verification has been approved. Drafts and the
+      // internal listing approval stage remain available while verification
+      // is pending. Missing policy rows default to requiring verification.
+      if (action === 'publish' && listing.ownerUserId) {
+        const ownerVerification = await client.query<{
+          account_type: string | null
+          verification_status: string
+        }>(
+          `SELECT account_type, verification_status
+           FROM public.marketplace_users
+           WHERE user_id = $1
+           FOR UPDATE`,
+          [listing.ownerUserId],
+        )
+        const owner = ownerVerification.rows[0]
+        if (!owner) {
+          await client.query('ROLLBACK')
+          transactionStarted = false
+          res.status(409).json({ error: 'The listing owner account could not be verified.' })
+          return
+        }
+
+        const verificationAccountTypes = ['landlord', 'seller', 'service_provider', 'agent']
+        const policyKey = owner.account_type && verificationAccountTypes.includes(owner.account_type)
+          ? `verification.required.${owner.account_type}`
+          : ''
+        const policy = policyKey
+          ? await client.query<{ setting_value: unknown }>(
+              'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
+              [policyKey],
+            )
+          : { rows: [] as { setting_value: unknown }[] }
+        const verificationRequired = Boolean(policyKey) && policy.rows[0]?.setting_value !== false
+
+        if (verificationRequired && owner.verification_status !== 'approved') {
+          await client.query('ROLLBACK')
+          transactionStarted = false
+          res.status(409).json({
+            error: 'This listing cannot be published until the owner completes the required account verification.',
+            verificationStatus: owner.verification_status,
+          })
+          return
+        }
+      }
+
       // Verify the current listing status.
       if (
         !configuration.allowedPreviousStatuses.includes(

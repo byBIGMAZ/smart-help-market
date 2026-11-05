@@ -1,212 +1,125 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './AdminProfileApprovals.css'
 
 type ReviewStatus = 'pending' | 'approved' | 'rejected'
-type ProfileField = 'Full legal name' | 'Phone number' | 'Date of birth' | 'Email address' | 'Identity details' | 'Business ownership' | 'Payout details'
+type ApprovalView = 'queue' | 'history'
 
-interface ProfileRequest {
+interface VerificationRequest {
   id: string
-  user: string
+  displayName: string
   email: string
-  role: string
-  field: ProfileField
-  currentValue: string
-  proposedValue: string
-  submittedAt: string
+  accountType: string
   status: ReviewStatus
-  reason?: string
+  submittedAt?: string
   reviewedAt?: string
-  reviewer?: string
-  sourceStorageKey?: string
-  sourceRecordId?: string
-  fieldKey?: string
-  sourceUserId?: string
+  reviewer?: string | null
+  reason?: string
 }
 
-const STORAGE_KEY = 'smart-help-market:admin-profile-approvals:v1'
-const RULES_STORAGE_KEY = 'smart-help-market:admin-profile-approval-rules:v1'
-const initialRequests: ProfileRequest[] = [
-  { id: 'PR-2048', user: 'Ada Okafor', email: 'ada.okafor@example.com', role: 'Landlord', field: 'Full legal name', currentValue: 'Ada O. Okafor', proposedValue: 'Adaeze Okafor', submittedAt: '2026-11-04T07:10:00.000Z', status: 'pending' },
-  { id: 'PR-2047', user: 'Emmanuel Eze', email: 'emmanuel.eze@example.com', role: 'Seller', field: 'Phone number', currentValue: '+234 803 000 0012', proposedValue: '+234 806 000 0044', submittedAt: '2026-11-03T18:25:00.000Z', status: 'pending' },
-  { id: 'PR-2046', user: 'Maryam Bello', email: 'maryam.bello@example.com', role: 'Service provider', field: 'Business ownership', currentValue: 'Bello Home Services', proposedValue: 'Bello Integrated Services Ltd', submittedAt: '2026-11-03T12:40:00.000Z', status: 'pending' },
-  { id: 'PR-2045', user: 'Chidi Nwosu', email: 'chidi.nwosu@example.com', role: 'Buyer', field: 'Date of birth', currentValue: 'Not provided', proposedValue: '12 August 1998', submittedAt: '2026-11-02T09:15:00.000Z', status: 'approved', reviewer: 'Super Admin', reviewedAt: '2026-11-02T11:20:00.000Z', reason: 'Supporting verification completed.' },
-  { id: 'PR-2044', user: 'Zainab Musa', email: 'zainab.musa@example.com', role: 'Agent', field: 'Identity details', currentValue: 'Identity record ending 4421', proposedValue: 'Updated identity record ending 8830', submittedAt: '2026-11-01T14:00:00.000Z', status: 'rejected', reviewer: 'Super Admin', reviewedAt: '2026-11-01T16:30:00.000Z', reason: 'The submitted document was not sufficiently clear.' },
-]
-
-const defaultRules: Record<ProfileField, { approval: boolean; cooldown: number }> = {
-  'Full legal name': { approval: true, cooldown: 24 },
-  'Phone number': { approval: true, cooldown: 24 },
-  'Date of birth': { approval: true, cooldown: 24 },
-  'Email address': { approval: true, cooldown: 24 },
-  'Identity details': { approval: true, cooldown: 24 },
-  'Business ownership': { approval: true, cooldown: 24 },
-  'Payout details': { approval: true, cooldown: 24 },
+function formatDate(value?: string) {
+  if (!value) return 'Not available'
+  const date = new Date(value)
+  return Number.isNaN(date.getTime())
+    ? 'Not available'
+    : date.toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
-function readRequests(): ProfileRequest[] {
-  const linkedRequests: ProfileRequest[] = []
-  const fieldLabels: Record<string, ProfileField> = {
-    fullName: 'Full legal name',
-    phone: 'Phone number',
-    dateOfBirth: 'Date of birth',
-    email: 'Email address',
-    identityDetails: 'Identity details',
-    businessOwnership: 'Business ownership',
-    payoutDetails: 'Payout details',
+function accountTypeLabel(value: string) {
+  return value.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+async function readResponse<T>(response: Response): Promise<T> {
+  const data: unknown = await response.json().catch(() => null)
+  if (!response.ok) {
+    const message = typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string'
+      ? data.error
+      : `Request failed (HTTP ${response.status}).`
+    throw new Error(message)
   }
-
-  try {
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-      const key = window.localStorage.key(index)
-      if (!key?.startsWith('smart-help-market:profile-protection:v1:')) continue
-      const raw = window.localStorage.getItem(key)
-      if (!raw) continue
-      const parsed = JSON.parse(raw) as {
-        profile?: Record<string, string>
-        pending?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string }>
-        history?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string; reviewedAt?: string; reviewerNote?: string }>
-      }
-      const sourceUserId = key.slice('smart-help-market:profile-protection:v1:'.length)
-      const common = (item: { id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string }) => ({
-        id: item.id.replace(/-history$/, ''),
-        user: parsed.profile?.fullName || parsed.profile?.displayName || 'Marketplace member',
-        email: 'Account email protected',
-        role: 'Marketplace member',
-        field: fieldLabels[item.field] || item.field as ProfileField,
-        fieldKey: item.field,
-        currentValue: item.previousValue || 'Not provided',
-        proposedValue: item.proposedValue || 'Not provided',
-        submittedAt: item.submittedAt,
-        sourceStorageKey: key,
-        sourceUserId,
-        sourceRecordId: item.id.replace(/-history$/, ''),
-      })
-      const history = Array.isArray(parsed.history) ? parsed.history : []
-      const historicalIds = new Set(history.map((item) => item.id.replace(/-history$/, '')))
-      for (const item of parsed.pending || []) {
-        if (historicalIds.has(item.id)) continue
-        linkedRequests.push({ ...common(item), status: 'pending' })
-      }
-      for (const item of history) {
-        if (item.status === 'Pending approval') continue
-        const status: ReviewStatus = item.status === 'Approved' ? 'approved' : item.status === 'Rejected' ? 'rejected' : 'pending'
-        if (status === 'pending') continue
-        linkedRequests.push({
-          ...common(item),
-          status,
-          reason: item.reviewerNote,
-          reviewedAt: item.reviewedAt,
-          reviewer: 'Super Admin reviewer',
-        })
-      }
-    }
-  } catch {
-    // Ignore malformed local preview records and keep the rest of the queue available.
-  }
-
-  let savedSamples = initialRequests
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed: unknown = JSON.parse(raw)
-      if (Array.isArray(parsed)) savedSamples = (parsed as ProfileRequest[]).filter((item) => !item.sourceStorageKey)
-    }
-  } catch {
-    // Use sample records if preview storage is unavailable.
-  }
-  return [...linkedRequests, ...savedSamples].sort((a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt))
+  return data as T
 }
 
-function readRules(): Record<ProfileField, { approval: boolean; cooldown: number }> {
-  try {
-    const raw = window.localStorage.getItem(RULES_STORAGE_KEY)
-    if (raw) return { ...defaultRules, ...(JSON.parse(raw) as Partial<typeof defaultRules>) }
-  } catch {
-    // Fall back to default preview policy.
-  }
-  return defaultRules
+async function loadRequests(view: ApprovalView): Promise<VerificationRequest[]> {
+  const response = await fetch(`/api/admin/profile-approvals?view=${view === 'history' ? 'history' : 'pending'}&limit=100`, {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
+  const data = await readResponse<{ requests: VerificationRequest[] }>(response)
+  return Array.isArray(data.requests) ? data.requests : []
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' })
-}
-
-export default function AdminProfileApprovals() {
-  const [requests, setRequests] = useState<ProfileRequest[]>(readRequests)
-  const [view, setView] = useState<'queue' | 'history' | 'rules'>('queue')
+export default function AdminProfileApprovals({ canManage = false }: { canManage?: boolean }) {
+  const [view, setView] = useState<ApprovalView>('queue')
+  const [requests, setRequests] = useState<VerificationRequest[]>([])
   const [selectedId, setSelectedId] = useState('')
   const [query, setQuery] = useState('')
   const [reason, setReason] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
-  const [rules, setRules] = useState(readRules)
 
-  const pending = requests.filter((item) => item.status === 'pending')
-  const selected = requests.find((item) => item.id === selectedId) || requests.find((item) => item.status === 'pending') || requests[0]
-  const visible = useMemo(() => requests.filter((item) => {
-    const matchesView = view === 'history' ? item.status !== 'pending' : view === 'queue' ? item.status === 'pending' : true
-    const term = query.trim().toLowerCase()
-    return matchesView && (!term || [item.id, item.user, item.email, item.role, item.field].join(' ').toLowerCase().includes(term))
-  }), [requests, query, view])
-
-  function persist(next: ProfileRequest[]) {
-    setRequests(next)
+  const refresh = useCallback(async (targetView: ApprovalView = view) => {
+    setLoading(true)
+    setError('')
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next.filter((item) => !item.sourceStorageKey)))
-    } catch {
-      setNotice('Updated in this session only. Browser storage is unavailable.')
+      const next = await loadRequests(targetView)
+      setRequests(next)
+      setSelectedId((current) => next.some((item) => item.id === current) ? current : next[0]?.id || '')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Account verification records could not be loaded.')
+    } finally {
+      setLoading(false)
     }
-  }
+  }, [view])
 
-  function decide(status: Exclude<ReviewStatus, 'pending'>) {
-    if (!selected || selected.status !== 'pending') return
+  useEffect(() => {
+    void refresh(view)
+  }, [refresh, view])
+
+  const selected = requests.find((item) => item.id === selectedId) || requests[0]
+  const visible = useMemo(() => {
+    const term = query.trim().toLowerCase()
+    if (!term) return requests
+    return requests.filter((item) =>
+      [item.id, item.displayName, item.email, item.accountType, item.status]
+        .join(' ')
+        .toLowerCase()
+        .includes(term),
+    )
+  }, [requests, query])
+
+  async function decide(decision: Exclude<ReviewStatus, 'pending'>) {
+    if (!selected || selected.status !== 'pending' || saving) return
     if (reason.trim().length < 8) {
-      setNotice('Enter a clear review reason of at least 8 characters.')
+      setError('Enter a clear verification review reason of at least 8 characters.')
+      setNotice('')
       return
     }
-    const now = new Date().toISOString()
-    if (selected.sourceStorageKey && selected.sourceRecordId) {
-      try {
-        const raw = window.localStorage.getItem(selected.sourceStorageKey)
-        if (raw) {
-          const stored = JSON.parse(raw) as {
-            profile?: Record<string, string>
-            cooldownUntil?: string | null
-            pending?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string }>
-            history?: Array<{ id: string; field: string; previousValue: string; proposedValue: string; submittedAt: string; status: string; reviewedAt?: string; reviewerNote?: string }>
-          }
-          const matching = (stored.pending || []).find((item) => item.id === selected.sourceRecordId)
-          if (matching) {
-            if (status === 'approved' && stored.profile && selected.fieldKey) {
-              stored.profile[selected.fieldKey] = matching.proposedValue
-            }
-            stored.pending = (stored.pending || []).filter((item) => item.id !== selected.sourceRecordId)
-            stored.history = (stored.history || []).map((item) => item.id === `${selected.sourceRecordId}-history` || item.id === selected.sourceRecordId
-              ? { ...item, status: status === 'approved' ? 'Approved' : 'Rejected', reviewedAt: now, reviewerNote: reason.trim() }
-              : item)
-            window.localStorage.setItem(selected.sourceStorageKey, JSON.stringify(stored))
-          }
-        }
-      } catch {
-        setNotice('The linked profile record could not be updated in browser storage.')
-        return
-      }
-    }
-    const next = requests.map((item) => item.id === selected.id
-      ? { ...item, status, reason: reason.trim(), reviewer: 'Super Admin reviewer', reviewedAt: now }
-      : item)
-    persist(next)
-    setReason('')
-    setNotice(`${selected.id} marked ${status}. This is a local frontend preview only.`)
-    setView('history')
-  }
 
-  function updateRule(field: ProfileField, patch: Partial<{ approval: boolean; cooldown: number }>) {
-    setRules((current) => {
-      const next = { ...current, [field]: { ...current[field], ...patch } }
-      try { window.localStorage.setItem(RULES_STORAGE_KEY, JSON.stringify(next)) } catch { /* Session-only preview. */ }
-      return next
-    })
-    setNotice('Rule updated in this browser preview. Server-enforced policy is not connected yet.')
+    setSaving(true)
+    setError('')
+    setNotice('')
+    try {
+      const response = await fetch(`/api/admin/profile-approvals/${encodeURIComponent(selected.id)}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ decision, reason: reason.trim() }),
+      })
+      const result = await readResponse<{ message: string }>(response)
+      setNotice(result.message || 'Verification decision saved.')
+      setReason('')
+      setView('history')
+      await refresh('history')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'The verification decision could not be saved.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -214,85 +127,72 @@ export default function AdminProfileApprovals() {
       <div className="admin-section-heading profile-approval-heading">
         <div>
           <span className="admin-kicker">ACCOUNT INTEGRITY</span>
-          <h2>Profile Approval Centre</h2>
-          <p>Review sensitive account changes before they replace a user's approved profile information.</p>
+          <h2>Account Verification Centre</h2>
+          <p>Review marketplace account verification requests using live registration records. Decisions are saved to the database and recorded in the audit log.</p>
         </div>
-        <button type="button" className="admin-secondary-button" onClick={() => { setRequests(readRequests()); setSelectedId(''); setNotice('Preview records refreshed.') }}>↻ Refresh</button>
+        <button type="button" className="admin-secondary-button" onClick={() => void refresh()} disabled={loading || saving}>↻ Refresh</button>
       </div>
 
       <div className="profile-approval-notice" role="note">
-        <strong>Frontend preview</strong>
-        <span>These sample requests and decisions are stored in this browser only. No user profile is changed and no real approval is issued until secure backend workflows are connected.</span>
+        <strong>Verification workflow</strong>
+        <span>This queue uses the account verification status created during registration. Identity documents are not currently collected by the platform, so review decisions must be based only on evidence obtained through an approved verification process. Do not approve an account without completing that process.</span>
       </div>
 
       <div className="profile-approval-stats">
-        <article><span>Awaiting review</span><strong>{pending.length}</strong><small>Requests requiring a decision</small></article>
-        <article><span>Approved</span><strong>{requests.filter((item) => item.status === 'approved').length}</strong><small>Sample approved decisions</small></article>
-        <article><span>Rejected</span><strong>{requests.filter((item) => item.status === 'rejected').length}</strong><small>Sample rejected decisions</small></article>
-        <article><span>Protected fields</span><strong>{Object.keys(rules).length}</strong><small>Policy-controlled profile fields</small></article>
+        <article><span>{view === 'queue' ? 'Awaiting review' : 'Reviewed records'}</span><strong>{requests.length}</strong><small>{view === 'queue' ? 'Live accounts awaiting verification' : 'Database-backed decisions'}</small></article>
+        <article><span>Review status</span><strong>{view === 'queue' ? 'Pending' : 'Recorded'}</strong><small>Current selected workspace</small></article>
+        <article><span>Records shown</span><strong>{visible.length}</strong><small>Up to 100 most recent records</small></article>
+        <article><span>Source</span><strong>Database</strong><small>Not browser preview data</small></article>
       </div>
 
-      <div className="profile-approval-tabs" role="tablist" aria-label="Profile approval views">
-        <button type="button" role="tab" aria-selected={view === 'queue'} className={view === 'queue' ? 'active' : ''} onClick={() => setView('queue')}>Review queue <span>{pending.length}</span></button>
-        <button type="button" role="tab" aria-selected={view === 'history'} className={view === 'history' ? 'active' : ''} onClick={() => setView('history')}>Decision history</button>
-        <button type="button" role="tab" aria-selected={view === 'rules'} className={view === 'rules' ? 'active' : ''} onClick={() => setView('rules')}>Approval rules</button>
+      <div className="profile-approval-tabs" role="tablist" aria-label="Account verification views">
+        <button type="button" role="tab" aria-selected={view === 'queue'} className={view === 'queue' ? 'active' : ''} onClick={() => { setView('queue'); setQuery(''); setReason('') }}>Review queue</button>
+        <button type="button" role="tab" aria-selected={view === 'history'} className={view === 'history' ? 'active' : ''} onClick={() => { setView('history'); setQuery(''); setReason('') }}>Decision history</button>
       </div>
 
+      {error && <div className="admin-error" role="alert">{error}</div>}
       {notice && <div className="admin-message" role="status">{notice}</div>}
 
-      {view === 'rules' ? (
-        <div className="profile-rules-panel">
-          <div className="profile-panel-title"><div><h3>Profile change policy</h3><p>Configure the preview policy for each sensitive field.</p></div><span className="profile-protected-tag">Core safeguards stay enforced</span></div>
-          <div className="profile-rule-list">
-            {(Object.keys(rules) as ProfileField[]).map((field) => (
-              <div className="profile-rule-row" key={field}>
-                <div><strong>{field}</strong><small>Changes to this field are tracked in the approval history.</small></div>
-                <label className="profile-rule-toggle"><input type="checkbox" checked={rules[field].approval} onChange={(event) => updateRule(field, { approval: event.target.checked })} /> Require approval</label>
-                <label className="profile-cooldown-control">Cooldown
-                  <select value={rules[field].cooldown} onChange={(event) => updateRule(field, { cooldown: Number(event.target.value) })}>
-                    <option value={0}>No additional delay</option><option value={12}>12 hours</option><option value={24}>24 hours</option><option value={48}>48 hours</option><option value={72}>72 hours</option><option value={168}>7 days</option>
-                  </select>
-                </label>
-              </div>
-            ))}
+      <div className="profile-approval-workspace">
+        <div className="profile-approval-list">
+          <div className="profile-list-toolbar">
+            <div><h3>{view === 'queue' ? 'Pending verification' : 'Reviewed verification'}</h3><small>{visible.length} record(s)</small></div>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, email, ID..." aria-label="Search verification requests" />
           </div>
-          <p className="profile-rule-footnote">These controls demonstrate the intended policy interface. Production enforcement must remain server-side and cannot be disabled by ordinary administrators.</p>
+          {loading ? <div className="profile-empty-state"><strong>Loading records...</strong><span>Fetching live verification data.</span></div>
+            : visible.length === 0 ? <div className="profile-empty-state"><strong>{view === 'queue' ? 'No pending verification requests' : 'No decisions recorded yet'}</strong><span>New records will appear here when available.</span></div>
+              : visible.map((item) => (
+                <button type="button" key={item.id} className={`profile-request-item ${selected?.id === item.id ? 'selected' : ''}`} onClick={() => { setSelectedId(item.id); setReason('') }}>
+                  <span className="profile-request-avatar">{item.displayName.split(' ').map((part) => part[0]).join('').slice(0, 2).toUpperCase()}</span>
+                  <span className="profile-request-copy"><strong>{item.displayName}</strong><small>{accountTypeLabel(item.accountType)}</small><small>Account #{item.id} · {formatDate(item.submittedAt || item.reviewedAt)}</small></span>
+                  <span className={`profile-status status-${item.status}`}>{item.status}</span>
+                </button>
+              ))}
         </div>
-      ) : (
-        <div className="profile-approval-workspace">
-          <div className="profile-approval-list">
-            <div className="profile-list-toolbar">
-              <div><h3>{view === 'queue' ? 'Pending requests' : 'Reviewed requests'}</h3><small>{visible.length} record(s)</small></div>
-              <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search name, ID, role..." aria-label="Search profile requests" />
-            </div>
-            {visible.length === 0 ? <div className="profile-empty-state"><strong>No requests found</strong><span>Try another search or switch to a different view.</span></div> : visible.map((item) => (
-              <button type="button" key={item.id} className={`profile-request-item ${selectedId === item.id ? 'selected' : ''}`} onClick={() => { setSelectedId(item.id); setReason('') }}>
-                <span className="profile-request-avatar">{item.user.split(' ').map((part) => part[0]).join('').slice(0, 2)}</span>
-                <span className="profile-request-copy"><strong>{item.user}</strong><small>{item.field} · {item.role}</small><small>{item.id} · {formatDate(item.submittedAt)}</small></span>
-                <span className={`profile-status status-${item.status}`}>{item.status}</span>
-              </button>
-            ))}
-          </div>
 
-          <div className="profile-approval-detail">
-            {selected ? <>
-              <div className="profile-detail-top"><div><span className="admin-kicker">REQUEST {selected.id}</span><h3>{selected.field}</h3><p>{selected.user} · {selected.role} · {selected.email}</p></div><span className={`profile-status status-${selected.status}`}>{selected.status}</span></div>
-              <div className="profile-value-comparison">
-                <div><span>Current approved value</span><strong>{selected.currentValue}</strong></div>
-                <div><span>Proposed new value</span><strong>{selected.proposedValue}</strong></div>
+        <div className="profile-approval-detail">
+          {!selected ? <div className="profile-empty-state">Select a verification record to inspect its details.</div> : <>
+            <div className="profile-detail-top">
+              <div><span className="admin-kicker">ACCOUNT #{selected.id}</span><h3>{selected.displayName}</h3><p>{selected.email}</p></div>
+              <span className={`profile-status status-${selected.status}`}>{selected.status}</span>
+            </div>
+            <div className="profile-value-comparison">
+              <div><span>Account type</span><strong>{accountTypeLabel(selected.accountType)}</strong></div>
+              <div><span>Verification status</span><strong>{accountTypeLabel(selected.status)}</strong></div>
+            </div>
+            <div className="profile-request-meta"><span>{view === 'queue' ? 'Registered' : 'Reviewed'}</span><strong>{formatDate(selected.submittedAt || selected.reviewedAt)}</strong></div>
+            {view === 'queue' && selected.status === 'pending' && canManage ? <>
+              <label className="profile-review-reason">Verification review reason <span>Required</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Record the verification checks completed and the reason for your decision..." rows={4} maxLength={500} /></label>
+              <div className="profile-review-actions">
+                <button type="button" className="admin-secondary-button profile-reject-button" onClick={() => void decide('rejected')} disabled={saving || loading}>{saving ? 'Saving...' : 'Reject verification'}</button>
+                <button type="button" className="admin-primary-button" onClick={() => void decide('approved')} disabled={saving || loading}>{saving ? 'Saving...' : 'Approve verification'}</button>
               </div>
-              <div className="profile-request-meta"><span>Submitted</span><strong>{formatDate(selected.submittedAt)}</strong></div>
-              {selected.status === 'pending' ? <>
-                <label className="profile-review-reason">Review reason <span>Required</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Explain the verification checks and your decision..." rows={4} maxLength={500} /></label>
-                <div className="profile-review-actions">
-                  <button type="button" className="admin-secondary-button profile-reject-button" onClick={() => decide('rejected')}>Reject request</button>
-                  <button type="button" className="admin-primary-button" onClick={() => decide('approved')}>Approve request</button>
-                </div>
-              </> : <div className="profile-decision-record"><strong>Decision: {selected.status}</strong><span>{selected.reviewer || 'Reviewer'} · {selected.reviewedAt ? formatDate(selected.reviewedAt) : 'Date unavailable'}</span><p>{selected.reason || 'No review reason recorded.'}</p></div>}
-            </> : <div className="profile-empty-state">Select a request to inspect its details.</div>}
-          </div>
+            </> : view === 'queue' && selected.status === 'pending' ? (
+              <div className="profile-decision-record"><strong>Review access only</strong><span>Your administrator role can view this queue but cannot issue verification decisions.</span><p>Request the users.manage permission from the Super Admin if you are responsible for verification reviews.</p></div>
+            ) : <div className="profile-decision-record"><strong>Decision: {selected.status}</strong><span>{selected.reviewer || 'Administrator'} · {formatDate(selected.reviewedAt)}</span><p>{selected.reason || 'No additional review note was supplied.'}</p></div>}
+          </>}
         </div>
-      )}
+      </div>
     </section>
   )
 }

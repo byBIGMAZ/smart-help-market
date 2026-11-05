@@ -25,12 +25,25 @@ adminRouter.get(
   async (_req, res) => {
     try {
       const db = getDatabasePool()
+      const authenticatedUserId = String(res.locals.authenticatedUserId ?? '')
+
+      const superAdminCheck = await db.query(
+        `SELECT EXISTS (
+           SELECT 1
+           FROM public.marketplace_user_roles ur
+           INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+           WHERE ur.user_id = $1 AND r.role_key = 'super_admin'
+         ) AS allowed`,
+        [authenticatedUserId],
+      )
+      const isSuperAdmin = Boolean(superAdminCheck.rows[0]?.allowed)
 
       const [
         usersResult,
         listingsResult,
         categoriesResult,
         sessionsResult,
+        listingStatusResult,
       ] = await Promise.all([
         db.query(
           `SELECT
@@ -40,8 +53,8 @@ adminRouter.get(
         ),
         db.query(
           `SELECT
-             COUNT(*)::text AS total,
-             COUNT(*) FILTER (WHERE status = 'published')::text AS published
+             COUNT(*) FILTER (WHERE is_demo = FALSE)::text AS total,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'published')::text AS published
            FROM public.marketplace_listings`,
         ),
         db.query(
@@ -53,7 +66,41 @@ adminRouter.get(
            FROM public.marketplace_sessions
            WHERE expires_at > NOW()`,
         ),
+        db.query(
+          `SELECT
+             COUNT(*) FILTER (WHERE is_demo = FALSE)::text AS "liveTotal",
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'published')::text AS "publishedLive",
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'pending_review')::text AS "pendingReview",
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'draft')::text AS drafts,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'paused')::text AS paused,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'rejected')::text AS rejected,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'suspended')::text AS suspended
+           FROM public.marketplace_listings`,
+        ),
       ])
+
+      const [administratorResult, settingsResult, recentActivityResult] = isSuperAdmin
+        ? await Promise.all([
+            db.query(
+              `SELECT
+                 COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key <> 'member')::text AS total,
+                 COUNT(DISTINCT ur.user_id) FILTER (WHERE r.role_key = 'super_admin')::text AS "superAdmins"
+               FROM public.marketplace_user_roles ur
+               INNER JOIN public.marketplace_roles r ON r.role_id = ur.role_id
+               INNER JOIN public.marketplace_users u ON u.user_id = ur.user_id
+               WHERE u.account_status = 'active'`,
+            ),
+            db.query(
+              `SELECT COUNT(*)::text AS total
+               FROM public.platform_settings`,
+            ),
+            db.query(
+              `SELECT COUNT(*)::text AS total
+               FROM public.marketplace_audit_logs
+               WHERE created_at >= NOW() - INTERVAL '7 days'`,
+            ),
+          ])
+        : [null, null, null]
 
       res.status(200).json({
         status: 'ok',
@@ -65,10 +112,31 @@ adminRouter.get(
           listings: {
             total: Number(listingsResult.rows[0]?.total ?? 0),
             published: Number(listingsResult.rows[0]?.published ?? 0),
+            liveTotal: Number(listingStatusResult.rows[0]?.liveTotal ?? 0),
+            publishedLive: Number(listingStatusResult.rows[0]?.publishedLive ?? 0),
+            pendingReview: Number(listingStatusResult.rows[0]?.pendingReview ?? 0),
+            drafts: Number(listingStatusResult.rows[0]?.drafts ?? 0),
+            paused: Number(listingStatusResult.rows[0]?.paused ?? 0),
+            rejected: Number(listingStatusResult.rows[0]?.rejected ?? 0),
+            suspended: Number(listingStatusResult.rows[0]?.suspended ?? 0),
           },
           categories: {
             total: Number(categoriesResult.rows[0]?.total ?? 0),
           },
+          ...(isSuperAdmin
+            ? {
+                administrators: {
+                  total: Number(administratorResult?.rows[0]?.total ?? 0),
+                  superAdmins: Number(administratorResult?.rows[0]?.superAdmins ?? 0),
+                },
+                configuration: {
+                  settingsCount: Number(settingsResult?.rows[0]?.total ?? 0),
+                },
+                activity: {
+                  auditActionsLast7Days: Number(recentActivityResult?.rows[0]?.total ?? 0),
+                },
+              }
+            : {}),
           activeSessions: Number(sessionsResult.rows[0]?.total ?? 0),
         },
         generatedAt: new Date().toISOString(),
@@ -1123,6 +1191,188 @@ adminRouter.put(
       res.status(500).json({
         error: 'User roles could not be updated.',
       })
+    } finally {
+      client.release()
+    }
+  },
+)
+
+
+
+/**
+ * Real marketplace account-verification queue.
+ * This is distinct from profile-change approval: registration currently
+ * records verification_status on marketplace_users, but does not yet
+ * collect identity documents or arbitrary profile-change submissions.
+ */
+adminRouter.get(
+  '/profile-approvals',
+  requirePermission('users.view'),
+  async (req, res) => {
+    const view = req.query.view === 'history' ? 'history' : 'pending'
+    const parsedLimit = Number(req.query.limit ?? 100)
+    if (!Number.isInteger(parsedLimit) || parsedLimit < 1 || parsedLimit > 200) {
+      res.status(400).json({ error: 'Limit must be between 1 and 200.' })
+      return
+    }
+
+    try {
+      const db = getDatabasePool()
+      if (view === 'pending') {
+        const result = await db.query(
+          `SELECT
+             u.user_id::text AS id,
+             u.display_name AS "displayName",
+             u.email,
+             u.account_type AS "accountType",
+             u.verification_status AS status,
+             u.created_at AS "submittedAt"
+           FROM public.marketplace_users u
+           WHERE u.verification_status = 'pending'
+             AND u.account_status = 'active'
+           ORDER BY u.created_at ASC, u.user_id ASC
+           LIMIT $1`,
+          [parsedLimit],
+        )
+
+        res.status(200).json({ status: 'ok', view, requests: result.rows })
+        return
+      }
+
+      const result = await db.query(
+        `SELECT
+           l.target_id AS id,
+           COALESCE(u.display_name, 'Deleted account') AS "displayName",
+           COALESCE(u.email, '') AS email,
+           COALESCE(u.account_type, 'unknown') AS "accountType",
+           CASE
+             WHEN l.action_key = 'account.verification_approved' THEN 'approved'
+             ELSE 'rejected'
+           END AS status,
+           l.created_at AS "reviewedAt",
+           actor.display_name AS reviewer,
+           COALESCE(l.details->>'reason', '') AS reason
+         FROM public.marketplace_audit_logs l
+         LEFT JOIN public.marketplace_users u
+           ON u.user_id::text = l.target_id
+         LEFT JOIN public.marketplace_users actor
+           ON actor.user_id = l.actor_user_id
+         WHERE l.target_type = 'marketplace_user'
+           AND l.action_key IN (
+             'account.verification_approved',
+             'account.verification_rejected'
+           )
+         ORDER BY l.created_at DESC, l.audit_id DESC
+         LIMIT $1`,
+        [parsedLimit],
+      )
+
+      res.status(200).json({ status: 'ok', view, requests: result.rows })
+    } catch (error: unknown) {
+      console.error(
+        'Account verification queue failed:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+      res.status(500).json({ error: 'Account verification records could not be loaded.' })
+    }
+  },
+)
+
+adminRouter.patch(
+  '/profile-approvals/:userId',
+  requirePermission('users.manage'),
+  async (req, res) => {
+    const userIdParam = req.params.userId
+    const targetUserId = typeof userIdParam === 'string' ? userIdParam : ''
+    const actorUserId = String(res.locals.authenticatedUserId ?? '')
+    const decision = req.body?.decision
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : ''
+
+    if (!/^[1-9]\d*$/.test(targetUserId)) {
+      res.status(400).json({ error: 'Invalid marketplace account ID.' })
+      return
+    }
+    if (decision !== 'approved' && decision !== 'rejected') {
+      res.status(400).json({ error: 'Decision must be approved or rejected.' })
+      return
+    }
+    if (reason.length < 8 || reason.length > 500) {
+      res.status(400).json({ error: 'Provide a review reason between 8 and 500 characters.' })
+      return
+    }
+    if (!actorUserId) {
+      res.status(401).json({ error: 'Administrator session is required.' })
+      return
+    }
+
+    const db = getDatabasePool()
+    const client = await db.connect()
+    try {
+      await client.query('BEGIN')
+      const accountResult = await client.query(
+        `SELECT
+           user_id::text AS id,
+           display_name AS "displayName",
+           email,
+           account_type AS "accountType",
+           verification_status AS status
+         FROM public.marketplace_users
+         WHERE user_id = $1
+         FOR UPDATE`,
+        [targetUserId],
+      )
+      const account = accountResult.rows[0]
+      if (!account) {
+        await client.query('ROLLBACK')
+        res.status(404).json({ error: 'Marketplace account not found.' })
+        return
+      }
+      if (account.status !== 'pending') {
+        await client.query('ROLLBACK')
+        res.status(409).json({ error: 'This account is no longer awaiting verification review.' })
+        return
+      }
+
+      await client.query(
+        `UPDATE public.marketplace_users
+         SET verification_status = $1, updated_at = NOW()
+         WHERE user_id = $2`,
+        [decision, targetUserId],
+      )
+      await client.query(
+        `INSERT INTO public.marketplace_audit_logs
+           (actor_user_id, action_key, target_type, target_id, details)
+         VALUES ($1, $2, 'marketplace_user', $3, $4::jsonb)`,
+        [
+          actorUserId,
+          decision === 'approved'
+            ? 'account.verification_approved'
+            : 'account.verification_rejected',
+          targetUserId,
+          JSON.stringify({
+            displayName: account.displayName,
+            accountType: account.accountType,
+            previousStatus: 'pending',
+            newStatus: decision,
+            reason,
+          }),
+        ],
+      )
+      await client.query('COMMIT')
+      res.status(200).json({
+        status: 'ok',
+        message: decision === 'approved'
+          ? 'Account verification approved.'
+          : 'Account verification rejected.',
+        request: { ...account, status: decision, reason },
+      })
+    } catch (error: unknown) {
+      await client.query('ROLLBACK').catch(() => undefined)
+      console.error(
+        'Account verification decision failed:',
+        error instanceof Error ? error.message : 'Unknown error',
+      )
+      res.status(500).json({ error: 'The verification decision could not be saved.' })
     } finally {
       client.release()
     }

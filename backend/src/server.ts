@@ -6,6 +6,7 @@ import publicSettingsRouter from './routes/publicSettings'
 import publicCategoriesRouter from './routes/publicCategories'
 import publicListingsRouter from './routes/publicListings'
 import listingImagesRouter from './routes/listingImages'
+import ownerListingsRouter from './routes/ownerListings'
 import listingModerationRouter from './routes/listingModeration'
 import categoryManagementRouter from './routes/categoryManagement'
 import settingsManagementRouter from './routes/settingsManagement'
@@ -17,6 +18,7 @@ import notificationsRouter from './routes/notifications'
 import messagesRouter from './routes/messages'
 import helpCentreRouter from './routes/helpCentre'
 import adminNotificationsRouter from './routes/adminNotifications'
+import paymentManagementRouter from './routes/paymentManagement'
 
 import authRouter from './routes/auth'
 import authSessionRouter from './routes/authSession'
@@ -49,7 +51,7 @@ app.use(
   }),
 )
 
-app.use(express.json({ limit: '100kb' }))
+app.use(express.json({ limit: '256kb' }))
 
 // Authentication routes.
 app.use('/api/auth', authRouter)
@@ -71,6 +73,7 @@ app.use('/api/admin/automation', automationManagementRouter)
 app.use('/api/admin/automation', automationMonitoringRouter)
 app.use('/api/admin/automation', automationRulesRouter)
 app.use('/api/admin/notifications', adminNotificationsRouter)
+app.use('/api/admin/payments', paymentManagementRouter)
 
 // API health check.
 app.get('/api/health', (_req, res) => {
@@ -86,7 +89,8 @@ app.use('/api/settings/public', publicSettingsRouter)
 app.use('/api/categories/public', publicCategoriesRouter)
 app.use('/api/listings/public', publicListingsRouter)
 
-// Authenticated listing image management.
+// Authenticated owner draft management and listing image management.
+app.use('/api/listings', ownerListingsRouter)
 app.use('/api/listings', listingImagesRouter)
 
 // Unknown endpoint handler.

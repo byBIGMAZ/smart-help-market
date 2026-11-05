@@ -1,7 +1,7 @@
 # SMART HELP CENTRE implementation register
 
 ## Purpose
-The Help Centre is an account-linked guided marketplace assistant. It can guide users to existing marketplace routes, ask follow-up questions, search published listings in PostgreSQL, preserve conversations, enforce monthly message allowances, and escalate requests to the administrator support inbox.
+The Help Centre is an account-linked guided marketplace assistant. It can guide users to existing marketplace routes, ask follow-up questions, search published listings in PostgreSQL, preserve conversations, enforce monthly usage tracking, and escalate requests to the administrator support inbox.
 
 ## Frontend files
 - `frontend/src/components/help/HelpCentreWidget.tsx`: fixed, non-draggable viewport launcher, guest preview entry point and glass panel.
@@ -24,8 +24,8 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `backend/src/setup-geographic-intelligence.ts`: safely adds nullable listing coordinates, geocoding status metadata, a server-side geocode cache, geographic indexes and centrally managed private geographic settings. Uses one PostgreSQL client for the entire setup transaction.
 - `backend/src/geography/geocoding.ts`: canonical server-side Nominatim resolver with persistent PostgreSQL cache, strict coordinate validation, Nigeria country restriction, a serialized 1.1-second provider request interval, provider timeout and OpenStreetMap attribution.
 - `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
-- `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
-- `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
+- `backend/src/intelligence/bigmazEngine.ts`: proprietary built-in intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It runs locally in the marketplace backend and has no external AI API dependency or per-message provider charge.
+- `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-side usage tracking with unlimited free messages by default, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics. The assistant resolves the active workspace from server-assigned account roles and the authenticated current route, supports multiple roles without silently choosing an arbitrary one, remembers role selection across follow-up messages, personalises greetings and suggested tasks by active workspace, and filters role-specific navigation actions. Clicked suggestions carry the originating assistant-message ID; the API validates that the option was actually offered in that conversation before interpreting it. Suggestion labels are expanded into task-specific prompts while preserving the preceding assistant question and workflow state. Location, budget and pagination choices retain their original values. Unknown selections receive contextual clarification rather than restarting with a generic introduction. Multi-role greetings and navigation ask the user to choose a workspace instead of silently selecting one. Workspace selection buttons can switch the active role only when that role is assigned to the account, and explicit workspace selection or a clearly role-specific task takes precedence over the page currently open. The assistant also provides guided landlord/agent Listing Studio and draft-saving diagnostics, seller product and service-provider listing troubleshooting, property-purpose, unit and pricing guidance, submission-readiness checks, workspace navigation menus, buyer save/enquiry/inspection guidance, roommate advice and transaction-dispute guidance. Landlord listing troubleshooting is distinct from agent listing guidance; agent guidance does not direct users into landlord-only tenant, rent or maintenance tools.
 - `backend/package.json`: adds `npm run setup:help-centre`.
 
 ## Database tables
@@ -50,7 +50,7 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `GET /api/help-centre/status`: signed-in user's monthly quota.
 - `GET /api/help-centre/conversations`: conversation history.
 - `GET /api/help-centre/conversations/:conversationId/messages`: owned conversation thread.
-- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified answer, route actions or published listing matches and, when enabled, resolves a user-selected property location.
+- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified, workspace-aware answer, role-appropriate route actions or published listing matches and, when enabled, resolves a user-selected property location. Workspace role context is derived server-side from `marketplace_user_roles`; client-supplied text cannot grant a role.
 - `POST /api/help-centre/feedback`: rate a response and optionally correct the assistant's understood intent.
 - `GET /api/help-centre/admin/intelligence/summary`: administrator metrics for interactions, feedback and reviewed learning examples.
 - `POST /api/help-centre/support-cases`: escalate a conversation to administrators.
@@ -60,11 +60,10 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `POST /api/help-centre/admin/cases/:caseId/reply`: reply to the user.
 
 ## Platform settings
+- `help.ai.learning_enabled`: controls local, privacy-conscious learning from explicit user corrections. No external AI provider is called.
+- `help.ai.feedback_enabled`: controls response ratings and intent-correction feedback.
 - `help.assistant.enabled`: assistant availability.
-- `help.messages.free_limit`: included messages per user per calendar month.
-- `help.messages.paid_enabled`: reserved and seeded false. Paid usage is not active until payment integration is connected.
-- `help.messages.pack_size`: proposed paid message package quantity.
-- `help.messages.pack_price_ngn`: proposed package price in NGN.
+- `help.messages.free_limit`: free messages per user per calendar month. The default is `0`, meaning unlimited free messages. No paid Help Centre message packages or paywall are configured.
 - `geo.enabled`: geographic lookup is disabled by default until a provider is configured and tested.
 - `geo.provider`: provider identifier, default `nominatim`.
 - `geo.country_code`: default country restriction, `ng`.
@@ -93,9 +92,4 @@ Then run the frontend production build from the frontend folder:
 npm run build
 ```
 
-## Current BIGMAZ Intelligence capability boundary
-The first proprietary engine version is a hybrid lexical/statistical intent classifier. It uses token and n-gram similarity, semantic cue scoring, curated examples and bounded online feature-weight updates from explicit user intent corrections. It does not call an external generative AI API and is not yet a general-purpose language model. It does not yet train neural language-model weights or perform open-ended reasoning at the level of a large foundation model.
 
-The Help Centre uses the existing contextual workflow for published property/product/service listing search. When a user supplies a location during a property search, BIGMAZ resolves it through the server-side Nominatim adapter if geographic lookup is enabled. It confirms the resolved place name, preserves the user's original location for matching, and filters published listings by their stored location text; coordinate-radius matching, automatic geocoding of every listing, road-distance routing, live neighbourhood-discussion retrieval, full roommate-profile matching, interactive escrow animations and model-training evaluation/rollback remain later implementation phases. Geographic lookup remains disabled by default until `GEOCODING_USER_AGENT` is configured and an administrator enables it.
-
-Paid message package values are configuration only; no payment is collected or simulated. Database setup and production builds must be run in Codespaces and their output checked before treating this implementation as verified.

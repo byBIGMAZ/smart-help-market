@@ -431,3 +431,325 @@
 :root[data-theme="light"] .admin-shell .admin-welcome-panel.admin-time-evening .admin-panel-label {
   color: #397b2b !important;
 }
+
+
+/*
+ * Central theme layer for every administration module.
+ * All admin pages are rendered inside .admin-shell and inherit the same
+ * application-level data-theme attribute managed by the global ThemeProvider.
+ * Keep status colours and chart series intact while normalising page surfaces,
+ * typography, controls, tables, dialogs and supporting panels.
+ */
+
+:root[data-theme="light"] .admin-shell {
+  --admin-page-bg: #f5f7f5;
+  --admin-surface: #ffffff;
+  --admin-surface-soft: #f4f7f3;
+  --admin-surface-muted: #edf3ed;
+  --admin-border: #dce5dc;
+  --admin-border-strong: #cbd8cc;
+  --admin-text: #17231b;
+  --admin-text-secondary: #526157;
+  --admin-text-muted: #718075;
+  --admin-accent-text: #285d20;
+  --admin-accent-bg: #eaf4e6;
+  --admin-shadow: 0 8px 24px rgba(28, 54, 32, 0.055);
+  color-scheme: light;
+  background: var(--admin-page-bg);
+  color: var(--admin-text);
+}
+
+/* All administration page headings and supporting copy. */
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) {
+  color: var(--admin-text);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(h1, h2, h3, h4, strong) {
+  color: var(--admin-text);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(p, small, label, .admin-muted, [class*="description"], [class*="metadata"], [class*="generated"], [class*="pagination"], [class*="period-note"], [class*="information"], [class*="note"]) {
+  color: var(--admin-text-secondary);
+}
+
+/* Reusable surfaces across all admin modules, including lazy-loaded pages. */
+:root[data-theme="light"] .admin-shell :is(
+  [class*="audit-"],
+  [class*="automation-"],
+  [class*="category-"],
+  [class*="help-"],
+  [class*="moderation-"],
+  [class*="notification-"],
+  [class*="profile-approval"],
+  [class*="report-"],
+  [class*="setting-"]
+):is(
+  [class*="card"],
+  [class*="panel"],
+  [class*="filters"],
+  [class*="form"],
+  [class*="dialog"],
+  [class*="table-wrap"],
+  [class*="workspace"],
+  [class*="thread"],
+  [class*="composer"],
+  [class*="editor"],
+  [class*="detail"],
+  [class*="empty"],
+  [class*="summary"],
+  [class*="stat"],
+  [class*="list"]
+) {
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+/* Common module containers and cards. */
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(
+  [class*="card"],
+  [class*="panel"],
+  [class*="filters"],
+  [class*="form"],
+  [class*="table-wrap"],
+  [class*="workspace"],
+  [class*="thread"],
+  [class*="composer"],
+  [class*="editor"],
+  [class*="detail"],
+  [class*="empty"],
+  [class*="summary"],
+  [class*="stat"],
+  [class*="list"]
+):not([class*="status"]):not([class*="action"]):not([class*="bar"]):not([class*="legend"]) {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+  box-shadow: var(--admin-shadow);
+}
+
+/* Tables and data grids. */
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-table,
+  .admin-user-table,
+  .admin-users-table,
+  .admin-category-table,
+  .automation-monitor-table,
+  .moderation-history-table
+) {
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-table,
+  .admin-user-table,
+  .admin-users-table,
+  .admin-category-table,
+  .automation-monitor-table,
+  .moderation-history-table
+) :is(th, td) {
+  border-color: var(--admin-border);
+  color: var(--admin-text-secondary);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-table,
+  .admin-user-table,
+  .admin-users-table,
+  .admin-category-table,
+  .automation-monitor-table,
+  .moderation-history-table
+) th {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-table,
+  .admin-user-table,
+  .admin-users-table,
+  .admin-category-table,
+  .automation-monitor-table,
+  .moderation-history-table
+) tbody tr:hover {
+  background: #f7faf6;
+}
+
+/* Forms, filters, textareas and selects across all admin screens. */
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  color-scheme: light;
+  background-color: #ffffff;
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(input, textarea)::placeholder {
+  color: #89958b;
+  opacity: 1;
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(input, select, textarea):focus {
+  border-color: #4b9639;
+  box-shadow: 0 0 0 3px rgba(75, 150, 57, 0.13);
+}
+
+/* Neutral buttons and links. Preserve semantic success, warning and danger buttons. */
+:root[data-theme="light"] .admin-shell :is(
+  .admin-audit-section,
+  .admin-automation,
+  .automation-monitor,
+  .automation-rules,
+  .admin-category-section,
+  .admin-help-centre,
+  .admin-moderation-section,
+  .admin-notifications-section,
+  .admin-profile-approvals,
+  .admin-reports-section,
+  .admin-settings-section
+) :is(button, a):not(
+  [class*="primary"]
+):not(
+  [class*="danger"]
+):not(
+  [class*="success"]
+):not(
+  [class*="warning"]
+):not(
+  [class*="status"]
+):not(
+  [class*="activate"]
+):not(
+  [class*="deactivate"]
+) {
+  border-color: var(--admin-border-strong);
+}
+
+/* Modal backdrops retain their dimming, while dialog surfaces become light. */
+:root[data-theme="light"] .admin-shell :is(
+  .admin-category-dialog,
+  .moderation-confirm-dialog,
+  .admin-permission-editor,
+  .admin-help-thread,
+  .admin-ai-intelligence
+) {
+  background-color: var(--admin-surface);
+  border-color: var(--admin-border);
+  color: var(--admin-text);
+}
+
+:root[data-theme="light"] .admin-shell :is(
+  .admin-category-dialog,
+  .moderation-confirm-dialog,
+  .admin-permission-editor,
+  .admin-help-thread,
+  .admin-ai-intelligence
+) :is(h1, h2, h3, h4, strong, label) {
+  color: var(--admin-text);
+}
+
+/* Code and JSON inspection areas. */
+:root[data-theme="light"] .admin-shell :is(
+  .automation-rule-json,
+  .admin-audit-details pre,
+  .admin-shell code
+) {
+  background: var(--admin-surface-muted);
+  color: var(--admin-accent-text);
+  border-color: var(--admin-border);
+}
+
+/* Respect reduced motion consistently in every administration module. */
+@media (prefers-reduced-motion: reduce) {
+  .admin-shell *,
+  .admin-shell *::before,
+  .admin-shell *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

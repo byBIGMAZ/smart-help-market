@@ -2,10 +2,7 @@ import { getDatabasePool } from './database'
 
 const initialSettings = [
   ['help.assistant.enabled', true, 'help_centre', 'Enable or disable the Help Centre assistant.', false],
-  ['help.messages.free_limit', 30, 'help_centre', 'Included assistant messages per user per calendar month.', false],
-  ['help.messages.paid_enabled', false, 'help_centre', 'Enable paid assistant message packages after payment integration is connected.', false],
-  ['help.messages.pack_size', 50, 'help_centre', 'Number of additional assistant messages in one paid package.', false],
-  ['help.messages.pack_price_ngn', 500, 'help_centre', 'Price in NGN for one additional assistant message package.', false],
+  ['help.messages.free_limit', 0, 'help_centre', 'Monthly assistant message limit per user. Zero means unlimited free use.', false],
   ['help.ai.engine_name', 'BIGMAZ Intelligence Engine', 'help_centre', 'Name of the proprietary marketplace intelligence engine.', false],
   ['help.ai.learning_enabled', true, 'help_centre', 'Allow privacy-conscious learning signals and reviewed model improvements.', false],
   ['help.ai.feedback_enabled', true, 'help_centre', 'Allow users to rate assistant responses.', false],
@@ -133,6 +130,8 @@ async function setupHelpCentreTables() {
         [key, JSON.stringify(value), group, description, isPublic],
       )
     }
+    await db.query("DELETE FROM public.platform_settings WHERE setting_key IN ('help.ai.model_enabled', 'help.messages.paid_enabled', 'help.messages.pack_size', 'help.messages.pack_price_ngn')")
+    await db.query("UPDATE public.platform_settings SET setting_value = '0'::jsonb, description = 'Monthly assistant message limit per user. Zero means unlimited free use.' WHERE setting_key = 'help.messages.free_limit' AND setting_value = '30'::jsonb")
     await db.query('COMMIT')
     const result = await db.query<{ table_name: string }>(
       `SELECT table_name FROM information_schema.tables

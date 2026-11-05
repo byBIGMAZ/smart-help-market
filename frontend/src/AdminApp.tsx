@@ -53,8 +53,10 @@ import './AdminAuditLogs.css'
 import './AdminSystemTheme.css'
 import './AdminProfileApprovals.css'
 import ProfilePhotoSlideshow from './components/profile/ProfilePhotoSlideshow'
+import AdminOverviewPanel from './components/admin/AdminOverviewPanel'
 import WorkspaceFloatingSidebar from './components/navigation/WorkspaceFloatingSidebar'
 import HelpCentreWidget from './components/help/HelpCentreWidget'
+import { useTheme } from './hooks/useTheme'
 
 type Screen = 'checking' | 'login' | 'dashboard'
 
@@ -63,6 +65,7 @@ const AdminProfileApprovals = lazy(() => import('./AdminProfileApprovals'))
 const AdminListingModeration = lazy(() => import('./AdminListingModeration'))
 const AdminCategoryManagement = lazy(() => import('./AdminCategoryManagement'))
 const AdminSettingsManagement = lazy(() => import('./AdminSettingsManagement'))
+const AdminPaymentManagement = lazy(() => import('./AdminPaymentManagement'))
 const AdminReports = lazy(() => import('./AdminReports'))
 const AdminAutomation = lazy(() => import('./AdminAutomation'))
 const AdminAutomationRules = lazy(() => import('./AdminAutomationRules'))
@@ -83,6 +86,7 @@ type AdminSection =
   | 'moderation'
   | 'categories'
   | 'settings'
+  | 'payments'
   | 'reports'
   | 'audit'
   | 'automation'
@@ -91,6 +95,15 @@ type AdminSection =
   | 'notifications'
   | 'profile-approvals'
   | 'help-support'
+
+type AdminNavigationItem = {
+  label: string
+  path: AdminSection
+  permission: string
+  secondaryPermission?: string
+  superAdminOnly: boolean
+  group: string
+}
 
 type UserStatusFilter = 'all' | AccountStatus
 
@@ -119,6 +132,7 @@ function formatAction(value: string): string {
 }
 
 function AdminApp() {
+  const { theme, setTheme } = useTheme()
   const [screen, setScreen] = useState<Screen>('checking')
   const [section, setSection] = useState<AdminSection>('overview')
   const [sectionHistory, setSectionHistory] = useState<AdminSection[]>([])
@@ -127,6 +141,35 @@ function AdminApp() {
   useState(0)
   const [overview, setOverview] = useState<AdminOverview | null>(null)
   const [dashboardTime, setDashboardTime] = useState(() => new Date())
+  const [automationView, setAutomationView] = useState<'control' | 'rules' | 'monitoring'>('control')
+  const [peopleView, setPeopleView] = useState<'accounts' | 'roles'>('accounts')
+
+  // One permission-aware navigation catalogue drives both admin navigation surfaces.
+  // Server routes remain the final authority for every operation.
+  const adminNavigation: AdminNavigationItem[] = [
+    { label: 'Overview', path: 'overview', permission: 'dashboard.view', superAdminOnly: false, group: 'Overview' },
+    { label: 'Users & Access', path: 'users', permission: 'users.view', secondaryPermission: 'roles.view', superAdminOnly: false, group: 'People & Access' },
+    { label: 'Listing Moderation', path: 'moderation', permission: 'listings.view', superAdminOnly: false, group: 'Approvals & Listings' },
+    { label: 'Categories', path: 'categories', permission: 'categories.view', superAdminOnly: false, group: 'Marketplace Setup' },
+    { label: 'Platform Settings', path: 'settings', permission: 'settings.view', superAdminOnly: false, group: 'Marketplace Setup' },
+    { label: 'Payments & Finance', path: 'payments', permission: '', superAdminOnly: true, group: 'Finance & Transactions' },
+    { label: 'Reports & Analytics', path: 'reports', permission: 'reports.view', superAdminOnly: false, group: 'Insights & Security' },
+    { label: 'Automation', path: 'automation', permission: 'automation.view', superAdminOnly: false, group: 'Automation' },
+    { label: 'Notifications', path: 'notifications', permission: 'notifications.view', superAdminOnly: false, group: 'Communications & Support' },
+    { label: 'Audit Logs', path: 'audit', permission: 'audit.view', superAdminOnly: false, group: 'Insights & Security' },
+    { label: 'Help Support Inbox', path: 'help-support', permission: '', superAdminOnly: true, group: 'Communications & Support' },
+    { label: 'Account Verification', path: 'profile-approvals', permission: 'users.view', superAdminOnly: false, group: 'Approvals & Listings' },
+  ]
+
+  const visibleAdminNavigation = adminNavigation.filter((item) =>
+    item.superAdminOnly
+      ? Boolean(user?.roles.includes('super_admin'))
+      : Boolean((item.permission && user?.permissions.includes(item.permission)) || (item.secondaryPermission && user?.permissions.includes(item.secondaryPermission))),
+  )
+  const navigationGroups = Array.from(new Set(visibleAdminNavigation.map((item) => item.group))).map((group) => ({
+    label: group,
+    items: visibleAdminNavigation.filter((item) => item.group === group),
+  }))
 
   useEffect(() => {
     const timer = window.setInterval(() => setDashboardTime(new Date()), 60000)
@@ -440,7 +483,7 @@ useEffect(() => {
 
         if (
           !currentUser ||
-          !currentUser.roles.includes('super_admin')
+          !currentUser.permissions.includes('dashboard.view')
         ) {
           setScreen('login')
           return
@@ -480,9 +523,9 @@ useEffect(() => {
     try {
       const loggedInUser = await adminLogin(email.trim(), password)
 
-      if (!loggedInUser.roles.includes('super_admin')) {
+      if (!loggedInUser.permissions.includes('dashboard.view')) {
         await adminLogout()
-        throw new Error('This account does not have Super Admin access.')
+        throw new Error('This account does not have administrator dashboard access.')
       }
 
       setUser(loggedInUser)
@@ -545,7 +588,13 @@ useEffect(() => {
 
   // Navigation
   function navigateAdminSection(nextSection: AdminSection) {
-    if (nextSection === section) return
+    const navigationItem = adminNavigation.find((item) => item.path === nextSection)
+    const hasAccess = navigationItem && (
+      navigationItem.superAdminOnly
+        ? Boolean(user?.roles.includes('super_admin'))
+        : Boolean((navigationItem.permission && user?.permissions.includes(navigationItem.permission)) || (navigationItem.secondaryPermission && user?.permissions.includes(navigationItem.secondaryPermission)))
+    )
+    if (!hasAccess || nextSection === section) return
     setSectionHistory((current) => [...current, section])
     setSection(nextSection)
   }
@@ -564,15 +613,21 @@ useEffect(() => {
     if (window.history.length > 1) window.history.back()
   }
   function openUsers() {
+    const canViewAccounts = Boolean(user?.permissions.includes('users.view'))
+    setPeopleView(canViewAccounts ? 'accounts' : 'roles')
     navigateAdminSection('users')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
     setNotice('')
-    setUserSearch('')
-    setUserStatus('all')
-    setUserOffset(0)
-    void loadUsers('', 'all', 0)
+    if (canViewAccounts) {
+      setUserSearch('')
+      setUserStatus('all')
+      setUserOffset(0)
+      void loadUsers('', 'all', 0)
+    } else if (user?.permissions.includes('roles.view')) {
+      void loadRoles()
+    }
   }
 
   function openOverview() {
@@ -587,7 +642,8 @@ useEffect(() => {
   }
 
   function openRoles() {
-    navigateAdminSection('roles')
+    setPeopleView('roles')
+    navigateAdminSection('users')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
     setError('')
@@ -629,6 +685,17 @@ useEffect(() => {
   setNotice('')
 }
 
+function openPayments() {
+  navigateAdminSection('payments')
+  setSelectedRoleId(null)
+  setSelectedRoleUserId(null)
+  setUsersError('')
+  setRolesError('')
+  setAuditError('')
+  setError('')
+  setNotice('')
+}
+
 function openReports() {
   navigateAdminSection('reports')
   setSelectedRoleId(null)
@@ -641,6 +708,7 @@ function openReports() {
 }
 
 function openAutomation() {
+  setAutomationView('control')
   navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
@@ -652,7 +720,8 @@ function openAutomation() {
 }
 
 function openAutomationRules() {
-  navigateAdminSection('automation-rules')
+  setAutomationView('rules')
+  navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -663,7 +732,8 @@ function openAutomationRules() {
 }
 
 function openAutomationMonitoring() {
-  navigateAdminSection('automation-monitoring')
+  setAutomationView('monitoring')
+  navigateAdminSection('automation')
   setSelectedRoleId(null)
   setSelectedRoleUserId(null)
   setUsersError('')
@@ -674,7 +744,7 @@ function openAutomationMonitoring() {
 }
 
   function openProfileApprovals() {
-    if (!user?.roles.includes('super_admin')) return
+    if (!user?.permissions.includes('users.view')) return
     navigateAdminSection('profile-approvals')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
@@ -723,6 +793,15 @@ function openAutomationMonitoring() {
 }
 
   function handleAdminSidebarNavigation(path: string) {
+    const allowed = adminNavigation.some((item) =>
+      item.path === path && (
+        item.superAdminOnly
+          ? Boolean(user?.roles.includes('super_admin'))
+          : Boolean((item.permission && user?.permissions.includes(item.permission)) || (item.secondaryPermission && user?.permissions.includes(item.secondaryPermission)))
+      ),
+    )
+    if (!allowed) return
+
     switch (path as AdminSection) {
       case 'overview': openOverview(); break
       case 'users': openUsers(); break
@@ -730,6 +809,7 @@ function openAutomationMonitoring() {
       case 'moderation': openModeration(); break
       case 'categories': openCategories(); break
       case 'settings': openSettings(); break
+      case 'payments': openPayments(); break
       case 'reports': openReports(); break
       case 'audit': openAuditLogs(); break
       case 'automation': openAutomation(); break
@@ -1061,10 +1141,25 @@ function openAutomationMonitoring() {
     )
   }
 
+  const themeSelector = (
+    <div className="admin-theme-selector" role="group" aria-label="Appearance preference">
+      <button type="button" className={theme === 'light' ? 'is-active' : ''} aria-pressed={theme === 'light'} onClick={() => setTheme('light')} title="Light theme">
+        <span aria-hidden="true">☀</span><span>Light</span>
+      </button>
+      <button type="button" className={theme === 'system' ? 'is-active' : ''} aria-pressed={theme === 'system'} onClick={() => setTheme('system')} title="Use system theme">
+        <span aria-hidden="true">◐</span><span>System</span>
+      </button>
+      <button type="button" className={theme === 'dark' ? 'is-active' : ''} aria-pressed={theme === 'dark'} onClick={() => setTheme('dark')} title="Dark theme">
+        <span aria-hidden="true">☾</span><span>Dark</span>
+      </button>
+    </div>
+  )
+
   // Login checking screen
   if (screen === 'checking') {
     return (
       <main className="admin-shell">
+        <div className="admin-theme-selector-floating">{themeSelector}</div>
         <div className="admin-loading">
           <div className="admin-brand-mark">SH</div>
           <h1>SMART HELP MARKET</h1>
@@ -1078,6 +1173,7 @@ function openAutomationMonitoring() {
   if (screen === 'login') {
     return (
       <main className="admin-shell">
+        <div className="admin-theme-selector-floating">{themeSelector}</div>
         <section className="admin-login-layout">
           <div className="admin-login-brand">
             <div className="admin-brand-mark">SH</div>
@@ -1095,9 +1191,9 @@ function openAutomationMonitoring() {
 
           <form className="admin-login-card" onSubmit={handleLogin}>
             <span className="admin-kicker">RESTRICTED ACCESS</span>
-            <h2>Super Admin</h2>
+            <h2>Administrator Access</h2>
             <p className="admin-muted">
-              Sign in using your provisioned administrator account.
+              Sign in using your authorised administrator account.
             </p>
 
             {error && (
@@ -1164,24 +1260,27 @@ function openAutomationMonitoring() {
           <span className="admin-brand-mark">SH</span>
           <span>
             <strong>SMART HELP MARKET</strong>
-            <small>SUPER ADMIN CONSOLE</small>
+            <small>{user?.roles.includes('super_admin') ? 'SUPER ADMIN CONSOLE' : 'ADMIN WORKSPACE'}</small>
           </span>
         </a>
 
         <div className="admin-topbar-actions">
+          {themeSelector}
           <span className="admin-status">
             <span /> Administrator
           </span>
 
-          <button
-            type="button"
-            className={`admin-nav-button ${section === 'help-support' ? 'is-active' : ''}`}
-            aria-current={section === 'help-support' ? 'page' : undefined}
-            onClick={openHelpSupport}
-          >
-            <span aria-hidden="true">✦</span>
-            Help Support Inbox
-          </button>
+          {user?.roles.includes('super_admin') && (
+            <button
+              type="button"
+              className={`admin-nav-button ${section === 'help-support' ? 'is-active' : ''}`}
+              aria-current={section === 'help-support' ? 'page' : undefined}
+              onClick={openHelpSupport}
+            >
+              <span aria-hidden="true">✦</span>
+              Help Support Inbox
+            </button>
+          )}
 
           {user?.permissions.includes('notifications.view') && (
   <button
@@ -1219,22 +1318,7 @@ function openAutomationMonitoring() {
       </header>
 
       <WorkspaceFloatingSidebar
-        links={[
-          { label: 'Overview', path: 'overview' },
-          { label: 'User Management', path: 'users' },
-          { label: 'Listing Moderation', path: 'moderation' },
-          { label: 'Categories', path: 'categories' },
-          { label: 'Platform Settings', path: 'settings' },
-          { label: 'Reports & Analytics', path: 'reports' },
-          { label: 'Automation Control', path: 'automation' },
-          { label: 'Automation Rules', path: 'automation-rules' },
-          { label: 'Automation Monitoring', path: 'automation-monitoring' },
-          { label: 'Role Management', path: 'roles' },
-          ...(user?.permissions.includes('notifications.view') ? [{ label: 'Notifications', path: 'notifications' }] : []),
-          ...(user?.roles.includes('super_admin') ? [{ label: 'Profile Approvals', path: 'profile-approvals' }] : []),
-          { label: 'Audit Logs', path: 'audit' },
-          { label: 'Help Support Inbox', path: 'help-support' },
-        ]}
+        links={visibleAdminNavigation.map(({ label, path, group }) => ({ label, path, group }))}
         onNavigate={handleAdminSidebarNavigation}
         activePath={section}
       />
@@ -1252,7 +1336,7 @@ function openAutomationMonitoring() {
         </nav>
         <div className="admin-page-heading">
           <div>
-            <span className="admin-kicker">PLATFORM CONTROL CENTRE</span>
+            <span className="admin-kicker">{user?.roles.includes('super_admin') ? 'PLATFORM CONTROL CENTRE' : 'ADMINISTRATION WORKSPACE'}</span>
             <h1>
               Good to see you, {user?.displayName || 'Administrator'}.
             </h1>
@@ -1284,172 +1368,25 @@ function openAutomationMonitoring() {
 
         {/* MAIN NAVIGATION */}
         <nav className="admin-section-nav" aria-label="Admin sections">
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'overview' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'overview' ? 'page' : undefined}
-            onClick={openOverview}
-          >
-            <span aria-hidden="true">▦</span>
-            Overview
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'users' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'users' ? 'page' : undefined}
-            onClick={openUsers}
-          >
-            <span aria-hidden="true">♙</span>
-            User Management
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'moderation' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'moderation' ? 'page' : undefined}
-            onClick={openModeration}
-          >
-            <span aria-hidden="true">◈</span>
-            Listing Moderation
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'categories' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'categories' ? 'page' : undefined}
-            onClick={openCategories}
-          >
-            <span aria-hidden="true">◇</span>
-            Categories
-          </button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-            section === 'settings' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'settings' ? 'page' : undefined}
-            onClick={openSettings}
-          >
-            <span className="admin-animated-gear" aria-hidden="true">⚙</span>
-            Platform Settings
-          </button>
-
-          <button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'reports' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'reports' ? 'page' : undefined}
-  onClick={openReports}
->
-  <span aria-hidden="true">▥</span>
-  Reports &amp; Analytics
-</button>
-
-<button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'automation' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'automation' ? 'page' : undefined}
-  onClick={openAutomation}
->
-  <span aria-hidden="true">⚡</span>
-  Automation Control
-</button>
-
-<button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'automation-rules' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'automation-rules' ? 'page' : undefined}
-  onClick={openAutomationRules}
->
-  <span aria-hidden="true">⚙</span>
-  Automation Rules
-</button>
-
-<button
-  type="button"
-  className={`admin-nav-button ${
-    section === 'automation-monitoring' ? 'is-active' : ''
-  }`}
-  aria-current={section === 'automation-monitoring' ? 'page' : undefined}
-  onClick={openAutomationMonitoring}
->
-  <span aria-hidden="true">📊</span>
-  Automation Monitoring
-</button>
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'roles' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'roles' ? 'page' : undefined}
-            onClick={openRoles}
-          >
-            <span aria-hidden="true">🛡</span>
-            Role Management
-          </button>
-
-          {user?.permissions.includes('notifications.view') && (
-  <button
-    type="button"
-    className={`admin-nav-button ${
-      section === 'notifications' ? 'is-active' : ''
-    }`}
-    aria-current={
-      section === 'notifications' ? 'page' : undefined
-    }
-    onClick={openNotifications}
-  >
-    <span aria-hidden="true">♧</span>
-    Notifications
-    {notificationUnreadCount > 0 && (
-      <span className="admin-notification-nav-count">
-        {notificationUnreadCount > 99
-          ? '99+'
-          : notificationUnreadCount}
-      </span>
-    )}
-  </button>
-)}
-
-          {user?.roles.includes('super_admin') && (
-            <button
-              type="button"
-              className={`admin-nav-button ${section === 'profile-approvals' ? 'is-active' : ''}`}
-              aria-current={section === 'profile-approvals' ? 'page' : undefined}
-              onClick={openProfileApprovals}
-            >
-              <span aria-hidden="true">✓</span>
-              Profile Approvals
-            </button>
-          )}
-
-          <button
-            type="button"
-            className={`admin-nav-button ${
-              section === 'audit' ? 'is-active' : ''
-            }`}
-            aria-current={section === 'audit' ? 'page' : undefined}
-            onClick={openAuditLogs}
-          >
-            <span aria-hidden="true">▤</span>
-            Audit Logs
-          </button>
+          {navigationGroups.map((group) => (
+            <div className="admin-section-nav-group" key={group.label}>
+              <span className="admin-section-nav-group-label">{group.label}</span>
+              <div className="admin-section-nav-group-items">
+                {group.items.map((item) => (
+                  <button
+                    key={item.path}
+                    type="button"
+                    className={`admin-nav-button ${section === item.path ? 'is-active' : ''}`}
+                    aria-current={section === item.path ? 'page' : undefined}
+                    onClick={() => handleAdminSidebarNavigation(item.path)}
+                  >
+                    <span aria-hidden="true">{item.path === 'overview' ? '▦' : item.path === 'settings' ? '⚙' : item.path === 'audit' ? '▤' : item.path === 'automation' ? '⟳' : '◇'}</span>
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* OVERVIEW */}
@@ -1473,90 +1410,38 @@ function openAutomationMonitoring() {
               />
             </div>
 
-            <div className="admin-section-heading">
-              <div>
-                <span className="admin-kicker">LIVE DATABASE COUNTS</span>
-                <h2>Marketplace overview</h2>
-              </div>
-
-              <span className="admin-live-label">
-                <span /> Server data
-              </span>
-            </div>
-
-            {overview ? (
-              <div className="admin-stat-grid">
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openUsers}>
-                  <span className="admin-stat-icon">♙</span>
-                  <span className="admin-stat-label">Total users</span>
-                  <strong>{overview.users.total.toLocaleString()}</strong>
-                  <small>{overview.users.active} active accounts</small>
-                </button>
-
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openModeration}>
-                  <span className="admin-stat-icon">⌂</span>
-                  <span className="admin-stat-label">Total listings</span>
-                  <strong>{overview.listings.total.toLocaleString()}</strong>
-                  <small>{overview.listings.published} published</small>
-                </button>
-
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openCategories}>
-                  <span className="admin-stat-icon">◇</span>
-                  <span className="admin-stat-label">Categories</span>
-                  <strong>{overview.categories.total.toLocaleString()}</strong>
-                  <small>Marketplace categories</small>
-                </button>
-
-                <button type="button" className="admin-stat-card admin-stat-card-action" onClick={openAuditLogs}>
-                  <span className="admin-stat-icon">◉</span>
-                  <span className="admin-stat-label">Active sessions</span>
-                  <strong>{overview.activeSessions.toLocaleString()}</strong>
-                  <small>Sessions not yet expired · View audit logs</small>
-                </button>
-              </div>
-            ) : (
-              <div className="admin-empty-panel">
-                <h3>Statistics are not available yet</h3>
-                <p>Refresh the dashboard to try loading them again.</p>
-                <button
-                  className="admin-secondary-button"
-                  onClick={refreshOverview}
-                  disabled={busy}
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-
-            <section className="admin-next-panel">
-              <span className="admin-kicker">ADMINISTRATION ROADMAP</span>
-              <h2>Marketplace administration is growing.</h2>
-              <p>
-                Core account controls, access management, listing moderation,
-                category administration and administrative activity are
-                available. Platform settings, reporting and workflow
-                automation are planned.
-              </p>
-
-              <div className="admin-roadmap-list">
-                <span>✓ Protected administrator sign-in</span>
-                <span>✓ Session-aware dashboard</span>
-                <span>✓ Live database statistics</span>
-                <span>✓ User account management</span>
-                <span>✓ Role and permission directory</span>
-                <span>✓ Listing review and moderation</span>
-                <span>✓ Audit activity directory</span>
-                <span>✓ Category management</span>
-                <span>✓ Platform settings</span>
-                <span>✓ Reports and operational analytics</span>
-                <span>○ Workflow automation</span>
-              </div>
-            </section>
+            <AdminOverviewPanel
+              overview={overview}
+              permissions={user?.permissions ?? []}
+              isSuperAdmin={Boolean(user?.roles.includes('super_admin'))}
+              onOpenUsers={openUsers}
+              onOpenListings={openModeration}
+              onOpenCategories={openCategories}
+              onOpenSettings={openSettings}
+              onOpenReports={openReports}
+              onOpenRoles={openRoles}
+              onOpenAudit={openAuditLogs}
+              onOpenAutomation={openAutomation}
+              onRefresh={refreshOverview}
+              refreshing={busy}
+            />
           </>
         )}
 
-        {/* USER MANAGEMENT */}
+        {/* COMBINED PEOPLE AND ACCESS WORKSPACE TABS */}
         {section === 'users' && (
+          <div className="admin-workspace-tabs" role="tablist" aria-label="People and access sections">
+            {user?.permissions.includes('users.view') && (
+              <button type="button" role="tab" aria-selected={peopleView === 'accounts'} className={peopleView === 'accounts' ? 'is-active' : ''} onClick={openUsers}>User Accounts</button>
+            )}
+            {user?.permissions.includes('roles.view') && (
+              <button type="button" role="tab" aria-selected={peopleView === 'roles'} className={peopleView === 'roles' ? 'is-active' : ''} onClick={openRoles}>Roles &amp; Permissions</button>
+            )}
+          </div>
+        )}
+
+        {/* USER MANAGEMENT */}
+        {section === 'users' && peopleView === 'accounts' && user?.permissions.includes('users.view') && (
           <section className="admin-users-section">
             <div className="admin-section-heading">
               <div>
@@ -1965,7 +1850,7 @@ function openAutomationMonitoring() {
         )}
 
         {/* ROLE MANAGEMENT */}
-        {section === 'roles' && (
+        {section === 'users' && peopleView === 'roles' && user?.permissions.includes('roles.view') && (
           <section className="admin-users-section">
             <div className="admin-section-heading">
               <div>
@@ -2132,7 +2017,7 @@ function openAutomationMonitoring() {
         )}
 
         {/* ROLE PERMISSION EDITOR */}
-        {section === 'roles' && renderPermissionEditor()}
+        {section === 'users' && peopleView === 'roles' && user?.permissions.includes('roles.view') && renderPermissionEditor()}
 
         {/* LISTING MODERATION */}
         {section === 'moderation' && (
@@ -2146,7 +2031,11 @@ function openAutomationMonitoring() {
 
         {/* PLATFORM SETTINGS */}
         {section === 'settings' && (
-          <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement /></Suspense>
+          <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement isSuperAdmin={Boolean(user?.roles.includes('super_admin'))} /></Suspense>
+        )}
+
+        {section === 'payments' && user?.roles.includes('super_admin') && (
+          <Suspense fallback={<AdminModuleFallback />}><AdminPaymentManagement /></Suspense>
         )}
 
         {/* REPORTS AND ANALYTICS */}
@@ -2154,20 +2043,36 @@ function openAutomationMonitoring() {
           <Suspense fallback={<AdminModuleFallback />}><AdminReports /></Suspense>
         )}
 
-        {/* AUTOMATION CONTROL */}
-{section === 'automation' && (
-  <Suspense fallback={<AdminModuleFallback />}><AdminAutomation onNotice={setNotice} /></Suspense>
-)}
-
-{/* AUTOMATION RULES */}
-{section === 'automation-rules' && (
-  <Suspense fallback={<AdminModuleFallback />}><AdminAutomationRules onNotice={setNotice} /></Suspense>
-)}
-
-{/* AUTOMATION MONITORING */}
-{section === 'automation-monitoring' && (
-  <Suspense fallback={<AdminModuleFallback />}><AdminAutomationMonitoring /></Suspense>
-)}
+        {/* CONSOLIDATED AUTOMATION WORKSPACE */}
+        {section === 'automation' && (
+          <section className="admin-automation-workspace">
+            <div className="admin-section-heading">
+              <div>
+                <span className="admin-kicker">AUTOMATION CENTRE</span>
+                <h2>Automation Workspace</h2>
+                <p className="admin-users-description">Control background automation, manage rules and inspect execution history from one place.</p>
+              </div>
+            </div>
+            <div className="admin-workspace-tabs" role="tablist" aria-label="Automation sections">
+              <button type="button" role="tab" aria-selected={automationView === 'control'} className={automationView === 'control' ? 'is-active' : ''} onClick={() => setAutomationView('control')}>Control</button>
+              {user?.permissions.includes('automation.manage') && (
+                <button type="button" role="tab" aria-selected={automationView === 'rules'} className={automationView === 'rules' ? 'is-active' : ''} onClick={() => setAutomationView('rules')}>Rules</button>
+              )}
+              {user?.permissions.includes('automation.view') && (
+                <button type="button" role="tab" aria-selected={automationView === 'monitoring'} className={automationView === 'monitoring' ? 'is-active' : ''} onClick={() => setAutomationView('monitoring')}>Monitoring</button>
+              )}
+            </div>
+            {automationView === 'control' && (
+              <Suspense fallback={<AdminModuleFallback />}><AdminAutomation onNotice={setNotice} /></Suspense>
+            )}
+            {automationView === 'rules' && user?.permissions.includes('automation.manage') && (
+              <Suspense fallback={<AdminModuleFallback />}><AdminAutomationRules onNotice={setNotice} /></Suspense>
+            )}
+            {automationView === 'monitoring' && user?.permissions.includes('automation.view') && (
+              <Suspense fallback={<AdminModuleFallback />}><AdminAutomationMonitoring /></Suspense>
+            )}
+          </section>
+        )}
 
 {/* HELP CENTRE SUPPORT INBOX */}
 {section === 'help-support' && (
@@ -2184,9 +2089,9 @@ function openAutomationMonitoring() {
     /></Suspense>
   )}
 
-        {/* PROFILE APPROVAL CENTRE */}
-        {section === 'profile-approvals' && user?.roles.includes('super_admin') && (
-          <Suspense fallback={<AdminModuleFallback />}><AdminProfileApprovals /></Suspense>
+        {/* ACCOUNT VERIFICATION CENTRE */}
+        {section === 'profile-approvals' && user?.permissions.includes('users.view') && (
+          <Suspense fallback={<AdminModuleFallback />}><AdminProfileApprovals canManage={Boolean(user?.permissions.includes('users.manage'))} /></Suspense>
         )}
 
         {/* AUDIT LOGS */}
@@ -2454,7 +2359,7 @@ function openAutomationMonitoring() {
 
           <span>
             {section === 'users'
-              ? 'User directory'
+              ? peopleView === 'accounts' ? 'User account directory' : 'Roles and permissions workspace'
               : section === 'roles'
                 ? 'Role and permission directory'
                 : section === 'moderation'
@@ -2468,7 +2373,7 @@ function openAutomationMonitoring() {
                         : section === 'audit'
                           ? 'Administrative audit activity'
                           : section === 'automation'
-                            ? 'Marketplace automation control'
+                            ? 'Marketplace automation workspace'
                             : section === 'automation-rules'
                               ? 'Marketplace automation rules'
                               : section === 'automation-monitoring'

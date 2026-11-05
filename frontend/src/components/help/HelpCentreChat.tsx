@@ -237,7 +237,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
     setSupportNotice('')
   }
 
-  async function submitMessage(event?: FormEvent<HTMLFormElement>, preset?: string) {
+  async function submitMessage(event?: FormEvent<HTMLFormElement>, preset?: string, suggestionOfMessageId?: string) {
     event?.preventDefault()
     const value = (preset ?? input).trim()
     if (!value || sending || !user) return
@@ -254,7 +254,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
     setMessages((current) => [...current, optimistic])
     try {
       await new Promise((resolve) => window.setTimeout(resolve, 420))
-      const result = await sendHelpMessage(value, conversationId || undefined, pathname)
+      const result = await sendHelpMessage(value, conversationId || undefined, pathname, suggestionOfMessageId)
       setConversationId(result.conversationId)
       setMessages((current) => [...current, {
         id: result.assistantMessageId,
@@ -378,7 +378,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
                   ))}
                   {message.metadata?.actions?.map((action) => <Link className="help-action-link" to={action.path} key={action.path} onClick={onClose}>{action.label}<span>↗</span></Link>)}
                   {message.metadata?.suggestions && message.metadata.suggestions.length > 0 && (
-                    <div className="help-chat-suggestions">{message.metadata.suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void submitMessage(undefined, suggestion)}>{suggestion}</button>)}</div>
+                    <div className="help-chat-suggestions">{message.metadata.suggestions.map((suggestion) => <button type="button" key={suggestion} disabled={sending} onClick={() => void submitMessage(undefined, suggestion, message.id)}>{suggestion}</button>)}</div>
                   )}
                   {message.sender === 'assistant' && /^\d+$/.test(message.id) && (
                     <>
@@ -436,7 +436,7 @@ export default function HelpCentreChat({ mode = 'floating', onClose }: { mode?: 
 
           {!assistantEnabled && <div className="help-chat-error" role="status">The Help Centre assistant is temporarily disabled by the administrator.</div>}
           <div className="help-chat-composer-wrap">
-            {usage && <div className="help-chat-usage"><span>{usage.remaining} of {usage.limit} included messages remaining this month</span><span>{usage.used}/{usage.limit}</span></div>}
+            {usage && <div className="help-chat-usage">{usage.unlimited ? <span>{usage.used} messages used. Unlimited free messages.</span> : <><span>{usage.remaining} of {usage.limit} included messages remaining this month</span><span>{usage.used}/{usage.limit}</span></>}</div>}
             <form className="help-chat-composer" onSubmit={(event) => void submitMessage(event)}>
               <textarea value={input} onChange={(event) => setInput(event.target.value)} disabled={!assistantEnabled} placeholder="Ask me anything about the marketplace..." rows={1} maxLength={1200} onKeyDown={(event) => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); void submitMessage() } }}/>
               <button type="submit" disabled={!assistantEnabled || !input.trim() || sending} aria-label="Send message">↑</button>

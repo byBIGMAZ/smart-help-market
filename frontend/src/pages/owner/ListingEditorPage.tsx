@@ -4,6 +4,8 @@ import {
   getPublicCategories,
   type MarketplaceCategory,
 } from '../../services/marketplaceCategories'
+import { createOwnerListingDraft, updateOwnerListingDraft } from '../../services/ownerListingDrafts'
+import { getOwnerListings } from '../../services/ownerListings'
 import './ListingEditorPage.css'
 
 type ListingKind = 'properties' | 'products' | 'services'
@@ -29,6 +31,8 @@ interface PropertyUnit {
 interface Draft {
   values: FormValues
   units: Omit<PropertyUnit, 'photos' | 'videoUrl'>[]
+  categoryKey?: string
+  serverListingId?: string
   updatedAt: string
 }
 
@@ -332,6 +336,7 @@ export default function ListingEditorPage() {
       : 'properties'
 
   const storageKey = `smart-help-market-listing-draft-${kind}`
+  const draftId = new URLSearchParams(location.search).get('draftId') || ''
 
   const [values, setValues] = useState<FormValues>(emptyValues)
   const [categories, setCategories] = useState<MarketplaceCategory[]>([])
@@ -345,6 +350,9 @@ export default function ListingEditorPage() {
   const [cameraUnitId, setCameraUnitId] = useState<string | null>(null)
   const [expandedUnit, setExpandedUnit] = useState<string | null>(null)
   const [restored, setRestored] = useState(false)
+  const [serverListingId, setServerListingId] = useState('')
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [isLoadingServerDraft, setIsLoadingServerDraft] = useState(false)
 
   const category = categories.find((item) => item.key === categoryKey)
 
@@ -356,11 +364,17 @@ export default function ListingEditorPage() {
   const isCommercial = propertyType === 'Commercial property'
   const usesUnits = !isLand
 
-  const heading = kind === 'properties'
-    ? 'Build your property listing'
-    : kind === 'products'
-      ? 'Build your product listing'
-      : 'Build your service listing'
+  const heading = draftId
+    ? kind === 'properties'
+      ? 'Edit your property listing'
+      : kind === 'products'
+        ? 'Edit your product listing'
+        : 'Edit your service listing'
+    : kind === 'properties'
+      ? 'Build your property listing'
+      : kind === 'products'
+        ? 'Build your product listing'
+        : 'Build your service listing'
 
   const description = kind === 'properties'
     ? 'Tell us about the property. Your questions will adapt to the type you select.'
@@ -385,6 +399,8 @@ export default function ListingEditorPage() {
 
         if (draft.values && typeof draft.values === 'object') {
           setValues({ ...emptyValues, ...draft.values })
+          if (typeof draft.categoryKey === 'string') setCategoryKey(draft.categoryKey)
+          if (typeof draft.serverListingId === 'string') setServerListingId(draft.serverListingId)
           setRestored(true)
 
           if (Array.isArray(draft.units) && draft.units.length) {
@@ -405,6 +421,85 @@ export default function ListingEditorPage() {
       active = false
     }
   }, [storageKey])
+
+  useEffect(() => {
+    if (!draftId) return
+
+    let active = true
+    setIsLoadingServerDraft(true)
+    setError('')
+
+    getOwnerListings()
+      .then((listings) => {
+        if (!active) return
+
+        const listing = listings.find((item) => item.id === draftId)
+        if (!listing || listing.status.toLowerCase() !== 'draft') {
+          setError('This draft could not be found in your account, or it is no longer editable.')
+          return
+        }
+
+        const details = listing.details
+        if (!details || typeof details !== 'object' || Array.isArray(details)) {
+          setError('This saved draft does not contain readable listing details.')
+          return
+        }
+
+        const savedKind = details.kind
+        const rawValues = details.values
+        if (
+          savedKind !== kind ||
+          !rawValues ||
+          typeof rawValues !== 'object' ||
+          Array.isArray(rawValues)
+        ) {
+          setError('This draft belongs to a different listing workspace or has incomplete details.')
+          return
+        }
+
+        const restoredValues = Object.fromEntries(
+          Object.entries(rawValues).filter(
+            (entry): entry is [string, string] => typeof entry[1] === 'string',
+          ),
+        ) as FormValues
+
+        const rawUnits = Array.isArray(details.units) ? details.units : []
+        const restoredUnits: PropertyUnit[] = rawUnits
+          .filter((unit): unit is Record<string, unknown> =>
+            typeof unit === 'object' && unit !== null && !Array.isArray(unit),
+          )
+          .map((unit, index) => ({
+            ...createUnit(index),
+            id: typeof unit.id === 'string' ? unit.id : createUnit(index).id,
+            name: typeof unit.name === 'string' ? unit.name : `Unit ${index + 1}`,
+            rent: typeof unit.rent === 'string' ? unit.rent : '',
+            bedrooms: typeof unit.bedrooms === 'string' ? unit.bedrooms : '',
+            bathrooms: typeof unit.bathrooms === 'string' ? unit.bathrooms : '',
+            description: typeof unit.description === 'string' ? unit.description : '',
+            photos: [],
+            videoUrl: '',
+          }))
+
+        setValues({ ...emptyValues, ...restoredValues })
+        setCategoryKey(listing.categoryKey)
+        setServerListingId(listing.id)
+        setUnits(restoredUnits.length ? restoredUnits : [createUnit(0)])
+        setRestored(true)
+        setNotice('Saved marketplace draft loaded. Continue editing and save your changes when ready.')
+      })
+      .catch((cause) => {
+        if (active) {
+          setError(cause instanceof Error ? cause.message : 'Unable to load this saved draft.')
+        }
+      })
+      .finally(() => {
+        if (active) setIsLoadingServerDraft(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [draftId, kind])
 
   useEffect(() => {
     return () => {
@@ -509,19 +604,67 @@ export default function ListingEditorPage() {
     }))
   }
 
-  function saveDraft() {
+  async function saveDraft() {
+    setIsSavingDraft(true)
+    setNotice('')
+    setError('')
+
+    const savedValues = kind === 'properties' && !isLand && values.purpose !== 'For sale'
+      ? { ...values, price: '' }
+      : values
+
+    const draft: Draft = {
+      values: savedValues,
+      units: units.map(({ photos, videoUrl, ...unit }) => unit),
+      categoryKey,
+      serverListingId,
+      updatedAt: new Date().toISOString(),
+    }
+
     try {
-      const draft: Draft = {
-        values,
-        units: units.map(({ photos, videoUrl, ...unit }) => unit),
-        updatedAt: new Date().toISOString(),
+      localStorage.setItem(storageKey, JSON.stringify(draft))
+    } catch {
+      setError('Unable to save your local recovery copy. Check your browser storage.')
+      setIsSavingDraft(false)
+      return
+    }
+
+    if (!categoryKey) {
+      setNotice('Your draft is saved in this browser. Select a marketplace category to also save it to your account.')
+      setIsSavingDraft(false)
+      return
+    }
+
+    try {
+      const payload = {
+        categoryKey,
+        details: {
+          version: 1 as const,
+          kind,
+          values: savedValues,
+          units: kind === 'properties'
+            ? (isLand ? [] : units.map(({ photos, videoUrl, ...unit }) => unit))
+            : [],
+        },
       }
 
-      localStorage.setItem(storageKey, JSON.stringify(draft))
-      setNotice('Your listing draft has been saved in this browser.')
-      setError('')
-    } catch {
-      setError('Unable to save your draft. Check your browser storage.')
+      const saved = serverListingId
+        ? await updateOwnerListingDraft(serverListingId, payload)
+        : await createOwnerListingDraft(payload)
+
+      const nextDraft: Draft = {
+        ...draft,
+        serverListingId: saved.id,
+        updatedAt: new Date().toISOString(),
+      }
+      setServerListingId(saved.id)
+      localStorage.setItem(storageKey, JSON.stringify(nextDraft))
+      setNotice('Your draft is saved to your marketplace account and this browser. It has not been published.')
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : 'Marketplace draft synchronisation failed.'
+      setError('Your local draft is safe, but it could not be synced to your marketplace account: ' + message)
+    } finally {
+      setIsSavingDraft(false)
     }
   }
 
@@ -573,7 +716,14 @@ export default function ListingEditorPage() {
 
       <label className="listing-editor-field">
         Listing purpose
-        <select value={values.purpose} onChange={(event) => updateField('purpose', event.target.value)}>
+        <select
+          value={values.purpose}
+          onChange={(event) => {
+            const purpose = event.target.value
+            updateField('purpose', purpose)
+            if (purpose !== 'For sale' && !isLand) updateField('price', '')
+          }}
+        >
           <option>For rent</option>
           <option>For sale</option>
           <option>Shortlet</option>
@@ -631,6 +781,47 @@ export default function ListingEditorPage() {
             </label>
           )}
 
+          {values.purpose !== 'For sale' && (
+            <div className="smart-conditional-panel">
+              <label className="listing-editor-field">
+                <span>Use one amount for every unit</span>
+                <select
+                  value={values.sameUnitPrice || 'no'}
+                  onChange={(event) => {
+                    const enabled = event.target.value === 'yes'
+                    updateField('sameUnitPrice', enabled ? 'yes' : 'no')
+                    if (enabled) {
+                      setUnits((current) => current.map((unit) => ({
+                        ...unit,
+                        rent: values.sharedUnitPrice || '',
+                      })))
+                    }
+                  }}
+                >
+                  <option value="no">No, set an amount for each unit</option>
+                  <option value="yes">Yes, all units have the same amount</option>
+                </select>
+              </label>
+              {values.sameUnitPrice === 'yes' && (
+                <label className="listing-editor-field">
+                  Shared amount for all units (₦)
+                  <input
+                    type="number"
+                    min="0"
+                    value={values.sharedUnitPrice || ''}
+                    onChange={(event) => {
+                      const amount = event.target.value
+                      updateField('sharedUnitPrice', amount)
+                      setUnits((current) => current.map((unit) => ({ ...unit, rent: amount })))
+                    }}
+                    placeholder="Enter the common rent or shortlet amount"
+                  />
+                </label>
+              )}
+              <small>The parent listing will not carry a rental amount. The shared amount, when used, is applied to every unit.</small>
+            </div>
+          )}
+
           <div className="smart-unit-intro">
             <div>
               <h3>Manage each {isSingleRoom ? 'room' : isHostel ? 'hostel room' : isCommercial ? 'space' : 'unit'}</h3>
@@ -667,10 +858,21 @@ export default function ListingEditorPage() {
                         <input value={unit.name} onChange={(event) => updateUnit(unit.id, 'name', event.target.value)} placeholder={`Unit ${index + 1}`} />
                       </label>
 
-                      <label className="listing-editor-field">
-                        {values.purpose === 'For sale' ? 'Unit selling price (₦)' : 'Rent per unit (₦)'}
-                        <input type="number" min="0" value={unit.rent} onChange={(event) => updateUnit(unit.id, 'rent', event.target.value)} placeholder="Enter amount" />
-                      </label>
+                      {values.purpose === 'For sale' || values.sameUnitPrice !== 'yes' ? (
+                        <label className="listing-editor-field">
+                          {values.purpose === 'For sale' ? 'Unit selling price (₦)' : 'Rent per unit (₦)'}
+                          <input
+                            type="number"
+                            min="0"
+                            value={unit.rent}
+                            disabled={values.purpose !== 'For sale' && values.sameUnitPrice === 'yes'}
+                            onChange={(event) => updateUnit(unit.id, 'rent', event.target.value)}
+                            placeholder="Enter amount"
+                          />
+                        </label>
+                      ) : (
+                        <p className="smart-context-note">Shared amount applied: {unit.rent ? formatPrice(unit.rent) : 'Enter the shared amount above'}.</p>
+                      )}
 
                       {!isSelfContained && !isSingleRoom && (
                         <div className="smart-form-grid">
@@ -806,6 +1008,12 @@ export default function ListingEditorPage() {
         <Link className="listing-editor-back" to="/owner/listings">My listings</Link>
       </header>
 
+      {isLoadingServerDraft && (
+        <div className="listing-editor-notice" role="status">
+          Loading your saved marketplace draft...
+        </div>
+      )}
+
       <div className="smart-builder-progress">
         <span className="smart-progress-active"/>
         <span/>
@@ -848,25 +1056,27 @@ export default function ListingEditorPage() {
             <textarea required rows={4} value={values.description} onChange={(event) => updateField('description', event.target.value)} placeholder="Describe what makes this listing useful or attractive..."/>
           </label>
 
-          <div className="smart-form-grid">
-            <label className="listing-editor-field">
-              {kind === 'properties' ? 'Starting price (₦)' : kind === 'products' ? 'Product price (₦)' : 'Service price or starting fee (₦)'}
-              <input type="number" min="0" required value={values.price} onChange={(event) => updateField('price', event.target.value)} placeholder="Enter amount"/>
-            </label>
-            <label className="listing-editor-field">
-              Price basis
-              <select value={values.priceUnit} onChange={(event) => updateField('priceUnit', event.target.value)}>
-                <option>Negotiable</option>
-                <option>One-time</option>
-                <option>Per item</option>
-                <option>Per month</option>
-                <option>Per year</option>
-                <option>Per night</option>
-                <option>Per hour</option>
-                <option>Starting estimate</option>
-              </select>
-            </label>
-          </div>
+          {(kind !== 'properties' || isLand || values.purpose === 'For sale') && (
+            <div className="smart-form-grid">
+              <label className="listing-editor-field">
+                {kind === 'properties' ? 'Parent selling price (₦)' : kind === 'products' ? 'Product price (₦)' : 'Service price or starting fee (₦)'}
+                <input type="number" min="0" required value={values.price} onChange={(event) => updateField('price', event.target.value)} placeholder="Enter amount"/>
+              </label>
+              <label className="listing-editor-field">
+                Price basis
+                <select value={values.priceUnit} onChange={(event) => updateField('priceUnit', event.target.value)}>
+                  <option>Negotiable</option>
+                  <option>One-time</option>
+                  <option>Per item</option>
+                  <option>Per month</option>
+                  <option>Per year</option>
+                  <option>Per night</option>
+                  <option>Per hour</option>
+                  <option>Starting estimate</option>
+                </select>
+              </label>
+            </div>
+          )}
 
           <label className="listing-editor-field">
             Location
@@ -1009,7 +1219,7 @@ export default function ListingEditorPage() {
           )}
 
           <div className="listing-editor-actions smart-builder-actions">
-            <button type="button" className="listing-editor-secondary" onClick={saveDraft}>Save draft</button>
+            <button type="button" className="listing-editor-secondary" onClick={() => void saveDraft()} disabled={isSavingDraft}>{isSavingDraft ? "Saving…" : "Save draft"}</button>
             <button type="submit" className="listing-editor-primary">Preview listing <span>→</span></button>
           </div>
         </section>
@@ -1028,7 +1238,7 @@ export default function ListingEditorPage() {
           <div className="listing-editor-tip">
             <span>🔒</span>
             <h3>Draft protection</h3>
-            <p>Your details remain a local draft. Nothing is published or submitted to the marketplace server.</p>
+            <p>Your draft is saved in this browser and, when signed in with an eligible account, to your marketplace account. It is never published automatically.</p>
           </div>
           <div className="smart-builder-summary">
             <span className="listing-editor-kicker">YOUR PROGRESS</span>
@@ -1081,13 +1291,13 @@ export default function ListingEditorPage() {
                 ))}
             </dl>
 
-            <p className="listing-editor-preview-note">This is a preview only. Saving creates a local draft. Publishing and server submission are not enabled yet.</p>
+            <p className="listing-editor-preview-note">This is a preview only. Saving creates an unpublished draft in your marketplace account when signed in, together with a local recovery copy.</p>
             <div className="listing-editor-actions">
               <button type="button" className="listing-editor-secondary" onClick={() => setShowPreview(false)}>Continue editing</button>
-              <button type="button" className="listing-editor-primary" onClick={() => {
-                saveDraft()
+              <button type="button" className="listing-editor-primary" disabled={isSavingDraft} onClick={() => {
+                void saveDraft()
                 setShowPreview(false)
-              }}>Save this draft</button>
+              }}>{isSavingDraft ? "Saving…" : "Save this draft"}</button>
             </div>
           </section>
         </div>

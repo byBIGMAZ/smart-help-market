@@ -88,6 +88,7 @@ router.get(
             l.created_at AS "createdAt",
             l.property_relationship_type AS "propertyRelationshipType",
             l.parent_listing_id::text AS "parentListingId",
+            l.listing_details AS details,
             COALESCE(gallery.images, '[]'::json) AS images
           FROM public.marketplace_listings AS l
           INNER JOIN public.marketplace_categories AS c
