@@ -97,13 +97,13 @@ function resolveAssistantRole(
   if (sellerTask && available.has('seller')) return 'seller'
   if (providerTask && available.has('service_provider')) return 'service_provider'
 
-  const listingCreationIssue = ['create listing', 'creating listing', 'creating my listing', 'create my listing', 'post listing', 'posting listing', 'add property', 'add my property', 'new property', 'listing will not save', 'listing wont save', 'listing error', 'having issues creating my listing', 'trouble creating my listing'].some((cue) => text.includes(cue))
+  const listingCreationIssue = ['create listing', 'creating listing', 'creating my listing', 'create my listing', 'post listing', 'posting listing', 'add property', 'add my property', 'new property', 'listing will not save', 'listing wont save', 'listing error', 'having issues creating my listing', 'trouble creating my listing', 'having issues creating my product listing', 'having issues creating my service listing'].some((cue) => text.includes(cue))
   if (listingCreationIssue) {
-    const listingRoles = (['landlord', 'agent'] as const).filter((role) => available.has(role))
+    const listingRoles = (['landlord', 'agent', 'seller', 'service_provider'] as const).filter((role) => available.has(role))
     if (listingRoles.length === 1) return listingRoles[0]
     if (listingRoles.length > 1) {
       const remembered = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
-      if (remembered && listingRoles.includes(remembered as 'landlord' | 'agent')) return remembered
+      if (remembered && listingRoles.includes(remembered)) return remembered
       return null
     }
   }
