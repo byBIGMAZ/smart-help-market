@@ -35,6 +35,8 @@ The JSONB payload stores a versioned object containing the listing kind, form va
 - Editor: `frontend/src/pages/owner/ListingEditorPage.tsx`
 - The editor keeps its existing local-storage recovery copy.
 - When a category is selected and the user is signed in with an eligible account, Save Draft creates or updates the server-side draft.
+- Existing server drafts can be reopened with the Edit draft action on the owner listings page. The editor loads the authenticated owner's saved JSONB values and unit details using the draft ID, then updates that same draft on the next save.
+- The owner listings page displays saved purpose, property type, unit-pricing summaries, listing price where applicable, location, status, and photo count.
 - If the user is signed out or server synchronisation fails, the local recovery copy remains available and the interface reports the sync issue.
 - Media upload and listing submission are separate later phases.
 
