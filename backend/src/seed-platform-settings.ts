@@ -21,7 +21,7 @@ const initialSettings: InitialSetting[] = [
     key: `verification.required.${accountType}`,
     value: true,
     group: 'account_verification',
-    description: `Require Super Admin or authorised administrator verification before ${accountType.replace(/_/g, ' ')} accounts can create marketplace listings.`,
+    description: `Require Super Admin or authorised administrator verification before ${accountType.replace(/_/g, ' ')} accounts can publish marketplace listings.`,
     isPublic: false,
   })),
   {
