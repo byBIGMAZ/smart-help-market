@@ -210,6 +210,104 @@ async function predictIntent(message: string) {
   )
 }
 
+
+type SuggestionSelection = {
+  message: string
+  context: Record<string, unknown>
+}
+
+function expandSuggestionSelection(
+  label: string,
+  previousAssistantText: string,
+  context: Record<string, unknown>,
+  roles: string[],
+): SuggestionSelection {
+  const selected = normalize(label)
+  const prior = normalize(previousAssistantText)
+  const nextContext = { ...context }
+  const available = new Set(roles.map((role) => canonicalWorkspaceRole(role)).filter((role): role is WorkspaceRole => role !== null))
+  const currentRole = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
+
+  if (context.awaiting === 'listing_role' || prior.includes('both landlord and agent access')) {
+    if (selected === 'as a landlord' && available.has('landlord')) {
+      nextContext.activeRole = 'landlord'
+      nextContext.awaiting = 'listing_role'
+      return { message: 'I am having issues creating my listing as a landlord for my own property.', context: nextContext }
+    }
+    if (selected === 'as an agent' && available.has('agent')) {
+      nextContext.activeRole = 'agent'
+      nextContext.awaiting = 'listing_role'
+      return { message: 'I am having issues creating a listing as an agent for a property I represent.', context: nextContext }
+    }
+  }
+
+  const listingTroubleshooting = prior.includes('troubleshoot your landlord property listing')
+    || prior.includes('agent listing workflow')
+    || prior.includes('listing studio')
+    || prior.includes('represented property details')
+  if (listingTroubleshooting) {
+    if (selected.includes('listing studio') || selected.includes('listing form')) {
+      nextContext.awaiting = 'listing_studio_issue'
+      return { message: `I cannot open Listing Studio in my ${currentRole === 'agent' ? 'Agent' : 'Landlord'} workspace. Help me diagnose the problem.`, context: nextContext }
+    }
+    if (selected.includes('details will not save') || selected.includes('error when saving')) {
+      nextContext.awaiting = 'listing_save_issue'
+      return { message: `My ${currentRole === 'agent' ? 'agent listing' : 'property listing'} details will not save. Help me troubleshoot the save process.`, context: nextContext }
+    }
+  }
+
+  const generalPrompts: Record<string, string> = {
+    'find a property to rent': 'I want to find a property to rent. Please start a property search and ask me for my preferred location.',
+    'find accommodation': 'I am looking for accommodation to rent. Please start a property search and ask me for my preferred location.',
+    'find a product': 'I want to find a product to buy. Help me search the marketplace for products.',
+    'find a service': 'I need to find a service provider. Help me search published services.',
+    'help me navigate the website': 'I need help navigating SMART HELP MARKET. Show me the features and pages available in my assigned workspace.',
+    'what else can you help me with': 'Show me the useful things you can help me do in my active workspace.',
+    'find something in the marketplace': 'Take me to marketplace discovery and help me choose what to explore.',
+    'view my saved items': 'Open my saved items in my buyer workspace.',
+    'create a property listing': currentRole === 'agent'
+      ? 'As an agent, help me create a listing for a property I am authorised to represent.'
+      : 'As a landlord, help me create a property listing for my own property.',
+    'create an agent listing': 'As an agent, help me create a listing for a property I am authorised to represent.',
+    'manage my tenants': 'As a landlord, I need help managing my tenants.',
+    'track rent and renewals': 'As a landlord, I need help tracking rent payments, arrears and tenancy renewals.',
+    'manage maintenance': 'As a landlord, I need help managing property maintenance requests.',
+    'manage my listings': `Help me manage my listings in my ${currentRole || 'assigned'} workspace.`,
+    'view my clients': 'As an agent, help me manage my clients and prospective clients.',
+    'check commissions': 'As an agent, help me review my commissions and earnings.',
+    'add a product': 'As a seller, help me add a product listing.',
+    'manage inventory': 'As a seller, help me manage product inventory and stock levels.',
+    'view orders': currentRole === 'service_provider'
+      ? 'As a service provider, help me review my bookings.'
+      : 'As a seller, help me review customer orders.',
+    'review my sales': 'As a seller, help me review my sales.',
+    'add a service': 'As a service provider, help me create a service listing.',
+    'view bookings': 'As a service provider, help me review my service bookings.',
+    'manage availability': 'As a service provider, help me manage my service availability.',
+    'manage my services': 'As a service provider, help me manage my service listings.',
+    'listing studio will not open': 'I cannot open Listing Studio. Help me diagnose the problem.',
+    'my property details will not save': 'My property listing details will not save. Help me troubleshoot the save process.',
+    'i get an error when saving': 'I get an error when saving my listing. Help me troubleshoot the save process.',
+    'the agent listing form will not open': 'I cannot open the agent listing form. Help me diagnose the problem.',
+    'my represented property details will not save': 'My represented property listing details will not save. Help me troubleshoot the save process.',
+    'the page is blank': 'The listing page is blank when I try to open it.',
+    'i see access denied': 'I receive an access denied message when opening the listing page.',
+    'it keeps loading': 'The listing page keeps loading and never opens.',
+    'the button does nothing': 'I click the listing button but nothing happens.',
+    'required fields are missing': 'The listing form says required fields are missing when I save.',
+    'save button does nothing': 'The listing save button does nothing when I click it.',
+    'i see an error message': 'The listing form displays an error message when I save.',
+    'my saved draft disappeared': 'I cannot find a listing draft I previously saved.',
+  }
+  const mapped = generalPrompts[selected]
+  if (mapped) return { message: mapped, context: nextContext }
+
+  return {
+    message: `The user selected "${label}" in response to the assistant's previous question: "${previousAssistantText}". Continue that exact conversation, interpret the selected option as their answer, and do not restart with a generic introduction.`,
+    context: nextContext,
+  }
+}
+
 async function answerMessage(rawMessage: string, context: Record<string, unknown>, roles: string[], preferredRole?: string): Promise<AssistantResult> {
   const activeRole = resolveAssistantRole(roles, preferredRole, rawMessage, context)
 
