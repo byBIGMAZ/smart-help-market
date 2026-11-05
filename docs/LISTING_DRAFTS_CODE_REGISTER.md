@@ -8,7 +8,7 @@ This phase connects Listing Studio draft saving to the authenticated marketplace
 
 - Migration: `backend/src/migrate-listing-details.ts`
 - Command: `npm run setup:listing-drafts` from `backend/`
-- Adds `marketplace_listings.listing_details` as JSONB with an object-only constraint and a 64 KB limit.
+- Adds `marketplace_listings.listing_details` as JSONB with an object-only constraint and a 256 KB limit.
 - Existing listing records are preserved and receive an empty JSON object by default.
 
 ## Backend
