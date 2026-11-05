@@ -68,7 +68,7 @@ export default function AdminPaymentManagement() {
     setConfig(current => current ? { ...current, [key]: value } : current)
   }
   const updateNested = (key: 'transactionSettings' | 'feeSettings' | 'escrowSettings' | 'inspectionSettings', field: string, value: string | number | boolean) => {
-    setConfig(current => current ? ({ ...current, [key]: { ...current[key], [field]: value } }) : current)
+    setConfig(current => current ? ({ ...current, [key]: { ...current[key], [field]: value } } as PaymentConfiguration) : current)
   }
 
   const saveConfiguration = async () => {
