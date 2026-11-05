@@ -227,6 +227,8 @@ function expandSuggestionSelection(
   const nextContext = { ...context }
   const available = new Set(roles.map((role) => canonicalWorkspaceRole(role)).filter((role): role is WorkspaceRole => role !== null))
   const currentRole = canonicalWorkspaceRole(typeof context.activeRole === 'string' ? context.activeRole : undefined)
+  nextContext.lastSelectedSuggestion = label
+  nextContext.lastSuggestionContext = previousAssistantText.slice(0, 500)
 
   if (context.awaiting === 'location' || context.awaiting === 'budget') {
     return { message: label, context: nextContext }
@@ -427,7 +429,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: { ...nextContext, awaiting: 'listing_save_detail' },
       }
     }
-    if (message.includes('button does nothing') || message.includes('button does not respond') || message.includes('button stays unchanged')) {
+    if (message.includes('button does nothing') || message.includes('button does not respond') || message.includes('button stays unchanged') || message.includes('spinner appears')) {
       return {
         text: 'If Save draft does nothing, check whether all required fields are complete and whether the page is still processing. Try once, wait for a confirmation, and avoid repeated clicks that could create confusion. If there is no response, tell me whether the button becomes disabled, shows a spinner, or remains unchanged.',
         suggestions: ['The button stays unchanged', 'A spinner appears', 'I can see a success message'],
@@ -462,7 +464,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
         context: { ...nextContext, awaiting: 'listing_save_detail' },
       }
     }
-    if (message.includes('draft saved successfully') || message.includes('found my saved listing draft')) {
+    if (message.includes('draft saved successfully') || message.includes('found my saved listing draft') || message.includes('success message')) {
       return {
         text: 'Good. Your next step is to reopen the saved draft from your workspace and review it carefully. Confirm the listing purpose, location, unit details, prices and contact information. Save any corrections to the same draft. Only proceed to submission when the details are complete and accurate.',
         actions: [{ label: 'Open my saved listings', path: listingPath }],
@@ -695,7 +697,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  if (message.includes('how do i inspect a property') || message.includes('arrange a property inspection')) {
+  if (message.includes('how do i inspect a property') || message.includes('arrange a property inspection') || message.includes('what to inspect') || message.includes('inspection checklist')) {
     return {
       text: 'To prepare for a property inspection, first review the listing and contact the landlord or authorised agent through the marketplace. Agree on a date, time and who will meet you. Confirm the property address and inspection instructions through the authorised process, and do not rely on an unverified location pin. During the visit, check access, water, electricity, drainage, visible defects, security and the exact unit being offered. Ask about rent, deposits, fees, tenancy terms and what is included. Do not pay a deposit solely because you attended an inspection.',
       actions: [{ label: 'Open my inspections', path: '/buyer/inspections' }],
@@ -723,7 +725,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
-  if (prediction.intent === 'roommate_search' && (message.includes('advice') || message.includes('consider') || message.includes('compatible roommate'))) {
+  if (prediction.intent === 'roommate_search' && (message.includes('advice') || message.includes('consider') || message.includes('compatible roommate') || message.includes('roommate agreement'))) {
     return {
       text: 'Before sharing accommodation, compare more than rent. Discuss each person’s budget and payment dates, preferred location, cleanliness, visitors, noise, smoking, cooking, work or study schedules, shared bills, security expectations and how disagreements will be handled. Agree in writing on deposits, utilities, notice periods and responsibility for damage before moving in. Meet safely, verify the accommodation and avoid sending money before confirming the arrangement.',
       suggestions: ['Find a roommate', 'Find a property to rent', 'What should a roommate agreement include?'],
@@ -791,10 +793,22 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
   }
 
+  if (!category && typeof nextContext.lastSelectedSuggestion === 'string') {
+    const selected = nextContext.lastSelectedSuggestion
+    const previous = typeof nextContext.lastSuggestionContext === 'string' ? nextContext.lastSuggestionContext : ''
+    return {
+      text: `I understand you selected "${selected}" after I asked: "${previous}". I will keep that context rather than restart the conversation. Please tell me one more detail about what you want to achieve, or describe what happens on your screen.`,
+      suggestions: ['Explain what I should do next', 'I need more specific help', 'Speak to an administrator'],
+      context: nextContext,
+    }
+  }
+
   if (!category) {
     return {
-      text: 'I can help you find properties, products and services, or guide you to any feature on the website. What are you trying to do?',
-      suggestions: ['Find a property to rent', 'Find a product', 'Find a service', 'Help me navigate the website', 'Speak to an administrator'],
+      text: 'I can help you find properties, products and services, or guide you to any feature on the website. Tell me what you are trying to achieve and I will ask focused follow-up questions.',
+      suggestions: activeRole
+        ? ['Help me navigate the website', 'What else can you help me with?', 'Speak to an administrator']
+        : ['Find a property to rent', 'Find a product', 'Find a service', 'Help me navigate the website', 'Speak to an administrator'],
       context: nextContext,
     }
   }
