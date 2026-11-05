@@ -14,6 +14,13 @@ export type BigmazAccountSnapshot = {
     status: string
     count: number
   }>
+  recentOwnedListings: Array<{
+    listingKey: string
+    title: string
+    category: string
+    status: string
+    updatedAt: string
+  }>
 }
 
 export type BigmazAssistantInput = {
@@ -67,7 +74,7 @@ export async function generateBigmazReply(input: BigmazAssistantInput): Promise<
   if (!apiKey) return null
 
   const baseUrl = (process.env.BIGMAZ_AI_BASE_URL || 'https://api.openai.com/v1/chat/completions').trim()
-  const model = (process.env.BIGMAZ_AI_MODEL || 'gpt-4.1-mini').trim()
+  const model = process.env.BIGMAZ_AI_MODEL?.trim() || ''
   let endpoint: URL
 
   try {
