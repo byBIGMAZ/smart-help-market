@@ -92,6 +92,7 @@ function resolveAssistantRole(
   const providerTask = ['service booking', 'my bookings', 'service availability', 'working hours'].some((cue) => text.includes(cue))
 
   if (landlordTask && available.has('landlord')) return 'landlord'
+  if (landlordTask && available.has('agent')) return 'agent'
   if (agentTask && available.has('agent')) return 'agent'
   if (sellerTask && available.has('seller')) return 'seller'
   if (providerTask && available.has('service_provider')) return 'service_provider'
@@ -157,7 +158,13 @@ function routeForRequest(message: string, roles: string[], activeRole: Workspace
     { terms: ['category', 'categories'], label: 'Browse categories', path: '/categories' },
     { terms: ['help centre', 'help center', 'support'], label: 'Open Help Centre', path: '/help' },
   ]
-  const match = routes.find((item) => (!item.roles || item.roles.includes(role)) && item.terms.some((term) => text.includes(term)))
+  const match = routes.find((item) => {
+    const roleScopedPath = /^\\/(buyer|landlord|seller|provider|agent)\\//.test(item.path)
+    const roleIsClear = activeRole !== null || availableRoles.length <= 1
+    return (!item.roles || item.roles.includes(role))
+      && (roleIsClear || !roleScopedPath)
+      && item.terms.some((term) => text.includes(term))
+  })
   return match ? [{ label: match.label, path: match.path }] : []
 }
 
