@@ -1,5 +1,5 @@
 export interface OwnerListingDraftInput {
-  categoryKey: 'properties' | 'products' | 'services'
+  categoryKey: string
   details: {
     version: 1
     kind: 'properties' | 'products' | 'services'
