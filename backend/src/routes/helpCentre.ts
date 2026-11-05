@@ -359,6 +359,10 @@ function expandSuggestionSelection(
     'my product details will not save': 'My product listing details will not save. Help me troubleshoot the save process.',
     'the service form will not open': 'I cannot open the service listing form in my Service Provider workspace. Help me diagnose the problem.',
     'my service details will not save': 'My service listing details will not save. Help me troubleshoot the save process.',
+    'product details are missing': 'My product listing is missing required product details.',
+    'price or stock is rejected': 'The product listing price or stock value is rejected by the form.',
+    'service details are missing': 'My service listing is missing required service details.',
+    'my service area is not accepted': 'The service area I entered is not accepted by the form.',
     'view bookings': 'As a service provider, help me review my service bookings.',
     'manage availability': 'As a service provider, help me manage my service availability.',
     'manage my services': 'As a service provider, help me manage my service listings.',
@@ -562,6 +566,70 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       text: 'Before submitting, confirm that the latest draft is saved and all information is accurate. Then check whether the listing page provides a Submit or Publish control and read any confirmation or terms it displays. Do not assume that Save draft publishes the listing. If no submission control is available, tell me the status and buttons shown on your listing page so I can guide you without guessing.',
       actions: [{ label: 'Open my saved listings', path: activeRole === 'agent' ? '/agent/listings' : '/landlord/properties' }],
       suggestions: ['I cannot see a submit button', 'Review my listing before submission', 'Speak to an administrator'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'seller_listing_issue' || awaiting === 'seller_listing_save_issue') {
+    nextContext.awaiting = 'seller_listing_detail'
+    return {
+      text: 'Let's diagnose the product listing issue in your Seller workspace. Check that the product form is being opened from Seller Products and that you are signed in to the correct seller account. If the form opens but will not save, the important fields include product title, category, condition, price, stock and delivery information. What is happening?',
+      actions: [{ label: 'Open Seller Products', path: '/seller/products' }, { label: 'Add a product', path: '/seller/products/new' }],
+      suggestions: ['Product details are missing', 'Price or stock is rejected', 'The button does nothing', 'I see an error message'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'seller_listing_detail') {
+    if (message.includes('details are missing')) {
+      return {
+        text: 'Review the product title, category, condition, price, stock quantity and delivery method. Add brand and warranty details where relevant. Make sure the description accurately identifies the item and its condition. Follow any required-field indicators in the form, then save the listing again.',
+        suggestions: ['Price or stock is rejected', 'The button does nothing', 'I see an error message'],
+        context: nextContext,
+      }
+    }
+    if (message.includes('price or stock')) {
+      return {
+        text: 'Check that the price and stock fields contain valid numeric values and that stock is not negative. Confirm that the currency and delivery options are selected as required. If the form still rejects the values, share the exact validation message and the field name without sharing private account credentials.',
+        suggestions: ['The form accepts the values now', 'I see an error message', 'Speak to an administrator'],
+        context: nextContext,
+      }
+    }
+    return {
+      text: 'Tell me the exact message shown by the product form, or describe what changes when you click Save. I will use that detail to distinguish a missing-field issue, invalid product data, account permission or network problem.',
+      suggestions: ['Product details are missing', 'Price or stock is rejected', 'The button does nothing', 'I see an error message'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'provider_listing_issue' || awaiting === 'provider_listing_save_issue') {
+    nextContext.awaiting = 'provider_listing_detail'
+    return {
+      text: 'Let's diagnose the service listing issue in your Service Provider workspace. Open the form from your Services area and confirm that you are signed in to the correct provider account. Check the service type, experience, service area, delivery mode and availability information. What exactly happens when you try to create or save the service?',
+      actions: [{ label: 'Open my services', path: '/provider/services' }, { label: 'Add a service', path: '/provider/services/new' }],
+      suggestions: ['Service details are missing', 'My service area is not accepted', 'The button does nothing', 'I see an error message'],
+      context: nextContext,
+    }
+  }
+
+  if (awaiting === 'provider_listing_detail') {
+    if (message.includes('details are missing')) {
+      return {
+        text: 'Review the service title and type, description, experience, service area, delivery mode and availability. Confirm that the information explains what you offer, where you can provide it and whether delivery is on-site or remote. Complete any required fields shown by the form, then save again.',
+        suggestions: ['My service area is not accepted', 'The button does nothing', 'I see an error message'],
+        context: nextContext,
+      }
+    }
+    if (message.includes('service area')) {
+      return {
+        text: 'Check the service-area value for spelling and make sure it is entered in the format requested by the form. If the form offers a location selector, choose one of its recognised options. If the area is still rejected, share the exact validation text and the area format you entered.',
+        suggestions: ['The service area is accepted now', 'I see an error message', 'Speak to an administrator'],
+        context: nextContext,
+      }
+    }
+    return {
+      text: 'Tell me the exact error text or what happens after you select Save. I will narrow the issue to service details, service-area validation, account permission or a network problem.',
+      suggestions: ['Service details are missing', 'My service area is not accepted', 'The button does nothing', 'I see an error message'],
       context: nextContext,
     }
   }
