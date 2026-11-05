@@ -448,6 +448,24 @@ router.patch('/owner/:listingId', requireAuthenticatedSession, async (req, res) 
         return
       }
 
+      const activeFeePayment = await client.query(
+        `SELECT 1
+         FROM public.marketplace_payment_transactions
+         WHERE user_id = $1
+           AND purpose_key = 'listing_fee'
+           AND subject_type = 'marketplace_listing'
+           AND subject_id = $2
+           AND status IN ('initialized', 'pending')
+           AND expires_at > NOW()
+         LIMIT 1`,
+        [userId, listingId],
+      )
+      if (activeFeePayment.rowCount) {
+        await client.query('ROLLBACK')
+        res.status(409).json({ error: 'This draft has an active listing fee checkout. Complete or allow that checkout to expire before editing the listing.' })
+        return
+      }
+
       const updated = await client.query(
         `UPDATE public.marketplace_listings
          SET category_key = $1,
