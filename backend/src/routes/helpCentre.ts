@@ -4,7 +4,6 @@ import { requireAuthenticatedSession } from '../auth/requireAuthenticatedSession
 import { requirePermission } from '../auth/requirePermission'
 import { classifyBigmazIntent, countMeaningfulTokens, getBigmazModelVersion, hashIntentFeatures, type BigmazIntent, type IntentWeight } from '../intelligence/bigmazEngine'
 import { resolveGeographicLocation } from '../geography/geocoding'
-import { generateBigmazReply, interpretBigmazMessage, type BigmazAccountSnapshot, type BigmazConversationTurn } from '../intelligence/bigmazAssistant'
 
 const router = Router()
 const MAX_MESSAGE_LENGTH = 1200
@@ -1535,17 +1534,13 @@ router.post('/chat', async (req: Request, res: Response) => {
     const accountResult = await client.query<{
       account_status: string
       roles: string[]
-      permissions: string[]
     }>(
       `SELECT
          u.account_status,
-         COALESCE(array_agg(DISTINCT r.role_key) FILTER (WHERE r.role_key IS NOT NULL), ARRAY[]::text[]) AS roles,
-         COALESCE(array_agg(DISTINCT p.permission_key) FILTER (WHERE p.permission_key IS NOT NULL), ARRAY[]::text[]) AS permissions
+         COALESCE(array_agg(DISTINCT r.role_key) FILTER (WHERE r.role_key IS NOT NULL), ARRAY[]::text[]) AS roles
        FROM public.marketplace_users u
        LEFT JOIN public.marketplace_user_roles ur ON ur.user_id = u.user_id
        LEFT JOIN public.marketplace_roles r ON r.role_id = ur.role_id
-       LEFT JOIN public.marketplace_role_permissions rp ON rp.role_id = r.role_id
-       LEFT JOIN public.marketplace_permissions p ON p.permission_id = rp.permission_id
        WHERE u.user_id = $1
        GROUP BY u.user_id`,
       [userId],
@@ -1596,59 +1591,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     )
 
     let answer = await answerMessage(effectiveMessage, context, assignedRoles, preferredRole)
-    const ownedListingSummary = await client.query<{
-      category: string
-      status: string
-      count: number
-    }>(
-      `SELECT category_key AS category, status, COUNT(*)::int AS count
-       FROM public.marketplace_listings
-       WHERE owner_user_id = $1 AND is_demo = FALSE
-       GROUP BY category_key, status
-       ORDER BY category_key, status`,
-      [userId],
-    )
-    const recentOwnedListingResult = await client.query<{
-      listingKey: string
-      title: string
-      category: string
-      status: string
-      updatedAt: string
-    }>(
-      `SELECT listing_key AS "listingKey", title, category_key AS category,
-              status, updated_at::text AS "updatedAt"
-       FROM public.marketplace_listings
-       WHERE owner_user_id = $1 AND is_demo = FALSE
-       ORDER BY updated_at DESC, listing_id DESC
-       LIMIT 5`,
-      [userId],
-    )
-    const recentMessageResult = await client.query<{
-      sender: 'user' | 'assistant' | 'admin'
-      text: string
-    }>(
-      `SELECT sender_type AS sender, message_text AS text
-       FROM public.marketplace_help_messages
-       WHERE conversation_id = $1
-       ORDER BY message_id DESC
-       LIMIT 10`,
-      [conversationId],
-    )
-    const accountSnapshot: BigmazAccountSnapshot = {
-      accountStatus: accountRecord.account_status,
-      assignedRoles,
-      permissions: accountRecord.permissions || [],
-      activeRole: typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null,
-      ownedListings: ownedListingSummary.rows,
-      recentOwnedListings: recentOwnedListingResult.rows,
-    }
-    const recentConversation: BigmazConversationTurn[] = recentMessageResult.rows.reverse()
-    const modelSetting = await client.query<{ setting_value: unknown }>(
-      'SELECT setting_value FROM public.platform_settings WHERE setting_key = $1 LIMIT 1',
-      ['help.ai.model_enabled'],
-    )
-    const modelEnabled = modelSetting.rows[0]?.setting_value === true
-    let prediction = await predictIntent(effectiveMessage)
+    const prediction = await predictIntent(effectiveMessage)
     const assistantMessage = await client.query<{ id: string }>(
       `INSERT INTO public.marketplace_help_messages (conversation_id, sender_type, message_text, metadata)
        VALUES ($1, 'assistant', $2, $3::jsonb)
@@ -1660,7 +1603,6 @@ router.post('/chat', async (req: Request, res: Response) => {
         guide: answer.guide || null,
         intent: prediction.intent,
         modelVersion: prediction.modelVersion,
-        reasoningMode: 'guided_fallback',
       })],
     )
     const learningEnabled = await client.query<{ setting_value: unknown }>(
@@ -1690,119 +1632,6 @@ router.post('/chat', async (req: Request, res: Response) => {
     )
     await client.query('COMMIT')
 
-    let interpretedRequest: string | null = null
-    if (
-      modelEnabled
-      && prediction.intent === 'general'
-      && !answer.matches?.length
-      && !answer.actions?.length
-    ) {
-      const candidate = await interpretBigmazMessage({
-        message: effectiveMessage,
-        conversation: recentConversation,
-        account: accountSnapshot,
-        workflowContext: answer.context || {},
-      })
-      if (candidate && normalize(candidate) !== normalize(effectiveMessage)) {
-        let interpretedAnswer: AssistantResult | null = null
-        try {
-          interpretedAnswer = await answerMessage(
-            candidate,
-            answer.context || context,
-            assignedRoles,
-            preferredRole,
-          )
-        } catch {
-          interpretedAnswer = null
-        }
-        const wasGenericFallback = answer.text.startsWith('I can help you find properties, products and services')
-        if (interpretedAnswer && wasGenericFallback && interpretedAnswer.text !== answer.text) {
-          const deterministicFallbackAnswer = answer
-          const deterministicFallbackPrediction = prediction
-          interpretedRequest = candidate
-          answer = interpretedAnswer
-          prediction = await predictIntent(candidate)
-          try {
-            await client.query('BEGIN')
-            await client.query(
-              `UPDATE public.marketplace_help_messages
-               SET message_text = $1, metadata = $2::jsonb
-               WHERE message_id = $3 AND conversation_id = $4 AND sender_type = 'assistant'`,
-              [answer.text, JSON.stringify({
-                suggestions: answer.suggestions || [],
-                actions: answer.actions || [],
-                matches: answer.matches || [],
-                guide: answer.guide || null,
-                intent: prediction.intent,
-                modelVersion: prediction.modelVersion,
-                reasoningMode: 'guided_fallback',
-              }), assistantMessage.rows[0].id, conversationId],
-            )
-            await client.query(
-              `UPDATE public.marketplace_help_conversations
-               SET context = $2::jsonb, updated_at = NOW()
-               WHERE conversation_id = $1 AND user_id = $3`,
-              [conversationId, JSON.stringify(answer.context || {}), userId],
-            )
-            await client.query(
-              `UPDATE public.marketplace_ai_learning_events
-               SET intent_key = $2, confidence = $3, meaningful_token_count = $4,
-                   model_version = $5, feature_hashes = $6::jsonb
-               WHERE assistant_message_id = $1`,
-              [assistantMessage.rows[0].id, prediction.intent, prediction.confidence,
-                countMeaningfulTokens(candidate), getBigmazModelVersion(), JSON.stringify(hashIntentFeatures(candidate))],
-            )
-            await client.query('COMMIT')
-            accountSnapshot.activeRole = typeof answer.context?.activeRole === 'string' ? answer.context.activeRole : null
-          } catch {
-            await client.query('ROLLBACK').catch(() => undefined)
-            answer = deterministicFallbackAnswer
-            prediction = deterministicFallbackPrediction
-            interpretedRequest = null
-          }
-        }
-      }
-    }
-
-    let modelReply: string | null = null
-    if (modelEnabled) {
-      const generatedReply = await generateBigmazReply({
-        message: effectiveMessage,
-        interpretedRequest: interpretedRequest || undefined,
-        deterministicReply: answer.text,
-        suggestions: answer.suggestions || [],
-        actions: answer.actions || [],
-        marketplaceMatches: (answer.matches || []).map((match) => ({
-          title: match.title,
-          category: match.category,
-          location: match.location,
-          price: match.price,
-          priceUnit: match.priceUnit,
-        })),
-        account: accountSnapshot,
-        conversation: recentConversation,
-        workflowContext: answer.context || {},
-      })
-      if (generatedReply) {
-        try {
-          const persistedReply = await getDatabasePool().query(
-            `UPDATE public.marketplace_help_messages
-             SET message_text = $1,
-                 metadata = jsonb_set(metadata, '{reasoningMode}', '"model_assisted"'::jsonb, TRUE)
-             WHERE message_id = $2 AND conversation_id = $3 AND sender_type = 'assistant'`,
-            [generatedReply, assistantMessage.rows[0].id, conversationId],
-          )
-          if (persistedReply.rowCount) {
-            modelReply = generatedReply
-            answer.text = generatedReply
-          }
-        } catch {
-          // Keep the already-committed deterministic response if persistence
-          // of the model-enhanced wording fails.
-        }
-      }
-    }
-
     res.json({
       conversationId,
       assistantMessageId: assistantMessage.rows[0].id,
@@ -1813,7 +1642,6 @@ router.post('/chat', async (req: Request, res: Response) => {
       guide: answer.guide || null,
       usage: { used: used + 1, limit, remaining: Math.max(0, limit - used - 1) },
       needsAdmin: answer.needsAdmin === true,
-      reasoningMode: modelReply ? 'model_assisted' : 'guided_fallback',
     })
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined)
