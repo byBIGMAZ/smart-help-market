@@ -91,7 +91,8 @@ async function readAndValidateRequest(req: Request, res: Response) {
   const kind = isRecord(req.body?.details) && isListingKind(req.body.details.kind)
     ? req.body.details.kind
     : null
-  if (!categoryKey || categoryKey.length > 60 || !/^[a-z0-9-]+$/.test(categoryKey) || !kind) {
+  if (!categoryKey || categoryKey.length > 60 || !/^[a-z0-9-]+$/.test(categoryKey) || !kind ||
+      (['properties', 'products', 'services'].includes(categoryKey) && categoryKey !== kind)) {
     res.status(400).json({ error: 'Choose a valid marketplace category and listing type.' })
     return null
   }
