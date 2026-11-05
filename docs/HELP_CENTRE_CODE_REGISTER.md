@@ -25,7 +25,7 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `backend/src/geography/geocoding.ts`: canonical server-side Nominatim resolver with persistent PostgreSQL cache, strict coordinate validation, Nigeria country restriction, a serialized 1.1-second provider request interval, provider timeout and OpenStreetMap attribution.
 - `backend/package.json`: provides `npm run setup:geography` for the geographic schema setup.
 - `backend/src/intelligence/bigmazEngine.ts`: proprietary intent classifier, phrase and n-gram similarity, cue scoring, privacy-preserving feature hashing and bounded adaptive intent weights. It has no external AI API dependency.
-- `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics.
+- `backend/src/routes/helpCentre.ts`: authenticated conversation APIs, server-enforced monthly quotas, BIGMAZ intent reasoning, published listing search, privacy-preserving learning signals, explicit intent-correction feedback, escalation, administrator inbox and intelligence metrics. The assistant resolves the active workspace from server-assigned account roles and the authenticated current route, supports multiple roles without silently choosing an arbitrary one, remembers role selection across follow-up messages, and filters role-specific navigation actions. Landlord listing troubleshooting is distinct from agent listing guidance; agent guidance does not direct users into landlord-only tenant, rent or maintenance tools.
 - `backend/package.json`: adds `npm run setup:help-centre`.
 
 ## Database tables
@@ -50,7 +50,7 @@ The Help Centre is an account-linked guided marketplace assistant. It can guide 
 - `GET /api/help-centre/status`: signed-in user's monthly quota.
 - `GET /api/help-centre/conversations`: conversation history.
 - `GET /api/help-centre/conversations/:conversationId/messages`: owned conversation thread.
-- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified answer, route actions or published listing matches and, when enabled, resolves a user-selected property location.
+- `POST /api/help-centre/chat`: send a message and receive a BIGMAZ intent-classified, workspace-aware answer, role-appropriate route actions or published listing matches and, when enabled, resolves a user-selected property location. Workspace role context is derived server-side from `marketplace_user_roles`; client-supplied text cannot grant a role.
 - `POST /api/help-centre/feedback`: rate a response and optionally correct the assistant's understood intent.
 - `GET /api/help-centre/admin/intelligence/summary`: administrator metrics for interactions, feedback and reviewed learning examples.
 - `POST /api/help-centre/support-cases`: escalate a conversation to administrators.
