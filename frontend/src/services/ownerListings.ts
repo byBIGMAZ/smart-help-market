@@ -27,6 +27,7 @@ export interface OwnerMarketplaceListing {
   propertyRelationshipType: 'standalone' | 'parent' | 'child'
   parentListingId: string | null
   images: OwnerListingImage[]
+  details?: Record<string, unknown>
 }
 
 interface OwnerListingsResponse {
