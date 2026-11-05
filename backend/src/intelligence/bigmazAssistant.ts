@@ -67,7 +67,7 @@ function readModelContent(payload: ChatCompletionResponse): string | null {
  *
  * The deterministic marketplace engine remains the source of truth for
  * permissions, route actions, listing matches and workflow state. The model
- * may only improve the natural-language explanation and follow-up wording.
+ * may normalize unclear requests for existing workflows and improve reply wording.
  */
 export async function generateBigmazReply(input: BigmazAssistantInput): Promise<string | null> {
   const apiKey = process.env.BIGMAZ_AI_API_KEY?.trim()
