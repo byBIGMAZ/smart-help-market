@@ -682,6 +682,47 @@ export default function ListingEditorPage() {
             </label>
           )}
 
+          {values.purpose !== 'For sale' && (
+            <div className="smart-conditional-panel">
+              <label className="listing-editor-field">
+                <span>Use one amount for every unit</span>
+                <select
+                  value={values.sameUnitPrice || 'no'}
+                  onChange={(event) => {
+                    const enabled = event.target.value === 'yes'
+                    updateField('sameUnitPrice', enabled ? 'yes' : 'no')
+                    if (enabled) {
+                      setUnits((current) => current.map((unit) => ({
+                        ...unit,
+                        rent: values.sharedUnitPrice || '',
+                      })))
+                    }
+                  }}
+                >
+                  <option value="no">No, set an amount for each unit</option>
+                  <option value="yes">Yes, all units have the same amount</option>
+                </select>
+              </label>
+              {values.sameUnitPrice === 'yes' && (
+                <label className="listing-editor-field">
+                  Shared amount for all units (₦)
+                  <input
+                    type="number"
+                    min="0"
+                    value={values.sharedUnitPrice || ''}
+                    onChange={(event) => {
+                      const amount = event.target.value
+                      updateField('sharedUnitPrice', amount)
+                      setUnits((current) => current.map((unit) => ({ ...unit, rent: amount })))
+                    }}
+                    placeholder="Enter the common rent or shortlet amount"
+                  />
+                </label>
+              )}
+              <small>The parent listing will not carry a rental amount. The shared amount, when used, is applied to every unit.</small>
+            </div>
+          )}
+
           <div className="smart-unit-intro">
             <div>
               <h3>Manage each {isSingleRoom ? 'room' : isHostel ? 'hostel room' : isCommercial ? 'space' : 'unit'}</h3>
@@ -718,10 +759,21 @@ export default function ListingEditorPage() {
                         <input value={unit.name} onChange={(event) => updateUnit(unit.id, 'name', event.target.value)} placeholder={`Unit ${index + 1}`} />
                       </label>
 
-                      <label className="listing-editor-field">
-                        {values.purpose === 'For sale' ? 'Unit selling price (₦)' : 'Rent per unit (₦)'}
-                        <input type="number" min="0" value={unit.rent} onChange={(event) => updateUnit(unit.id, 'rent', event.target.value)} placeholder="Enter amount" />
-                      </label>
+                      {values.purpose === 'For sale' || values.sameUnitPrice !== 'yes' ? (
+                        <label className="listing-editor-field">
+                          {values.purpose === 'For sale' ? 'Unit selling price (₦)' : 'Rent per unit (₦)'}
+                          <input
+                            type="number"
+                            min="0"
+                            value={unit.rent}
+                            disabled={values.purpose !== 'For sale' && values.sameUnitPrice === 'yes'}
+                            onChange={(event) => updateUnit(unit.id, 'rent', event.target.value)}
+                            placeholder="Enter amount"
+                          />
+                        </label>
+                      ) : (
+                        <p className="smart-context-note">Shared amount applied: {unit.rent ? formatPrice(unit.rent) : 'Enter the shared amount above'}.</p>
+                      )}
 
                       {!isSelfContained && !isSingleRoom && (
                         <div className="smart-form-grid">
@@ -899,25 +951,27 @@ export default function ListingEditorPage() {
             <textarea required rows={4} value={values.description} onChange={(event) => updateField('description', event.target.value)} placeholder="Describe what makes this listing useful or attractive..."/>
           </label>
 
-          <div className="smart-form-grid">
-            <label className="listing-editor-field">
-              {kind === 'properties' ? 'Starting price (₦)' : kind === 'products' ? 'Product price (₦)' : 'Service price or starting fee (₦)'}
-              <input type="number" min="0" required value={values.price} onChange={(event) => updateField('price', event.target.value)} placeholder="Enter amount"/>
-            </label>
-            <label className="listing-editor-field">
-              Price basis
-              <select value={values.priceUnit} onChange={(event) => updateField('priceUnit', event.target.value)}>
-                <option>Negotiable</option>
-                <option>One-time</option>
-                <option>Per item</option>
-                <option>Per month</option>
-                <option>Per year</option>
-                <option>Per night</option>
-                <option>Per hour</option>
-                <option>Starting estimate</option>
-              </select>
-            </label>
-          </div>
+          {(kind !== 'properties' || isLand || values.purpose === 'For sale') && (
+            <div className="smart-form-grid">
+              <label className="listing-editor-field">
+                {kind === 'properties' ? 'Parent selling price (₦)' : kind === 'products' ? 'Product price (₦)' : 'Service price or starting fee (₦)'}
+                <input type="number" min="0" required value={values.price} onChange={(event) => updateField('price', event.target.value)} placeholder="Enter amount"/>
+              </label>
+              <label className="listing-editor-field">
+                Price basis
+                <select value={values.priceUnit} onChange={(event) => updateField('priceUnit', event.target.value)}>
+                  <option>Negotiable</option>
+                  <option>One-time</option>
+                  <option>Per item</option>
+                  <option>Per month</option>
+                  <option>Per year</option>
+                  <option>Per night</option>
+                  <option>Per hour</option>
+                  <option>Starting estimate</option>
+                </select>
+              </label>
+            </div>
+          )}
 
           <label className="listing-editor-field">
             Location
