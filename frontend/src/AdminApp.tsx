@@ -730,7 +730,7 @@ function openAutomationMonitoring() {
 }
 
   function openProfileApprovals() {
-    if (!user?.roles.includes('super_admin')) return
+    if (!user?.permissions.includes('users.view')) return
     navigateAdminSection('profile-approvals')
     setSelectedRoleId(null)
     setSelectedRoleUserId(null)
