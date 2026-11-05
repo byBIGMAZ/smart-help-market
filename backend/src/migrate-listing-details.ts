@@ -27,7 +27,7 @@ async function migrateListingDetails() {
           ADD CONSTRAINT marketplace_listings_details_object
           CHECK (
             jsonb_typeof(listing_details) = 'object'
-            AND octet_length(listing_details::text) <= 65536
+            AND octet_length(listing_details::text) <= 262144
           );
         END IF;
       END
@@ -62,7 +62,7 @@ async function migrateListingDetails() {
 
     console.log('LISTING DETAILS MIGRATION COMPLETED')
     console.log('Verified marketplace_listings.listing_details (JSONB)')
-    console.log('Verified object and 64 KB size constraints')
+    console.log('Verified object and 256 KB size constraints')
     console.log(`Existing listing records preserved: ${existing.rows[0]?.total ?? '0'}`)
   } catch (error) {
     await client.query('ROLLBACK').catch(() => undefined)
