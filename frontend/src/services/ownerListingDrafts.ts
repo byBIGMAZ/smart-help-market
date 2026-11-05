@@ -104,7 +104,7 @@ async function ownerListingAction(
   action: 'submit' | 'verify-payment',
   reference?: string,
 ): Promise<OwnerListingSubmissionResult> {
-  if (!/^[1-9]\\d*$/.test(listingId)) {
+  if (!/^[1-9]\d*$/.test(listingId)) {
     throw new Error('A valid listing ID is required.')
   }
 
