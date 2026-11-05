@@ -24,14 +24,14 @@ export interface AdminOverview {
   categories: {
     total: number
   }
-  administrators: {
+  administrators?: {
     total: number
     superAdmins: number
   }
-  configuration: {
+  configuration?: {
     settingsCount: number
   }
-  activity: {
+  activity?: {
     auditActionsLast7Days: number
   }
   activeSessions: number
