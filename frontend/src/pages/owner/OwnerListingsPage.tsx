@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { submitOwnerListingForReview, verifyOwnerListingFeePayment } from '../../services/ownerListingDrafts'
 import ListingGalleryManager from '../../components/listings/ListingGalleryManager'
 import {
   getOwnerListings,
@@ -71,6 +72,9 @@ export default function OwnerListingsPage() {
   const [selectedListingId, setSelectedListingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [listingActionBusy, setListingActionBusy] = useState(false)
+  const [listingActionMessage, setListingActionMessage] = useState('')
+  const [listingActionError, setListingActionError] = useState('')
 
   const loadListings = useCallback(async () => {
     setLoading(true)
@@ -111,6 +115,68 @@ export default function OwnerListingsPage() {
       active = false
     }
   }, [loadListings])
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('payment') !== 'return') return
+
+    const listingId = params.get('listingId') || ''
+    const reference = params.get('reference') || ''
+    if (!listingId || !reference) {
+      setListingActionError('The payment return details are incomplete. Refresh your listings and contact support if you were charged.')
+      return
+    }
+
+    let active = true
+    setListingActionBusy(true)
+    setListingActionMessage('Confirming your payment securely with Paystack…')
+    setListingActionError('')
+
+    verifyOwnerListingFeePayment(listingId, reference)
+      .then((result) => {
+        if (!active) return
+        setListingActionMessage(result.message || 'Payment confirmed and listing submitted for review.')
+        return loadListings()
+      })
+      .catch((cause) => {
+        if (!active) return
+        setListingActionMessage('')
+        setListingActionError(cause instanceof Error ? cause.message : 'Payment verification could not be completed.')
+      })
+      .finally(() => {
+        if (active) setListingActionBusy(false)
+      })
+
+    const cleanUrl = new URL(window.location.href)
+    cleanUrl.searchParams.delete('payment')
+    cleanUrl.searchParams.delete('listingId')
+    cleanUrl.searchParams.delete('reference')
+    window.history.replaceState({}, '', cleanUrl.toString())
+
+    return () => {
+      active = false
+    }
+  }, [loadListings])
+
+  async function submitSelectedListing() {
+    if (!selectedListing || selectedListing.status.toLowerCase() !== 'draft') return
+    setListingActionBusy(true)
+    setListingActionMessage('')
+    setListingActionError('')
+    try {
+      const result = await submitOwnerListingForReview(selectedListing.id)
+      if (result.paymentRequired && result.authorizationUrl) {
+        window.location.assign(result.authorizationUrl)
+        return
+      }
+      setListingActionMessage(result.message || 'Your listing has been submitted for review.')
+      await loadListings()
+    } catch (cause) {
+      setListingActionError(cause instanceof Error ? cause.message : 'Your listing could not be submitted.')
+    } finally {
+      setListingActionBusy(false)
+    }
+  }
 
   const selectedListing = listings.find(
     (listing) => listing.id === selectedListingId
@@ -170,6 +236,17 @@ export default function OwnerListingsPage() {
           ↻ Refresh
         </button>
       </header>
+
+      {(listingActionMessage || listingActionError) && (
+        <div
+          className={`owner-listing-action-feedback ${listingActionError ? 'is-error' : 'is-success'}`}
+          role={listingActionError ? 'alert' : 'status'}
+        >
+          <span>{listingActionError ? '!' : '✓'}</span>
+          <p>{listingActionError || listingActionMessage}</p>
+          {listingActionBusy && <small>Checking securely…</small>}
+        </div>
+      )}
 
       {listings.length === 0 ? (
         <section className="owner-listings-empty">
@@ -256,6 +333,16 @@ export default function OwnerListingsPage() {
                       >
                         Edit draft
                       </Link>
+                    )}
+                    {selectedListing.status.toLowerCase() === 'draft' && (
+                      <button
+                        type="button"
+                        className="owner-submit-listing"
+                        onClick={() => void submitSelectedListing()}
+                        disabled={listingActionBusy}
+                      >
+                        {listingActionBusy ? 'Processing…' : 'Submit for review'}
+                      </button>
                     )}
                     {selectedListing.status.toLowerCase() === 'published' && (
                       <Link to={`/listing/${selectedListing.key}`}>
