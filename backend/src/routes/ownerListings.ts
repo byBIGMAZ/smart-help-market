@@ -156,11 +156,13 @@ async function verifyOwnerCanCreate(
   const result = await getDatabasePool().query<{
     account_type: string | null
     account_status: string
+    verification_status: string
     has_listing_role: boolean
   }>(
     `SELECT
        u.account_type,
        u.account_status,
+       u.verification_status,
        EXISTS (
          SELECT 1
          FROM public.marketplace_user_roles AS ur
@@ -178,11 +180,23 @@ async function verifyOwnerCanCreate(
   const account = result.rows[0]
   if (!account || account.account_status !== 'active') return false
 
-  return (
-    (typeof account.account_type === 'string' &&
-      allowedTypes[kind].includes(account.account_type)) ||
-    account.has_listing_role
-  )
+  const isRegisteredAccountType =
+    typeof account.account_type === 'string' &&
+    allowedTypes[kind].includes(account.account_type)
+
+  // Accounts with a selected business account type must complete the
+  // configured verification process before creating marketplace listings.
+  // Role-based demo workspaces without a selected account type retain their
+  // explicit development access.
+  if (
+    isRegisteredAccountType &&
+    account.verification_status !== 'approved' &&
+    account.verification_status !== 'not_required'
+  ) {
+    return false
+  }
+
+  return isRegisteredAccountType || account.has_listing_role
 }
 
 async function verifyCategory(categoryKey: string): Promise<boolean> {
