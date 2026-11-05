@@ -132,7 +132,7 @@ function ToggleControl({
   )
 }
 
-export default function AdminSettingsManagement() {
+export default function AdminSettingsManagement({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
   const [settings, setSettings] = useState<AdminPlatformSetting[]>([])
   const [values, setValues] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
@@ -293,6 +293,7 @@ export default function AdminSettingsManagement() {
             const label = SETTING_LABELS[setting.key] || setting.key.replace(/[._-]/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
             const help = SETTING_HELP[setting.key] || setting.description || 'This setting is registered by the platform.'
             const isContactPolicy = setting.key === 'communication.contact_policy'
+            const isSuperAdminOnly = isContactPolicy || setting.key === 'geo.enabled' || setting.key.startsWith('verification.required.')
             const isBoolean = typeof setting.value === 'boolean' || setting.value === 'true' || setting.value === 'false'
             const policy = isContactPolicy ? parseContactPolicy(setting.value) : null
             const isNumber = typeof setting.value === 'number' || setting.key === 'help.messages.free_limit'
@@ -308,7 +309,9 @@ export default function AdminSettingsManagement() {
                 </div>
 
                 <div className="admin-setting-control">
-                  {isContactPolicy && policy ? (
+                  {isSuperAdminOnly && !isSuperAdmin ? (
+                    <div className="admin-setting-readonly">Super Admin only. This security-sensitive setting is protected from ordinary administrator changes.</div>
+                  ) : isContactPolicy && policy ? (
                     <div className="admin-setting-policy-controls">
                       <div className="admin-setting-policy-master">
                         <div><strong>Contact restrictions</strong><small>Master control for all contact-sharing restrictions.</small></div>
