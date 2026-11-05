@@ -71,7 +71,7 @@ function readDraftDetails(value: unknown, expectedKind: ListingKind): DraftDetai
   if (expectedKind !== 'properties' && units.length > 0) return null
 
   const result: DraftDetails = { version: 1, kind: expectedKind, values, units }
-  if (Buffer.byteLength(JSON.stringify(result), 'utf8') > 65536) return null
+  if (Buffer.byteLength(JSON.stringify(result), 'utf8') > 245760) return null
   return result
 }
 
