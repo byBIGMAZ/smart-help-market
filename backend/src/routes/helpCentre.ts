@@ -219,7 +219,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     'having issues creating my listing', 'cannot create listing', "can't create listing",
     'unable to create listing', 'listing will not save', 'listing wont save',
     'error creating listing', 'problem posting property', 'trouble posting property',
-  ].some((cue) => message.includes(cue))
+  ].some((cue) => message.includes(cue)) || awaiting === 'listing_role'
 
   if (listingHelpRequest) {
     const listingRoles = roles
@@ -231,11 +231,12 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
       return {
         text: 'I can help with that. Your account has both Landlord and Agent access. Are you creating this listing as a landlord for your own property, or as an agent for a property you represent?',
         suggestions: ['As a landlord', 'As an agent'],
-        context: nextContext,
+        context: { ...nextContext, awaiting: 'listing_role' },
       }
     }
 
     if (listingRole === 'landlord') {
+      delete nextContext.awaiting
       return {
         text: 'I can help you troubleshoot your landlord property listing. Start from your Landlord workspace and open Add a property. Tell me exactly where you get stuck: opening Listing Studio, entering property details, adding unit information, saving the draft, or submitting the listing. I will guide you through the landlord workflow.',
         actions: [{ label: 'Open landlord property listings', path: '/landlord/properties' }, { label: 'Create a property listing', path: '/landlord/properties/new' }],
@@ -245,6 +246,7 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
     }
 
     if (listingRole === 'agent') {
+      delete nextContext.awaiting
       return {
         text: 'I can help with the Agent listing workflow. Use your Agent workspace to create or manage a listing for a property you are authorised to represent. Agent tools are separate from the landlord’s property-ownership, tenant, rent and maintenance management tools. Tell me whether you are stuck opening the listing form, entering represented-property details, saving a draft, or submitting the listing.',
         actions: [{ label: 'Open agent listings', path: '/agent/listings' }, { label: 'Create an agent listing', path: '/agent/listings/new' }],
