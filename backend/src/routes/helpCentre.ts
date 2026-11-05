@@ -285,7 +285,8 @@ function expandSuggestionSelection(
     }
   }
 
-  const listingTroubleshooting = prior.includes('troubleshoot your landlord property listing')
+  const listingTroubleshooting = ['listing_studio_issue', 'listing_studio_detail', 'listing_save_issue', 'listing_save_detail', 'seller_listing_issue', 'seller_listing_detail', 'seller_listing_save_issue', 'provider_listing_issue', 'provider_listing_detail', 'provider_listing_save_issue'].includes(String(context.awaiting || ''))
+    || prior.includes('troubleshoot your landlord property listing')
     || prior.includes('agent listing workflow')
     || prior.includes('seller product listing workflow')
     || prior.includes('service provider listing workflow')
