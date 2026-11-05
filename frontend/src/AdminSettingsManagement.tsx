@@ -43,6 +43,10 @@ const SETTING_LABELS: Record<string, string> = {
   'geo.country_code': 'Default country code',
   'geo.cache_ttl_hours': 'Geocoding cache lifetime (hours)',
   'geo.max_results': 'Maximum location results',
+  'verification.required.landlord': 'Require landlord verification',
+  'verification.required.seller': 'Require seller verification',
+  'verification.required.service_provider': 'Require service provider verification',
+  'verification.required.agent': 'Require agent verification',
 }
 
 const SETTING_HELP: Record<string, string> = {
@@ -61,6 +65,10 @@ const SETTING_HELP: Record<string, string> = {
   'geo.country_code': 'Restrict location lookup results to a two-letter country code, such as ng.',
   'geo.cache_ttl_hours': 'How many hours successful location lookup results remain cached.',
   'geo.max_results': 'Maximum number of location matches returned by the provider. The current provider supports up to five.',
+  'verification.required.landlord': 'Require landlords to complete account verification before creating property listings.',
+  'verification.required.seller': 'Require sellers to complete account verification before creating product listings.',
+  'verification.required.service_provider': 'Require service providers to complete account verification before creating service listings.',
+  'verification.required.agent': 'Require agents to complete account verification before creating property listings.',
 }
 
 const GROUP_LABELS: Record<string, string> = {
@@ -70,6 +78,7 @@ const GROUP_LABELS: Record<string, string> = {
   help_centre: 'SMART HELP Centre & BIGMAZ Intelligence',
   help: 'SMART HELP Centre & BIGMAZ Intelligence',
   geography: 'Location & Geographic Intelligence',
+  account_verification: 'Account Verification & Eligibility',
 }
 
 function displayValue(value: unknown): string {
