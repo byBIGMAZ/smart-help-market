@@ -526,3 +526,114 @@
     flex: 1 1 auto;
   }
 }
+
+
+.owner-payment-confirm-backdrop {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 20px;
+  background: rgb(8 14 24 / 68%);
+  backdrop-filter: blur(5px);
+}
+
+.owner-payment-confirm-modal {
+  width: min(100%, 460px);
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text-primary);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 24%);
+  text-align: center;
+}
+
+.owner-payment-confirm-icon {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  margin: 0 auto 16px;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface-secondary);
+  color: var(--brand-primary);
+  font-size: 23px;
+  font-weight: 850;
+}
+
+.owner-payment-confirm-modal .owner-listings-eyebrow {
+  margin-bottom: 7px;
+}
+
+.owner-payment-confirm-modal h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 23px;
+}
+
+.owner-payment-confirm-copy {
+  margin: 12px 0 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.owner-payment-confirm-amount {
+  display: block;
+  color: var(--text-primary);
+  font-size: clamp(28px, 7vw, 38px);
+  font-weight: 850;
+  letter-spacing: -1px;
+}
+
+.owner-payment-confirm-note {
+  display: block;
+  margin: 12px auto 22px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.owner-payment-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.owner-payment-confirm-actions button {
+  min-height: 44px;
+  flex: 1 1 150px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.owner-payment-cancel {
+  background: var(--surface-secondary);
+  color: var(--text-primary);
+}
+
+.owner-payment-continue {
+  border-color: var(--brand-primary) !important;
+  background: var(--brand-primary);
+  color: #fff;
+}
+
+.owner-payment-confirm-actions button:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 3px;
+}
+
+@media (max-width: 420px) {
+  .owner-payment-confirm-modal {
+    padding: 22px 18px;
+  }
+}
