@@ -1070,6 +1070,11 @@ router.post('/chat', async (req: Request, res: Response) => {
       conversationId = created.rows[0].id
     }
 
+    if (!suggestionOfMessageId) {
+      delete context.lastSelectedSuggestion
+      delete context.lastSuggestionContext
+    }
+
     let effectiveMessage = message
     const roleResult = await client.query<{ role_key: string }>(
       `SELECT r.role_key FROM public.marketplace_user_roles ur
