@@ -67,3 +67,32 @@ The Paystack secret key remains encrypted in the database. The frontend never re
 - This milestone uses the server-side Paystack Verify Transaction API when the owner returns from checkout.
 - A signed Paystack webhook receiver, reconciliation, refunds, chargebacks and transaction history UI are separate follow-up work.
 - Live payments must remain disabled until the complete payment lifecycle has been tested and approved.
+
+
+## Code register
+
+| File | Responsibility |
+|---|---|
+| `backend/src/routes/listingPayments.ts` | Authenticated listing submission, fee calculation, checkout initialization and payment verification |
+| `backend/src/payments/paystack.ts` | Server-side Paystack initialization, credential decryption and transaction verification |
+| `backend/src/setup-listing-fee-payments.ts` | Idempotent listing fee payment schema migration |
+| `backend/src/routes/ownerListings.ts` | Existing owner draft creation and editing; blocks edits while an active fee checkout exists |
+| `backend/src/routes/paymentManagement.ts` | Super Admin payment policy and credential controls; protects active transactions from environment/key rotation |
+| `backend/src/server.ts` | Mounts the listing payment routes under `/api/listings` |
+| `frontend/src/services/ownerListingDrafts.ts` | Owner submission and payment verification API client |
+| `frontend/src/pages/owner/OwnerListingsPage.tsx` | Owner submission action, fee confirmation, Paystack redirect and callback verification |
+| `frontend/src/pages/owner/OwnerListingsPage.css` | Responsive, theme-aware submission feedback and payment confirmation UI |
+| `backend/.env.example` | Documents the frontend callback origin environment variable |
+
+### Key functions
+
+- `getCurrencyExponent`: maps supported currencies to their minor-unit exponent.
+- `getMajorFee`: reads and validates the server-side fee for the listing kind.
+- `readOwnedDraft`: locks and validates the owner's draft and account email.
+- `readPaymentConfiguration`: loads the saved gateway configuration.
+- `initializePaystackTransaction`: initializes a Paystack checkout using the encrypted server credential.
+- `verifyPaystackTransaction`: obtains authoritative transaction details from Paystack.
+- `submitOwnerListingForReview`: frontend API client for the owner submission endpoint.
+- `verifyOwnerListingFeePayment`: frontend API client for server-side payment verification.
+- `submitSelectedListing`: handles no-fee submission or opens the fee confirmation dialog.
+- Payment callback effect in `OwnerListingsPage`: verifies the returned reference and refreshes the owner's listing directory.
