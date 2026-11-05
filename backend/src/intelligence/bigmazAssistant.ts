@@ -4,7 +4,6 @@ export type BigmazConversationTurn = {
 }
 
 export type BigmazAccountSnapshot = {
-  displayName: string | null
   accountStatus: string
   assignedRoles: string[]
   permissions: string[]
@@ -95,6 +94,7 @@ export async function generateBigmazReply(input: BigmazAssistantInput): Promise<
     'Give practical, numbered steps when explaining how to solve a problem. Keep the steps specific to the stated task and the available application evidence.',
     'Use only the supplied account roles, permissions, conversation, workflow context and marketplace evidence. Never claim that a user has a role or permission that is not listed.',
     'Never tell a user to bypass access controls, use another person account, or open a role workspace they are not assigned.',
+    'A user with the super_admin role passes the application permission middleware even if the aggregated permission list is empty; do not incorrectly describe that account as lacking permissions.',
     'Do not invent listing records, prices, payment states, bookings, tenant records, support actions, system errors or feature availability.',
     'If the evidence is insufficient to diagnose a problem, explain what is not yet known and ask for the smallest useful detail, such as the exact error text or page where it occurred.',
     'Do not claim that a database record was changed, a payment was made, an inspection was booked, a listing was published or an administrator was contacted unless the supplied evidence explicitly confirms it.',
