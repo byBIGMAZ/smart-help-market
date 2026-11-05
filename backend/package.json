@@ -14,7 +14,8 @@
     "setup:geography": "tsx src/setup-geographic-intelligence.ts",
     "setup:listing-drafts": "tsx src/migrate-listing-details.ts",
     "repair:demo-account-roles": "tsx src/repair-marketplace-demo-account-roles.ts",
-    "setup:payments": "tsx src/setup-payment-management.ts"
+    "setup:payments": "tsx src/setup-payment-management.ts",
+    "setup:payment-engine": "tsx src/setup-payment-engine.ts"
   },
   "keywords": [],
   "author": "",
