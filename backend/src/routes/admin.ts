@@ -53,8 +53,8 @@ adminRouter.get(
         ),
         db.query(
           `SELECT
-             COUNT(*)::text AS total,
-             COUNT(*) FILTER (WHERE status = 'published')::text AS published
+             COUNT(*) FILTER (WHERE is_demo = FALSE)::text AS total,
+             COUNT(*) FILTER (WHERE is_demo = FALSE AND status = 'published')::text AS published
            FROM public.marketplace_listings`,
         ),
         db.query(
