@@ -55,14 +55,14 @@ function decryptCredential(ciphertext: string): string {
   return Buffer.concat([decipher.update(encrypted), decipher.final()]).toString('utf8')
 }
 
-async function getConfiguredSecretKey(): Promise<{ secretKey: string; mode: 'test' | 'live' }> {
+async function getConfiguredSecretKey(allowDisabled = false): Promise<{ secretKey: string; mode: 'test' | 'live' }> {
   const result = await getDatabasePool().query<StoredPaymentConfiguration>(
     `SELECT enabled, mode, secret_key_ciphertext, secret_key_mode
      FROM public.marketplace_payment_configuration
      WHERE configuration_id = 1 LIMIT 1`,
   )
   const config = result.rows[0]
-  if (!config?.enabled) throw new Error('The payment gateway is currently disabled.')
+  if (!config || (!config.enabled && !allowDisabled)) throw new Error('The payment gateway is currently disabled.')
   if (!config.secret_key_ciphertext || config.secret_key_mode !== config.mode) {
     throw new Error('The Paystack secret key is missing or does not match the selected environment.')
   }
@@ -130,7 +130,7 @@ export async function initializePaystackTransaction(input: PaystackInitializeInp
 
 export async function verifyPaystackTransaction(reference: string): Promise<PaystackVerifiedTransaction> {
   if (!/^[A-Za-z0-9.=\-]{8,100}$/.test(reference)) throw new Error('Transaction reference is invalid.')
-  const { secretKey, mode } = await getConfiguredSecretKey()
+  const { secretKey, mode } = await getConfiguredSecretKey(true)
   const data = await paystackRequest<{
     status?: string
     reference?: string
