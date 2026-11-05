@@ -1533,13 +1533,11 @@ router.post('/chat', async (req: Request, res: Response) => {
 
     let effectiveMessage = message
     const accountResult = await client.query<{
-      display_name: string | null
       account_status: string
       roles: string[]
       permissions: string[]
     }>(
       `SELECT
-         u.display_name,
          u.account_status,
          COALESCE(array_agg(DISTINCT r.role_key) FILTER (WHERE r.role_key IS NOT NULL), ARRAY[]::text[]) AS roles,
          COALESCE(array_agg(DISTINCT p.permission_key) FILTER (WHERE p.permission_key IS NOT NULL), ARRAY[]::text[]) AS permissions
@@ -1637,7 +1635,6 @@ router.post('/chat', async (req: Request, res: Response) => {
       [conversationId],
     )
     const accountSnapshot: BigmazAccountSnapshot = {
-      displayName: accountRecord.display_name,
       accountStatus: accountRecord.account_status,
       assignedRoles,
       permissions: accountRecord.permissions || [],
