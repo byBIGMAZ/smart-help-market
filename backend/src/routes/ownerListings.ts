@@ -143,26 +143,46 @@ async function verifyOwnerCanCreate(
   userId: string,
   kind: ListingKind,
 ): Promise<boolean> {
-  const result = await getDatabasePool().query<{
-    account_type: string
-    account_status: string
-  }>(
-    `SELECT account_type, account_status
-     FROM public.marketplace_users
-     WHERE user_id = $1
-     LIMIT 1`,
-    [userId],
-  )
-
-  const account = result.rows[0]
-  if (!account || account.account_status !== 'active') return false
-
   const allowedTypes: Record<ListingKind, string[]> = {
     properties: ['landlord', 'agent'],
     products: ['seller'],
     services: ['service_provider'],
   }
-  return allowedTypes[kind].includes(account.account_type)
+
+  // Registered accounts are authorised by their selected account type.
+  // The development demo account deliberately has multiple workspace roles
+  // and no single account_type, so its explicit marketplace role assignments
+  // also grant access to the matching listing workspace.
+  const result = await getDatabasePool().query<{
+    account_type: string | null
+    account_status: string
+    has_listing_role: boolean
+  }>(
+    `SELECT
+       u.account_type,
+       u.account_status,
+       EXISTS (
+         SELECT 1
+         FROM public.marketplace_user_roles AS ur
+         INNER JOIN public.marketplace_roles AS r
+           ON r.role_id = ur.role_id
+         WHERE ur.user_id = u.user_id
+           AND r.role_key = ANY($2::text[])
+       ) AS has_listing_role
+     FROM public.marketplace_users AS u
+     WHERE u.user_id = $1
+     LIMIT 1`,
+    [userId, allowedTypes[kind]],
+  )
+
+  const account = result.rows[0]
+  if (!account || account.account_status !== 'active') return false
+
+  return (
+    (typeof account.account_type === 'string' &&
+      allowedTypes[kind].includes(account.account_type)) ||
+    account.has_listing_role
+  )
 }
 
 async function verifyCategory(categoryKey: string): Promise<boolean> {
