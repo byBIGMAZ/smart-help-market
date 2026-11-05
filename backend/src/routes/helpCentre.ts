@@ -250,6 +250,31 @@ function expandSuggestionSelection(
     }
   }
 
+  if (context.awaiting === 'listing_category') {
+    if (selected === 'property listing') {
+      const propertyRoles = (['landlord', 'agent'] as const).filter((role) => available.has(role))
+      if (propertyRoles.length > 1) {
+        nextContext.awaiting = 'listing_role'
+        return { message: 'I am having issues creating my property listing.', context: nextContext }
+      }
+      if (propertyRoles.length === 1) {
+        nextContext.activeRole = propertyRoles[0]
+        nextContext.awaiting = 'listing_role'
+        return { message: 'I am having issues creating my property listing.', context: nextContext }
+      }
+    }
+    if (selected === 'product listing' && available.has('seller')) {
+      nextContext.activeRole = 'seller'
+      nextContext.awaiting = 'listing_role'
+      return { message: 'I am having issues creating my product listing as a seller.', context: nextContext }
+    }
+    if (selected === 'service listing' && available.has('service_provider')) {
+      nextContext.activeRole = 'service_provider'
+      nextContext.awaiting = 'listing_role'
+      return { message: 'I am having issues creating my service listing as a service provider.', context: nextContext }
+    }
+  }
+
   const workspaceChoice = selected.match(/^as a (buyer|landlord|agent|seller|service provider)$/)
   if (workspaceChoice) {
     const chosenRole = canonicalWorkspaceRole(workspaceChoice[1] === 'service provider' ? 'service_provider' : workspaceChoice[1])
@@ -710,22 +735,37 @@ async function answerMessage(rawMessage: string, context: Record<string, unknown
 
   const listingHelpRequest = [
     'issue creating listing', 'problem creating listing', 'trouble creating listing',
-    'having issues creating my listing', 'cannot create listing', "can't create listing",
+    'having issues creating my listing', 'having issues creating my product listing',
+    'having issues creating my service listing', 'cannot create listing', "can't create listing",
     'unable to create listing', 'listing will not save', 'listing wont save',
     'error creating listing', 'problem posting property', 'trouble posting property',
-  ].some((cue) => message.includes(cue)) || awaiting === 'listing_role'
+  ].some((cue) => message.includes(cue)) || awaiting === 'listing_role' || awaiting === 'listing_category'
 
   if (listingHelpRequest) {
-    const listingRoles = roles
+    const listingWorkspaceRoles = roles
       .map((role) => canonicalWorkspaceRole(role))
-      .filter((role): role is WorkspaceRole => role === 'landlord' || role === 'agent')
-    const listingRole = activeRole || (listingRoles.length === 1 ? listingRoles[0] : null)
+      .filter((role): role is WorkspaceRole => role === 'landlord' || role === 'agent' || role === 'seller' || role === 'service_provider')
+    const listingRoles = listingWorkspaceRoles.filter((role): role is 'landlord' | 'agent' => role === 'landlord' || role === 'agent')
+    const listingRole = activeRole || (listingWorkspaceRoles.length === 1 ? listingWorkspaceRoles[0] : null)
 
-    if (!listingRole && listingRoles.length > 1) {
+    if (!listingRole && listingWorkspaceRoles.length === 2 && listingRoles.length === 2) {
       return {
         text: 'I can help with that. Your account has both Landlord and Agent access. Are you creating this listing as a landlord for your own property, or as an agent for a property you represent?',
         suggestions: ['As a landlord', 'As an agent'],
         context: { ...nextContext, awaiting: 'listing_role' },
+      }
+    }
+
+    if (!listingRole && listingWorkspaceRoles.length > 1) {
+      const categorySuggestions = [
+        ...(listingWorkspaceRoles.some((role) => role === 'landlord' || role === 'agent') ? ['Property listing'] : []),
+        ...(listingWorkspaceRoles.includes('seller') ? ['Product listing'] : []),
+        ...(listingWorkspaceRoles.includes('service_provider') ? ['Service listing'] : []),
+      ]
+      return {
+        text: 'I can help. Your account has access to more than one type of listing workspace. Which kind of listing are you trying to create?',
+        suggestions: categorySuggestions,
+        context: { ...nextContext, awaiting: 'listing_category' },
       }
     }
 
