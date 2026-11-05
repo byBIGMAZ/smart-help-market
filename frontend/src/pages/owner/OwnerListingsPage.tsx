@@ -180,7 +180,10 @@ export default function OwnerListingsPage() {
     setListingActionError('')
     try {
       const result = await submitOwnerListingForReview(selectedListing.id)
-      if (result.paymentRequired && result.authorizationUrl && Number.isSafeInteger(result.amountMinor) && result.currencyCode) {
+      if (result.paymentRequired) {
+        if (!result.authorizationUrl || !Number.isSafeInteger(result.amountMinor) || !result.currencyCode) {
+          throw new Error('The payment checkout details are incomplete. No payment has been made. Please try again or contact support.')
+        }
         setPendingCheckout({ authorizationUrl: result.authorizationUrl, amountMinor: result.amountMinor as number, currencyCode: result.currencyCode })
         return
       }
