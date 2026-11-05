@@ -2016,7 +2016,7 @@ function openAutomationMonitoring() {
 
         {/* PLATFORM SETTINGS */}
         {section === 'settings' && (
-          <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement /></Suspense>
+          <Suspense fallback={<AdminModuleFallback />}><AdminSettingsManagement isSuperAdmin={Boolean(user?.roles.includes('super_admin'))} /></Suspense>
         )}
 
         {/* REPORTS AND ANALYTICS */}
