@@ -41,6 +41,8 @@ async function setupPaymentManagement(): Promise<void> {
       )
     `)
     await pool.query('CREATE INDEX IF NOT EXISTS idx_payment_credential_otps_admin_created ON public.marketplace_payment_credential_otps(admin_user_id, created_at DESC)')
+    await pool.query('ALTER TABLE public.marketplace_payment_credential_otps ADD COLUMN IF NOT EXISTS verified_at TIMESTAMPTZ')
+    await pool.query('ALTER TABLE public.marketplace_payment_credential_otps ADD COLUMN IF NOT EXISTS credential_change_token_hash TEXT')
     await pool.query(`
       INSERT INTO public.marketplace_payment_configuration (configuration_id)
       VALUES (1) ON CONFLICT (configuration_id) DO NOTHING
