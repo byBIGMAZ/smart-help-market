@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { Link, useLocation } from 'react-router-dom'
 import './WorkspaceFloatingSidebar.css'
 
-type WorkspaceLink = { label: string; path: string }
+type WorkspaceLink = { label: string; path: string; group?: string }
 type Position = { x: number; y: number }
 const POSITION_KEY = 'shm.workspace-floating-sidebar.position.v2'
 
@@ -113,23 +113,27 @@ export default function WorkspaceFloatingSidebar({ links, onNavigate, activePath
           </div>
           <nav>
             {links.map((item, index) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={item.path === (activePath ?? pathname) ? 'is-active' : ''}
-                aria-current={item.path === (activePath ?? pathname) ? 'page' : undefined}
-                onClick={(event) => {
-                  if (onNavigate) {
-                    event.preventDefault()
-                    onNavigate(item.path)
-                  }
-                  setOpen(false)
-                }}
-              >
-                <span className="shm-workspace-float-link-index">{String(index + 1).padStart(2, '0')}</span>
-                <span>{item.label}</span>
-                <span className="shm-workspace-float-link-arrow" aria-hidden="true">›</span>
-              </Link>
+              <div className="shm-workspace-float-item" key={item.path}>
+                {(index === 0 || item.group !== links[index - 1]?.group) && item.group && (
+                  <div className="shm-workspace-float-group">{item.group}</div>
+                )}
+                <Link
+                  to={item.path}
+                  className={item.path === (activePath ?? pathname) ? 'is-active' : ''}
+                  aria-current={item.path === (activePath ?? pathname) ? 'page' : undefined}
+                  onClick={(event) => {
+                    if (onNavigate) {
+                      event.preventDefault()
+                      onNavigate(item.path)
+                    }
+                    setOpen(false)
+                  }}
+                >
+                  <span className="shm-workspace-float-link-index">{String(index + 1).padStart(2, '0')}</span>
+                  <span>{item.label}</span>
+                  <span className="shm-workspace-float-link-arrow" aria-hidden="true">›</span>
+                </Link>
+              </div>
             ))}
           </nav>
         </aside>
