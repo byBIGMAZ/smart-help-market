@@ -90,7 +90,8 @@ router.put('/configuration', async (req, res) => {
       res.status(409).json({ error: 'Configure the public and encrypted secret keys before enabling payments.' })
       return
     }
-    if (!Number.isSafeInteger(transactionSettings.transactionExpiryMinutes) || !Number.isSafeInteger(transactionSettings.minimumAmount) || !Number.isSafeInteger(transactionSettings.maximumAmount) ||\n        !Number.isSafeInteger(escrowSettings.holdingPeriodHours) || !Number.isSafeInteger(inspectionSettings.bookingExpiryHours) ||
+    if (!Number.isSafeInteger(transactionSettings.transactionExpiryMinutes) || !Number.isSafeInteger(transactionSettings.minimumAmount) || !Number.isSafeInteger(transactionSettings.maximumAmount) ||
+        !Number.isSafeInteger(escrowSettings.holdingPeriodHours) || !Number.isSafeInteger(inspectionSettings.bookingExpiryHours) ||
         !Number.isFinite(feeSettings.platformFeeValue) || !Number.isFinite(feeSettings.agentCommissionValue) ||
         typeof feeSettings.platformFeeEnabled !== 'boolean' || typeof feeSettings.agentCommissionEnabled !== 'boolean' ||
         !['fixed', 'percentage'].includes(feeSettings.platformFeeType) || !['fixed', 'percentage'].includes(feeSettings.agentCommissionType) ||
