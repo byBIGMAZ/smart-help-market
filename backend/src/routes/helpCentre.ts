@@ -83,9 +83,6 @@ function resolveAssistantRole(
     if (available.has(item.role) && item.cues.some((cue) => text.includes(cue))) return item.role
   }
 
-  const requested = canonicalWorkspaceRole(preferredRole)
-  if (requested && available.has(requested)) return requested
-
   const landlordTask = ['tenant', 'rent collection', 'rent payment', 'arrears', 'maintenance request', 'landlord complaint', 'renewal', 'occupancy'].some((cue) => text.includes(cue))
   const agentTask = ['commission', 'commissions', 'my clients', 'prospective client', 'represented property', 'agency listing'].some((cue) => text.includes(cue))
   const sellerTask = ['inventory', 'stock level', 'product order', 'my sales', 'seller listing'].some((cue) => text.includes(cue))
@@ -96,6 +93,9 @@ function resolveAssistantRole(
   if (agentTask && available.has('agent')) return 'agent'
   if (sellerTask && available.has('seller')) return 'seller'
   if (providerTask && available.has('service_provider')) return 'service_provider'
+
+  const requested = canonicalWorkspaceRole(preferredRole)
+  if (requested && available.has(requested)) return requested
 
   const listingCreationIssue = ['create listing', 'creating listing', 'creating my listing', 'create my listing', 'post listing', 'posting listing', 'add property', 'add my property', 'new property', 'listing will not save', 'listing wont save', 'listing error', 'having issues creating my listing', 'trouble creating my listing', 'having issues creating my product listing', 'having issues creating my service listing'].some((cue) => text.includes(cue))
   if (listingCreationIssue) {
