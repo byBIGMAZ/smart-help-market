@@ -71,9 +71,6 @@ function resolveAssistantRole(
       .map((role) => canonicalWorkspaceRole(role))
       .filter((role): role is WorkspaceRole => role !== null),
   )
-  const requested = canonicalWorkspaceRole(preferredRole)
-  if (requested && available.has(requested)) return requested
-
   const text = normalize(message)
   const explicitRoleCues: Array<{ role: WorkspaceRole; cues: string[] }> = [
     { role: 'landlord', cues: ['as a landlord', 'my landlord account', 'landlord workspace', 'property owner', 'as the property owner'] },
@@ -85,6 +82,9 @@ function resolveAssistantRole(
   for (const item of explicitRoleCues) {
     if (available.has(item.role) && item.cues.some((cue) => text.includes(cue))) return item.role
   }
+
+  const requested = canonicalWorkspaceRole(preferredRole)
+  if (requested && available.has(requested)) return requested
 
   const landlordTask = ['tenant', 'rent collection', 'rent payment', 'arrears', 'maintenance request', 'landlord complaint', 'renewal', 'occupancy'].some((cue) => text.includes(cue))
   const agentTask = ['commission', 'commissions', 'my clients', 'prospective client', 'represented property', 'agency listing'].some((cue) => text.includes(cue))
